@@ -1,0 +1,357 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KRES Co. Admin - Customers</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'DM Sans',sans-serif; background:#CCDEE4; display:flex; min-height:100vh; }
+        .sidebar { width:310px; background:#02182E; color:white; display:flex; flex-direction:column; position:fixed; height:100vh; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+        .logo-section {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 25px 20px;
+            gap: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .logo {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 0;
+        }
+        .logo img {
+            display: block;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: transparent;
+            padding: 0;
+        }
+        .logo-text h1 { font-family:'Times New Roman',serif; font-size:21px; font-weight:700; margin-bottom:2px; letter-spacing:.3px; }
+        .logo-text p { font-size:11px; color:#d0dce8; font-weight:400; letter-spacing:.5px; text-transform:uppercase; }
+        .nav-menu { flex:1; padding:10px; overflow-y:auto; margin-top:40px; }
+        .nav-item { display:flex; align-items:center; gap:15px; padding:15px 20px; color:#b8c9d9; text-decoration:none; border-radius:8px; margin-bottom:5px; transition:all .3s; font-size:15px; }
+        .nav-item:hover { background:rgba(255,255,255,.1); color:white; }
+        .nav-item.active { background:#85C4E4; color:#02182E; }
+        .nav-item svg { width:24px; height:24px; flex-shrink:0; }
+        .user-profile { display:flex; align-items:center; gap:12px; padding:20px; border-top:1px solid rgba(255,255,255,.1); margin-top:auto; }
+        .avatar { width:42px; height:42px; background:#5d7a8f; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:600; }
+        .user-name { font-size:14px; font-weight:600; flex:1; }
+        .logout-icon { width:24px; height:24px; color:#b8c9d9; cursor:pointer; transition:color .3s; }
+        .logout-icon:hover { color:white; }
+        .main-content { margin-left:310px; flex:1; background:#CCDEE4; min-height:100vh; }
+        .header { background:white; padding:25px 35px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+        .header-left { display:flex; align-items:center; gap:15px; }
+        .header-left svg { width:24px; height:24px; color:#333; }
+        .header h2 { font-size:28px; font-weight:600; color:#022F56; }
+        .notification-icon { position:relative; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; }
+        .notification-icon svg { width:28px; height:28px; color:#1a1a1a; }
+        .notification-badge { position:absolute; top:2px; right:2px; background:#ef4444; color:white; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
+        .page-content { padding:30px 35px; }
+        .search-row { display:flex; justify-content:flex-end; margin-bottom:20px; }
+        .search-wrap { position:relative; width:320px; }
+        .search-wrap svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:#9ca3af; pointer-events:none; }
+        .search-wrap input { width:100%; padding:10px 12px 10px 36px; border:2px solid #e5e7eb; border-radius:9px; font-size:14px; font-family:inherit; color:#374151; background:white; }
+        .search-wrap input:focus { outline:none; border-color:#3d5a73; }
+        .table-container { background:white; border-radius:12px; box-shadow:0 2px 8px rgba(2,24,46,0.1); border:1.2px solid rgba(133,196,228,0.3); overflow:hidden; }
+        table { width:100%; border-collapse:collapse; }
+        thead { background:rgba(133,196,228,0.15); }
+        th { padding:18px 20px; text-align:left; font-size:12px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.5px; border-bottom:2px solid rgba(72,141,180,0.2); }
+        td { padding:18px 20px; font-size:14px; color:#374151; border-bottom:1px solid rgba(133,196,228,0.15); vertical-align:middle; }
+        tbody tr:hover { background:rgba(133,196,228,0.1); }
+        tbody tr:last-child td { border-bottom:none; }
+        .name-cell { font-weight:600; color:#1a1a1a; }
+        .total-cell { font-weight:700; color:#1a1a1a; }
+        .pill { display:inline-block; padding:4px 11px; border-radius:20px; font-size:12px; font-weight:600; }
+        .pill-paid { background:#d1fae5; color:#059669; }
+        .pill-full { background:#dbeafe; color:#1d4ed8; }
+        .pill-half { background:#fef3c7; color:#d97706; }
+        .pill-unpaid { background:#fee2e2; color:#dc2626; }
+        .btn-view { background:#f0f4f8; color:#3d5a73; border:1.5px solid #d0dce8; padding:6px 14px; border-radius:7px; font-size:12.5px; font-weight:600; cursor:pointer; transition:all .2s; font-family:inherit; }
+        .btn-view:hover { background:#3d5a73; color:white; border-color:#3d5a73; }
+        /* Modal */
+        .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(10,16,26,.6); backdrop-filter:blur(4px); align-items:center; justify-content:center; }
+        .modal.show { display:flex; }
+        .modal-shell { background:white; border-radius:16px; width:90%; max-width:480px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.25); animation:slideUp .3s cubic-bezier(.34,1.56,.64,1); }
+        @keyframes slideUp { from{opacity:0;transform:translateY(20px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+        .modal-top { background:linear-gradient(135deg,#2c4456,#3d6680); padding:22px 26px; display:flex; align-items:center; justify-content:space-between; }
+        .modal-title { font-family:'DM Serif Display',serif; font-size:19px; color:white; }
+        .modal-sub { font-size:11px; color:rgba(255,255,255,.6); margin-top:2px; }
+        .close-btn { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:white; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+        .close-btn:hover { background:rgba(255,255,255,.25); transform:rotate(90deg); }
+        .modal-body { padding:22px 26px; }
+        .drow { display:flex; align-items:flex-start; padding:11px 0; border-bottom:1px solid #f3f4f6; gap:12px; }
+        .drow:last-child { border-bottom:none; }
+        .dico { width:32px; height:32px; background:#f0f4f8; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .dico svg { width:15px; height:15px; color:#3d5a73; }
+        .dlabel { font-size:10.5px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:.8px; margin-bottom:2px; }
+        .dvalue { font-size:14px; color:#1f2937; font-weight:500; }
+        .modal-footer { padding:14px 26px; display:flex; justify-content:flex-end; border-top:1px solid #f0f0f0; }
+        .btn-close { padding:8px 20px; background:#f3f4f6; color:#374151; border:1.5px solid #e5e7eb; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+        .btn-close:hover { background:#e5e7eb; }
+        .notification-dropdown { position:absolute; top:60px; right:20px; background:white; border:1px solid #e0e0e0; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.1); width:300px; max-height:400px; overflow-y:auto; z-index:1000; display:none; }
+        .notification-dropdown.show { display:block; }
+        .notification-header { padding:15px; border-bottom:1px solid #e0e0e0; font-weight:600; color:#1a1a1a; }
+        .notification-item { padding:12px 15px; border-bottom:1px solid #f0f0f0; cursor:pointer; }
+        .notification-item:hover { background:#f5f5f5; }
+        .notification-item-title { font-weight:600; color:#1a1a1a; margin-bottom:4px; }
+        .notification-item-text { font-size:12px; color:#666; }
+        .notification-footer { padding:10px 15px; text-align:center; border-top:1px solid #e0e0e0; color:#3d5a73; font-size:13px; font-weight:600; }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <div class="logo-section">
+        <div class="logo"><img src="{% static 'images/logo.png' %}" alt="KRES Logo" style="width: 70px; height: 70px; object-fit: contain;"></div>
+        <div class="logo-text"><h1>KRES Co. Admin</h1><p>Management Panel</p></div>
+    </div>
+    <nav class="nav-menu">
+        <a href="{% url 'pages:dashboard' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/></svg><span>Dashboard</span></a>
+        <a href="{% url 'pages:inventory' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><path d="M20 7H4C2.9 7 2 7.9 2 9V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V9C22 7.9 21.1 7 20 7Z" stroke="currentColor" stroke-width="2"/><path d="M12 7V3M8 7V5M16 7V5" stroke="currentColor" stroke-width="2"/></svg><span>Inventory</span></a>
+        <a href="{% url 'pages:orders' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><path d="M9 2L7 6H3L8 10L6 14L12 11L18 14L16 10L21 6H17L15 2H9Z" stroke="currentColor" stroke-width="2"/><path d="M6 14L4 22H20L18 14" stroke="currentColor" stroke-width="2"/></svg><span>Orders</span></a>
+        <a href="{% url 'pages:customers' %}" class="nav-item active"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="10" r="3" stroke="currentColor" stroke-width="2"/><path d="M2 20C2 16.5 5 14 9 14C13 14 16 16.5 16 20" stroke="currentColor" stroke-width="2"/><path d="M13 20C13 17.5 15 16 17 16C19 16 22 17.5 22 20" stroke="currentColor" stroke-width="2"/></svg><span>Customers</span></a>
+        <a href="{% url 'pages:payments' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M2 10H22M6 14H10M6 17H8" stroke="currentColor" stroke-width="2"/></svg><span>Payments</span></a>
+        <a href="{% url 'pages:reports' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 2V6M16 2V6M3 10H21" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="14" r="1" fill="currentColor"/><circle cx="12" cy="14" r="1" fill="currentColor"/><circle cx="16" cy="14" r="1" fill="currentColor"/><circle cx="8" cy="18" r="1" fill="currentColor"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg><span>Reports</span></a>
+    </nav>
+    <div class="user-profile">
+        <div class="avatar">A</div>
+        <div class="user-name">Admin User</div>
+<a href="#" onclick="openLogoutModal(); return false;" style="text-decoration:none;display:inline-flex;align-items:center;">
+            <svg class="logout-icon" viewBox="0 0 24 24" fill="none"><path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+    </div>
+</div>
+
+<div class="main-content">
+    <header class="header">
+        <div class="header-left">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <h2>Customers</h2>
+        </div>
+        <div class="notification-icon" onclick="toggleNotifications(event)">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="width: 28px; height: 28px;"><path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.89 22 12 22ZM18 16V11C18 7.93 16.36 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.64 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z"/></svg>
+            {% with total=low_stock_count|add:pending_payments|add:new_customers_count %}{% if total > 0 %}<span class="notification-badge">{{ total }}</span>{% endif %}{% endwith %}
+            <div id="notificationDropdown" class="notification-dropdown">
+                <div class="notification-header">Notifications</div>
+                {% if new_customers_count > 0 %}<a href="{% url 'pages:customers' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">👥 New Customers</div><div class="notification-item-text">{{ new_customers_count }} new customer(s) today</div></div></a>{% endif %}
+                {% if low_stock_count > 0 %}<a href="{% url 'pages:inventory' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">⚠️ Low Stock Alert</div><div class="notification-item-text">{{ low_stock_count }} product(s) running low</div></div></a>{% endif %}
+                {% if pending_payments > 0 %}<a href="{% url 'pages:payments' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">💳 Pending Payments</div><div class="notification-item-text">{{ pending_payments }} payment(s) waiting</div></div></a>{% endif %}
+                {% with total=low_stock_count|add:pending_payments|add:new_customers_count %}
+                    <div class="notification-footer">{% if total == 0 %}No new notifications{% else %}All notifications{% endif %}</div>
+                {% endwith %}
+            </div>
+        </div>
+    </header>
+
+    <div class="page-content">
+        <div class="search-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:16px;">
+            <div style="display:flex; gap:8px; align-items:center;">
+                <label style="font-size:13px; font-weight:600; color:#6b7280; white-space:nowrap;">Order Status:</label>
+                <select id="customerStatusFilter" style="padding:8px 12px; border:2px solid #e5e7eb; border-radius:8px; font-size:13px; background:white; color:#374151; cursor:pointer;">
+                    <option value="all" {% if not status_filter or status_filter == 'all' %}selected{% endif %}>All</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                </select>
+            </div>
+            <div class="search-wrap">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <input type="text" id="searchInput" placeholder="Search customers...">
+            </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;background:#fef9e7;border-left:3px solid #f59e0b;border-radius:6px;padding:8px 14px;margin-bottom:16px;">
+            <span style="font-size:14px;">⚠️</span>
+            <span style="font-size:12px;color:#92400e;">Customers with no active orders will be automatically cleared on <strong id="nextMonthDeletionDate"></strong>.</span>
+        </div>
+
+        <div class="table-container">
+            <table id="customersTable">
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>Contact Number</th>
+                        <th>Items Ordered</th>
+                        <th>Payment Status</th>
+                        <th>Total</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr
+                        data-name="{{ customer.first_name }} {{ customer.last_name }}"
+                        data-phone="{{ customer.phone }}"
+                        data-address="{{ customer.address }}"
+                        data-orders="{{ customer.orders.count }}"
+                        data-total="₱ {{ customer.get_total_spent|floatformat:2 }}"
+                        data-items="{% for order in customer.orders.all %}{% for item in order.items.all %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if not forloop.parentloop.last %} | {% endif %}{% endfor %}"
+                        data-delivery-type="{% with latest=customer.orders.first %}{% if latest %}{% if '[PICK UP]' in latest.notes %}pickup{% else %}dropoff{% endif %}{% endif %}{% endwith %}"
+                    >
+                        <td class="name-cell">{{ customer.first_name }} {{ customer.last_name }}</td>
+                        <td>{{ customer.phone|default:"—" }}</td>
+                        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                            {% with latest=customer.orders.first %}
+                                {% if latest %}{% for item in latest.items.all %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}—{% endif %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            {% with orders=customer.orders.all %}
+                                {% if orders %}
+                                    {% with latest=orders.0 %}
+                                        {% if latest.status == 'completed' %}
+                                            <span class="pill pill-paid"> Completed</span>
+                                        {% else %}
+                                            {% with p=latest.payments.first %}
+                                                {% if p and p.payment_status == 'completed' %}
+                                                    <span class="pill pill-full"> Fully Paid</span>
+                                                {% else %}
+                                                    <span class="pill pill-half"> Down Payment</span>
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% endif %}
+                                    {% endwith %}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td class="total-cell">₱ {{ customer.get_total_spent|floatformat:2 }}</td>
+                        <td><button class="btn-view" onclick="viewCustomer(this)">View Profile</button></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" style="text-align:center;padding:60px;color:#9ca3af;">
+                        <div style="font-size:38px;margin-bottom:10px;">👥</div>
+                        <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:#6b7280;">No customers yet</div>
+                        <div style="font-size:13px;">Customers appear here once an order is created.</div>
+                    </td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Modal -->
+<div id="customerModal" class="modal">
+    <div class="modal-shell">
+        <div class="modal-top">
+            <div><div class="modal-sub">Customer Profile</div><div class="modal-title" id="mSub"></div></div>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><div class="dlabel">Full Name</div><div class="dvalue" id="mName">—</div></div></div>
+            <div class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.82 2 2 0 012 .9h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6z"/></svg></div><div><div class="dlabel">Contact Number</div><div class="dvalue" id="mPhone">—</div></div></div>
+            <div id="mDeliveryRow" class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div><div class="dlabel" id="mDeliveryLabel">Address</div><div class="dvalue" id="mAddress">—</div></div></div>
+            <div id="mDeliveryTypeRow" class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><div><div class="dlabel">Delivery Type</div><div class="dvalue" id="mDeliveryType">—</div></div></div>
+            <div class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div><div><div class="dlabel">All Items Ordered</div><div class="dvalue" id="mItems" style="white-space:pre-wrap;">—</div></div></div>
+            <div class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="dlabel">Total Spent</div><div class="dvalue" id="mTotal">—</div></div></div>
+            <div class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><div><div class="dlabel">Total Orders</div><div class="dvalue" id="mOrders">—</div></div></div>
+        </div>
+        <div class="modal-footer"><button class="btn-close" onclick="closeModal()">Close</button></div>
+    </div>
+</div>
+
+<script>
+function viewCustomer(btn) {
+    const r = btn.closest('tr');
+    document.getElementById('mName').textContent    = r.getAttribute('data-name')    || '—';
+    document.getElementById('mPhone').textContent   = r.getAttribute('data-phone')   || '—';
+    document.getElementById('mItems').textContent   = (r.getAttribute('data-items') || '—').replace(/ \| /g, '\n');
+    document.getElementById('mTotal').textContent   = r.getAttribute('data-total')   || '—';
+    document.getElementById('mOrders').textContent  = r.getAttribute('data-orders')  || '0';
+    document.getElementById('mSub').textContent     = r.getAttribute('data-name')    || '';
+    
+    // Handle delivery type
+    const deliveryType = r.getAttribute('data-delivery-type') || '';
+    const deliveryRow = document.getElementById('mDeliveryRow');
+    const deliveryTypeRow = document.getElementById('mDeliveryTypeRow');
+    const deliveryLabel = document.getElementById('mDeliveryLabel');
+    const addressValue = document.getElementById('mAddress');
+    const deliveryTypeValue = document.getElementById('mDeliveryType');
+    
+    if (deliveryType === 'pickup') {
+        deliveryLabel.textContent = 'Delivery Type';
+        addressValue.textContent = 'Pick Up';
+        deliveryTypeValue.textContent = 'Local Pick Up';
+        if (deliveryTypeRow) deliveryTypeRow.style.display = 'flex';
+    } else if (deliveryType === 'dropoff') {
+        deliveryLabel.textContent = 'Delivery Address';
+        addressValue.textContent = r.getAttribute('data-address') || '—';
+        deliveryTypeValue.textContent = 'Local Drop Off';
+        if (deliveryTypeRow) deliveryTypeRow.style.display = 'flex';
+    } else {
+        addressValue.textContent = r.getAttribute('data-address') || '—';
+        deliveryTypeValue.textContent = '—';
+        if (deliveryTypeRow) deliveryTypeRow.style.display = 'none';
+    }
+    
+    document.getElementById('customerModal').classList.add('show');
+}
+function closeModal() { document.getElementById('customerModal').classList.remove('show'); }
+window.addEventListener('click', e => { if (e.target === document.getElementById('customerModal')) closeModal(); });
+
+// Customer status filter - navigate with URL parameter
+const customerStatusFilter = document.getElementById('customerStatusFilter');
+if (customerStatusFilter) {
+    customerStatusFilter.addEventListener('change', function() {
+        const value = this.value;
+        if (value === 'all') {
+            window.location.href = '/customers/';
+        } else {
+            window.location.href = '/customers/?status=' + value;
+        }
+    });
+}
+
+// Search functionality - client-side only
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('#customersTable tbody tr[data-name]').forEach(row => {
+            const txt = (row.getAttribute('data-name') + row.getAttribute('data-phone')).toLowerCase();
+            row.style.display = txt.includes(q) ? '' : 'none';
+        });
+    });
+}
+
+function toggleNotifications(event) {
+    event.stopPropagation();
+    document.getElementById('notificationDropdown').classList.toggle('show');
+}
+document.addEventListener('click', function(e) {
+    const icon = document.querySelector('.notification-icon');
+    if (icon && !icon.contains(e.target)) {
+        const dd = document.getElementById('notificationDropdown');
+        if (dd) dd.classList.remove('show');
+    }
+});
+</script>
+
+<script>
+// Populate the next month deletion date in the warning banner
+(function() {
+    const nextDeletionDate = new Date('{{ next_deletion_date|date:"Y-m-d" }}');
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    const formattedDate = nextDeletionDate.toLocaleDateString('en-US', options);
+    const dateSpan = document.getElementById('nextMonthDeletionDate');
+    if (dateSpan) {
+        dateSpan.textContent = formattedDate;
+    }
+})();
+</script>
+
+  {% include 'logout_modal.html' %}
+</body>
+</html>

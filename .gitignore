@@ -1,0 +1,27 @@
+Scripts/
+pyvenv.cfg
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Django
+*.pyc
+__pycache__/
+db.sqlite3
+*.sqlite3
+*.log
+media/
+
+# Environment variables
+.env
+*.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

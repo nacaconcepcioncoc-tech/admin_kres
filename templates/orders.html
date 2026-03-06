@@ -1,0 +1,1989 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KRES Co. Admin - Orders</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #CCDEE4;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 310px;
+            background: #02182E;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            left: 0; top: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 25px 20px;
+            gap: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .logo {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 0;
+        }
+
+        .logo img {
+            display: block;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: transparent;
+            padding: 0;
+        }
+
+        .logo-text h1 { font-family: 'Times New Roman', serif; font-size: 21px; font-weight: 700; margin-bottom: 2px; letter-spacing: 0.3px; }
+        .logo-text p { font-size: 11px; color: #d0dce8; font-weight: 400; letter-spacing: 0.5px; text-transform: uppercase; }
+
+        .nav-menu { flex: 1; padding: 10px; overflow-y: auto; margin-top: 40px; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 15px;
+            padding: 15px 20px; color: #b8c9d9;
+            text-decoration: none; border-radius: 8px;
+            margin-bottom: 5px; transition: all 0.3s ease; font-size: 15px;
+        }
+        .nav-item:hover { background-color: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background-color: #85C4E4; color: #02182E; }
+        .nav-item svg { width: 24px; height: 24px; flex-shrink: 0; }
+
+        .user-profile {
+            display: flex; align-items: center; gap: 12px;
+            padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto;
+        }
+        .avatar { width: 42px; height: 42px; background-color: #5d7a8f; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; flex-shrink: 0; }
+        .user-info { flex: 1; }
+        .user-name { font-size: 14px; font-weight: 600; }
+        .logout-icon { width: 24px; height: 24px; color: #b8c9d9; cursor: pointer; transition: color 0.3s; }
+        .logout-icon:hover { color: white; }
+
+        .main-content { margin-left: 310px; flex: 1; background-color: #CCDEE4; min-height: 100vh; }
+
+        .header { background: white; padding: 25px 35px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .header-left svg { width: 24px; height: 24px; color: #333; }
+        .header h2 { font-size: 28px; font-weight: 600; color: #1a1a1a; }
+
+        .notification-icon { position: relative; cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; }
+        .notification-icon svg { width: 28px; height: 28px; color: #1a1a1a; }
+        .notification-badge { position: absolute; top: 2px; right: 2px; background: #ef4444; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+        .notification-dropdown { position: absolute; top: 60px; right: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 300px; max-height: 400px; overflow-y: auto; z-index: 1000; display: none; }
+        .notification-dropdown.show { display: block; }
+        .notification-header { padding: 15px; border-bottom: 1px solid #e0e0e0; font-weight: 600; color: #1a1a1a; }
+        .notification-item { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+        .notification-item:hover { background: #f5f5f5; }
+        .notification-item-title { font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+        .notification-item-text { font-size: 12px; color: #666; }
+        .notification-footer { padding: 10px 15px; text-align: center; border-top: 1px solid #e0e0e0; color: #3d5a73; font-size: 13px; font-weight: 600; }
+
+        .orders-content { padding: 30px 35px; padding-bottom: 120px; }
+        .orders-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .orders-header h3 { font-size: 24px; font-weight: 600; color: #1a1a1a; }
+
+        .status-filter { position: relative; display: inline-block; }
+        .filter-select { appearance: none; padding: 10px 40px 10px 16px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-weight: 500; background: white; color: #374151; cursor: pointer; min-width: 150px; font-family: inherit; }
+        .filter-select:focus { outline: none; border-color: #3d5a73; }
+        .dropdown-icon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #6b7280; }
+
+        .table-container { background: #FFFFFF; border-radius: 12px; box-shadow: 0 2px 8px rgba(2, 24, 46, 0.1); border: 1.2px solid rgba(133, 196, 228, 0.3); overflow: hidden; }
+        .orders-table { width: 100%; border-collapse: collapse; }
+        .orders-table thead { background: #f9fafb; }
+        .orders-table th { text-align: left; padding: 18px 20px; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e5e7eb; }
+        .orders-table td { padding: 20px; font-size: 14px; color: #374151; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+        .orders-table tbody tr { transition: background 0.2s; }
+        .orders-table tbody tr:hover { background: #f9fafb; }
+        .orders-table tbody tr:last-child td { border-bottom: none; }
+
+        .order-id { font-weight: normal; color: #1a1a1a; font-size: 13px; }
+        .customer-name { font-weight: 600; color: #1a1a1a; }
+        .item-name { color: #374151; }
+        .order-amount { font-weight: 700; color: #1a1a1a; }
+
+        .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-badge.pending { background: #fef3c7; color: #d97706; }
+        .status-badge.completed { background: #d1fae5; color: #059669; }
+        .status-badge.fully-paid { background: #dbeafe; color: #1d4ed8; }
+
+        /* Action buttons */
+        .action-cell { display: flex; align-items: center; gap: 8px; }
+
+        .fulfilled-input {
+            width: 130px; padding: 5px 9px;
+            border: 1.5px solid #e5e7eb; border-radius: 7px;
+            font-size: 12.5px; font-family: inherit; color: #374151;
+            background: white; transition: border-color 0.2s;
+        }
+        .fulfilled-input:focus { outline: none; border-color: #3d5a73; background: #f0f4f8; }
+        .fulfilled-input::placeholder { color: #c0c8d4; }
+
+        .btn-view-details {
+            background: #f0f4f8; color: #3d5a73;
+            border: 1.5px solid #d0dce8;
+            padding: 6px 14px; border-radius: 7px;
+            font-size: 12.5px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn-view-details:hover { background: #3d5a73; color: white; border-color: #3d5a73; }
+
+        .btn-complete-order {
+            background: #fefce8; color: #ca8a04;
+            border: 1.5px solid #fde047;
+            padding: 6px 12px; border-radius: 7px;
+            font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+            font-family: inherit;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .btn-complete-order:hover { background: #eab308; color: white; border-color: #eab308; }
+        .btn-complete-order.done { background: #d1fae5; color: #059669; cursor: default; border-color: #a7f3d0; }
+
+        /* Bottom-right floating action buttons */
+        .fab-container {
+            position: fixed; bottom: 30px; right: 30px;
+            display: flex; flex-direction: column; align-items: flex-end; gap: 12px;
+            z-index: 100;
+        }
+        .btn-add-order {
+            background: linear-gradient(135deg, #2c4456, #3d6680);
+            color: white;
+            padding: 14px 26px; border: none; border-radius: 12px;
+            font-size: 15px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 4px 16px rgba(44,68,86,0.35);
+            transition: all 0.3s; font-family: inherit;
+            display: flex; align-items: center; gap: 9px;
+        }
+        .btn-add-order:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(44,68,86,0.4); }
+        .btn-completed-orders {
+            background: linear-gradient(135deg,#F59E0B,#FBBF24); color:white;
+            padding: 12px 22px; border: 2px solid transparent; border-radius: 12px;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 4px 14px rgba(245,158,11,0.25);
+            transition: all 0.3s; font-family: inherit;
+            display: flex; align-items: center; gap: 9px;
+        }
+        .btn-completed-orders:hover { background: linear-gradient(135deg,#FBBF24,#FDE047); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(245,158,11,0.35); }
+        /* Completed Orders Modal */
+        .completed-shell {
+            background: white; border-radius: 16px;
+            width: 96%; max-width: 900px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+            animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            max-height: 85vh; display: flex; flex-direction: column;
+        }
+        .completed-top { background: linear-gradient(135deg,#F59E0B,#FBBF24); padding:22px 26px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+        .completed-title { font-family:'DM Serif Display',serif; font-size:20px; color:white; }
+        .completed-body { padding:22px 26px; overflow-y:auto; flex:1; }
+        .completed-table { width:100%; border-collapse:collapse; }
+        .completed-table th { padding:14px 16px; text-align:left; font-size:12px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.5px; border-bottom:2px solid rgba(72,141,180,0.2); background:rgba(133,196,228,0.1); }
+        .completed-table td { padding:14px 16px; font-size:14px; color:#374151; border-bottom:1px solid #f3f4f6; }
+        .completed-table tbody tr:hover { background:rgba(133,196,228,0.1); }
+        .completed-table tbody tr:last-child td { border-bottom:none; }
+
+        /* ── MODAL OVERLAY ── */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(10,16,26,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+
+        /* ── CREATE ORDER MODAL ── */
+        .modal-shell {
+            background: white; border-radius: 20px;
+            width: 90%; max-width: 660px;
+            overflow: hidden;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            max-height: 90vh; overflow-y: auto;
+        }
+
+        @keyframes slideUp { from { opacity:0; transform: translateY(24px) scale(0.97); } to { opacity:1; transform: translateY(0) scale(1); } }
+
+        .modal-top {
+            background: linear-gradient(135deg, #2c4456 0%, #3d6680 50%, #4a7a8a 100%);
+            padding: 26px 30px 22px; position: relative; overflow: hidden;
+        }
+        .modal-top::before { content:''; position:absolute; top:-40px; right:-40px; width:160px; height:160px; border-radius:50%; background:rgba(255,255,255,0.06); }
+        .modal-top-inner { display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1; }
+        .modal-title-group { display:flex; align-items:center; gap:13px; }
+        .order-icon { width:42px; height:42px; background:rgba(255,255,255,0.15); border-radius:11px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,0.2); }
+        .order-icon svg { width:20px; height:20px; color:white; }
+        .modal-title { font-family:'DM Serif Display',serif; font-size:21px; color:white; }
+        .modal-subtitle { font-size:12px; color:rgba(255,255,255,0.6); margin-top:2px; }
+        .close-btn { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); color:white; font-size:17px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+        .close-btn:hover { background:rgba(255,255,255,0.25); transform:rotate(90deg); }
+
+        .steps-bar { display:flex; align-items:center; margin-top:18px; position:relative; z-index:1; }
+        .step { display:flex; align-items:center; gap:7px; flex:1; }
+        .step-dot { width:22px; height:22px; border-radius:50%; background:rgba(255,255,255,0.2); border:2px solid rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:rgba(255,255,255,0.6); flex-shrink:0; }
+        .step.active .step-dot { background:white; border-color:white; color:#2c4456; }
+        .step-label { font-size:11px; color:rgba(255,255,255,0.5); font-weight:500; }
+        .step.active .step-label { color:rgba(255,255,255,0.9); }
+        .step-line { flex:1; height:1px; background:rgba(255,255,255,0.2); margin:0 8px; }
+
+        .modal-body { padding:24px 30px; background:#fafafa; }
+
+        .section-label { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:#9ca3af; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+        .section-label::after { content:''; flex:1; height:1px; background:#e5e7eb; }
+
+        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }
+        .span-2 { grid-column:span 2; }
+        .field { display:flex; flex-direction:column; gap:5px; }
+        .field label { font-size:11.5px; font-weight:600; color:#374151; }
+        .field label .req { color:#f87171; }
+
+        .input-wrap { position:relative; }
+        .input-icon { position:absolute; left:11px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:#9ca3af; pointer-events:none; }
+        .input-icon.top { top:13px; transform:none; }
+
+        .field input, .field select, .field textarea {
+            width:100%; padding:9px 11px 9px 33px;
+            background:white; border:1.5px solid #e5e7eb;
+            border-radius:9px; font-size:13px; font-family:'DM Sans',inherit;
+            color:#1f2937; transition:all 0.2s; outline:none;
+        }
+        .field input::placeholder, .field textarea::placeholder { color:#d1d5db; }
+        .field input:focus, .field select:focus, .field textarea:focus { border-color:#3d6680; box-shadow:0 0 0 3px rgba(61,102,128,0.1); }
+        .field textarea { resize:none; min-height:68px; padding-top:9px; line-height:1.5; }
+        .field select { appearance:none; cursor:pointer; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:28px; }
+        .field input.no-icon, .field select.no-icon, .field textarea.no-icon { padding-left:11px; }
+
+        .payment-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }
+
+        .chip-group { display:flex; gap:7px; flex-wrap:wrap; margin-top:2px; }
+        .chip { padding:7px 13px; border-radius:8px; border:1.5px solid #e5e7eb; background:white; font-size:12px; font-weight:500; color:#6b7280; cursor:pointer; transition:all 0.2s; user-select:none; font-family:inherit; }
+        .chip:hover { border-color:#3d6680; color:#3d6680; }
+        .chip.selected { background:#3d6680; border-color:#3d6680; color:white; }
+
+        .modal-footer { padding:14px 30px 22px; background:#fafafa; border-top:1px solid #f0f0f0; display:flex; align-items:center; justify-content:space-between; }
+
+        /* ── NEW FORM SECTIONS ── */
+        .nf-section { margin-bottom:20px; background:white; border:1.5px solid #f0f3f7; border-radius:14px; overflow:hidden; }
+        .nf-section-head { display:flex; align-items:center; gap:10px; padding:13px 18px; background:#fafbfc; border-bottom:1.5px solid #f0f3f7; font-size:12.5px; font-weight:700; color:#1e293b; text-transform:uppercase; letter-spacing:0.7px; }
+        .nf-sec-icon { width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .nf-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:16px 18px; }
+        .nf-field { display:flex; flex-direction:column; gap:5px; }
+        .nf-field.span-2 { grid-column:span 2; }
+        .nf-field label { font-size:11.5px; font-weight:600; color:#475569; }
+        .nf-field label .req { color:#ef4444; }
+        .nf-input-wrap { position:relative; }
+        .nf-icon { position:absolute; left:11px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:#94a3b8; pointer-events:none; }
+        .nf-field input, .nf-field select {
+            width:100%; padding:9px 11px 9px 34px;
+            background:#f8fafc; border:1.5px solid #e2e8f0;
+            border-radius:9px; font-size:13px; font-family:inherit;
+            color:#1e293b; transition:all 0.2s; outline:none;
+        }
+        #customerName, #orderProduct { text-transform:capitalize; }
+        .nf-field input::placeholder { color:#cbd5e1; }
+        .nf-field input:focus, .nf-field select:focus { border-color:#6366f1; background:white; box-shadow:0 0 0 3px rgba(99,102,241,0.08); }
+        .nf-field select { appearance:none; cursor:pointer; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 11px center; background-color:#f8fafc; padding-right:30px; }
+        .nf-field select:focus { background-color:white; }
+
+        /* Delivery radio buttons */
+        .delivery-type-row { display:flex; gap:10px; padding:0 18px 4px; }
+        .delivery-radio { cursor:pointer; flex:1; }
+        .delivery-radio input[type="radio"] { display:none; }
+        .delivery-radio-box {
+            display:flex; align-items:center; justify-content:center; gap:7px;
+            padding:10px 14px; border-radius:10px;
+            border:2px solid #e2e8f0; background:#f8fafc;
+            font-size:13px; font-weight:600; color:#64748b;
+            transition:all 0.2s; cursor:pointer;
+        }
+        .delivery-radio input:checked + .delivery-radio-box {
+            border-color:#16a34a; background:#f0fdf4; color:#16a34a;
+        }
+        .delivery-radio-box:hover { border-color:#94a3b8; }
+        .footer-hint { font-size:11px; color:#9ca3af; display:flex; align-items:center; gap:5px; }
+        .footer-hint svg { width:12px; height:12px; }
+        .btn-group { display:flex; gap:9px; }
+
+        .btn { padding:9px 20px; border-radius:9px; font-size:13px; font-weight:600; font-family:'DM Sans',inherit; cursor:pointer; border:none; transition:all 0.2s; display:flex; align-items:center; gap:6px; }
+        .btn-ghost { background:transparent; color:#6b7280; border:1.5px solid #e5e7eb; }
+        .btn-ghost:hover { background:#f3f4f6; color:#374151; }
+        .btn-primary { background:linear-gradient(135deg,#2c4456,#3d6680); color:white; box-shadow:0 4px 12px rgba(44,68,86,0.25); }
+        .btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(44,68,86,0.35); }
+        .btn-export-excel { background:linear-gradient(135deg,#10b981,#059669); color:white; box-shadow:0 4px 12px rgba(16,185,129,0.25); }
+        .btn-export-excel:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(16,185,129,0.35); }
+        .btn svg { width:14px; height:14px; }
+
+        .error-banner { display:none; background:#fef2f2; border:1.5px solid #fecaca; border-radius:8px; padding:9px 13px; font-size:12.5px; font-weight:500; color:#dc2626; margin-bottom:14px; align-items:center; gap:7px; }
+        .error-banner.show { display:flex; }
+        .error-banner svg { width:15px; height:15px; flex-shrink:0; }
+
+        /* ── ORDER DETAILS MODAL ── */
+        .details-shell {
+            background:white; border-radius:24px;
+            width:90%; max-width:1000px;
+            overflow:hidden;
+            box-shadow:0 20px 60px rgba(0,0,0,0.2), 0 0 1px rgba(0,0,0,0.1);
+            animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            display:flex; flex-direction:column; max-height:90vh;
+            border:1px solid rgba(255,255,255,0.8);
+        }
+
+        .details-top { 
+            background:linear-gradient(135deg,#1e293b 0%,#334155 50%,#475569 100%);
+            padding:24px 36px; 
+            display:flex; align-items:center; justify-content:space-between; 
+            box-shadow:0 8px 16px rgba(0,0,0,0.15);
+            position:relative;
+            overflow:hidden;
+        }
+        .details-top::before {
+            content:'';
+            position:absolute;
+            top:0; right:0;
+            width:200px; height:200px;
+            background:radial-gradient(circle, rgba(148,163,184,0.15) 0%, transparent 70%);
+            border-radius:50%;
+            pointer-events:none;
+        }
+        .details-top > div { position:relative; z-index:1; }
+        .details-title { font-family:'Segoe UI', 'Helvetica Neue', sans-serif; font-size:22px; color:white; font-weight:700; letter-spacing:0.5px; }
+        .details-subtitle { font-size:12px; color:rgba(226,232,240,0.8); margin-top:4px; font-weight:500; letter-spacing:0.3px; }
+        .close-btn { position:relative; z-index:2; }
+
+        .details-body { 
+            padding:40px; 
+            display:grid; 
+            grid-template-columns:1fr 1.1fr 1fr; 
+            gap:36px; 
+            overflow-y:auto; 
+            flex:1;
+            background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+        .details-body::-webkit-scrollbar { width:6px; }
+        .details-body::-webkit-scrollbar-track { background:transparent; }
+        .details-body::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:10px; }
+        .details-body::-webkit-scrollbar-thumb:hover { background:#94a3b8; }
+
+        .detail-column { 
+            display:flex; 
+            flex-direction:column; 
+            gap:20px;
+            padding:24px;
+            background:white;
+            border-radius:16px;
+            border:1px solid #e2e8f0;
+            box-shadow:0 4px 12px rgba(0,0,0,0.05);
+            transition:all 0.3s ease;
+        }
+        .detail-column:hover {
+            box-shadow:0 8px 24px rgba(0,0,0,0.08);
+            border-color:#cbd5e1;
+        }
+        .detail-column-title { 
+            font-size:13px; 
+            font-weight:700; 
+            color:#0f172a; 
+            text-transform:uppercase; 
+            letter-spacing:1.5px; 
+            padding-bottom:16px; 
+            border-bottom:2px solid #e2e8f0;
+            margin-bottom:12px;
+            background:linear-gradient(90deg, #0f172a 0%, #64748b 100%);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+
+        .detail-row { 
+            display:flex; 
+            align-items:flex-start; 
+            gap:14px; 
+            padding:12px 0;
+            border-bottom:1px solid #f1f5f9;
+            transition:all 0.2s ease;
+        }
+        .detail-row:last-child { border-bottom:none; }
+        .detail-row:hover { background:linear-gradient(90deg, rgba(226,232,240,0.3) 0%, transparent 100%); padding:12px 8px; }
+        
+        .detail-icon { 
+            width:42px; 
+            height:42px; 
+            background:linear-gradient(135deg, #f0f4f8 0%, #e0e7ff 100%);
+            border-radius:12px; 
+            display:flex; 
+            align-items:center; 
+            justify-content:center; 
+            flex-shrink:0; 
+            box-shadow:0 2px 8px rgba(79,70,229,0.12);
+            border:1px solid rgba(79,70,229,0.1);
+        }
+        .detail-icon svg { width:20px; height:20px; color:#4f46e5; }
+        .detail-info { flex:1; }
+        .detail-label { 
+            font-size:11px; 
+            font-weight:700; 
+            color:#64748b; 
+            text-transform:uppercase; 
+            letter-spacing:1.1px; 
+            margin-bottom:6px; 
+            display:block;
+        }
+        .detail-value { 
+            font-size:15px; 
+            color:#1e293b; 
+            font-weight:600; 
+            line-height:1.6; 
+            word-break:break-word;
+        }
+
+        .details-note-section { 
+            padding:28px; 
+            background:linear-gradient(135deg, #f0f9ff 0%, #eff6ff 100%); 
+            border:1.5px solid #bae6fd;
+            border-radius:16px;
+            margin-top:16px;
+        }
+        .details-note-section .detail-column-title { margin-bottom:20px; }
+        .details-note-section .detail-value { 
+            font-size:14px; 
+            color:#075985; 
+            line-height:1.7; 
+            padding:14px; 
+            background:white; 
+            border-radius:10px; 
+            box-shadow:0 2px 6px rgba(0,0,0,0.06);
+            border-left:3px solid #0284c7;
+        }
+
+        .details-status-row { 
+            padding:28px 36px; 
+            background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+            border-top:2px solid #e2e8f0; 
+            display:flex; 
+            align-items:center; 
+            justify-content:space-between; 
+            gap:20px;
+        }
+
+        .status-select-wrap { 
+            display:flex; 
+            align-items:center; 
+            gap:14px; 
+            flex:1;
+            padding:16px;
+            background:white;
+            border-radius:12px;
+            border:1px solid #e2e8f0;
+        }
+        .status-select-wrap label { 
+            font-size:12px; 
+            font-weight:700; 
+            color:#334155; 
+            white-space:nowrap; 
+            text-transform:uppercase; 
+            letter-spacing:0.7px;
+        }
+        .status-select { 
+            padding:9px 32px 9px 12px; 
+            border:1.5px solid #cbd5e1; 
+            border-radius:10px; 
+            font-size:13px; 
+            font-family:inherit; 
+            color:#1e293b; 
+            background:white; 
+            cursor:pointer; 
+            appearance:none; 
+            font-weight:600; 
+            transition:all 0.3s;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); 
+            background-repeat:no-repeat; 
+            background-position:right 10px center;
+        }
+        .status-select:hover { border-color:#94a3b8; background-color:#f8fafc; }
+        .status-select:focus { outline:none; border-color:#4f46e5; box-shadow:0 0 0 4px rgba(79,70,229,0.12); }
+
+        .btn-save-status { 
+            padding:8px 18px; 
+            background:linear-gradient(135deg, #10b981 0%, #059669 100%); 
+            color:white; 
+            border:none; 
+            border-radius:10px; 
+            font-size:11px; 
+            font-weight:700; 
+            cursor:pointer; 
+            transition:all 0.3s; 
+            font-family:inherit; 
+            text-transform:uppercase; 
+            letter-spacing:0.6px; 
+            box-shadow:0 4px 12px rgba(16,185,129,0.3); 
+            white-space:nowrap;
+        }
+        .btn-save-status:hover { 
+            transform:translateY(-2px); 
+            box-shadow:0 8px 20px rgba(16,185,129,0.4);
+        }
+        .btn-save-status:active { transform:translateY(0px); }
+
+        .details-footer { 
+            padding:24px 36px; 
+            display:flex; 
+            justify-content:flex-end; 
+            gap:12px; 
+            border-top:1px solid #e2e8f0; 
+            background:linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+        .btn-close-details { 
+            padding:9px 22px; 
+            background:white; 
+            color:#475569; 
+            border:1.5px solid #cbd5e1; 
+            border-radius:10px; 
+            font-size:12px; 
+            font-weight:700; 
+            cursor:pointer; 
+            font-family:inherit; 
+            transition:all 0.3s; 
+            text-transform:uppercase; 
+            letter-spacing:0.6px;
+            box-shadow:0 2px 6px rgba(0,0,0,0.05);
+        }
+        .btn-close-details:hover { 
+            background:#f1f5f9; 
+            border-color:#94a3b8;
+            box-shadow:0 4px 12px rgba(0,0,0,0.1);
+            transform:translateY(-1px);
+        }
+        .btn-close-details:active { transform:translateY(0px); }
+
+        /* scrollbar */
+        .nav-menu::-webkit-scrollbar { width:6px; }
+        .nav-menu::-webkit-scrollbar-track { background:rgba(255,255,255,0.05); border-radius:10px; }
+        .nav-menu::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.2); border-radius:10px; }
+        .modal-shell::-webkit-scrollbar { width:5px; }
+        .modal-shell::-webkit-scrollbar-thumb { background:#d1d5db; border-radius:10px; }
+
+        @media (max-width:1024px) {
+            .details-body { grid-template-columns:1fr; gap:24px; }
+            .details-shell { max-width:650px; }
+        }
+
+        @media (max-width:768px) {
+            .sidebar { width:80px; }
+            .main-content { margin-left:80px; }
+            .logo-text, .nav-item span, .user-info { display:none; }
+            .logo-section { justify-content:center; padding:20px 10px; }
+            .nav-item { justify-content:center; }
+            .user-profile { justify-content:center; padding:20px 10px; }
+            .orders-content { padding:20px 15px; }
+            .form-grid, .payment-row { grid-template-columns:1fr; }
+            .span-2 { grid-column:span 1; }
+            .steps-bar { display:none; }
+            .details-shell { width:95%; max-width:500px; }
+            .details-top { padding:20px 24px; }
+            .details-title { font-size:22px; }
+            .details-body { padding:24px; grid-template-columns:1fr; gap:20px; }
+            .details-status-row { padding:18px 24px; flex-direction:column; align-items:flex-start; }
+            .status-select-wrap { flex-direction:column; align-items:flex-start; width:100%; }
+            .status-select { width:100%; }
+            .btn-save-status { width:100%; }
+            .details-footer { padding:16px 24px; flex-direction:column-reverse; }
+            .btn-close-details { width:100%; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="logo-section">
+        <div class="logo">
+            <img src="{% static 'images/logo.png' %}" alt="KRES Logo" style="width: 70px; height: 70px; object-fit: contain;">
+        </div>
+        <div class="logo-text">
+            <h1>KRES Co. Admin</h1>
+            <p>Management Panel</p>
+        </div>
+    </div>
+
+    <nav class="nav-menu">
+        <a href="{% url 'pages:dashboard' %}" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/></svg>
+            <span>Dashboard</span>
+        </a>
+        <a href="{% url 'pages:inventory' %}" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M20 7H4C2.9 7 2 7.9 2 9V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V9C22 7.9 21.1 7 20 7Z" stroke="currentColor" stroke-width="2"/><path d="M12 7V3M8 7V5M16 7V5" stroke="currentColor" stroke-width="2"/></svg>
+            <span>Inventory</span>
+        </a>
+        <a href="{% url 'pages:orders' %}" class="nav-item active">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 2L7 6H3L8 10L6 14L12 11L18 14L16 10L21 6H17L15 2H9Z" stroke="currentColor" stroke-width="2"/><path d="M6 14L4 22H20L18 14" stroke="currentColor" stroke-width="2"/></svg>
+            <span>Orders</span>
+        </a>
+        <a href="{% url 'pages:customers' %}" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="10" r="3" stroke="currentColor" stroke-width="2"/><path d="M2 20C2 16.5 5 14 9 14C13 14 16 16.5 16 20" stroke="currentColor" stroke-width="2"/><path d="M13 20C13 17.5 15 16 17 16C19 16 22 17.5 22 20" stroke="currentColor" stroke-width="2"/></svg>
+            <span>Customers</span>
+        </a>
+        <a href="{% url 'pages:payments' %}" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M2 10H22M6 14H10M6 17H8" stroke="currentColor" stroke-width="2"/></svg>
+            <span>Payments</span>
+        </a>
+        <a href="{% url 'pages:reports' %}" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 2V6M16 2V6M3 10H21" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="14" r="1" fill="currentColor"/><circle cx="12" cy="14" r="1" fill="currentColor"/><circle cx="16" cy="14" r="1" fill="currentColor"/><circle cx="8" cy="18" r="1" fill="currentColor"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg>
+            <span>Reports</span>
+        </a>
+    </nav>
+
+    <div class="user-profile">
+        <div class="avatar">A</div>
+        <div class="user-info"><div class="user-name">Admin User</div></div>
+        <a href="#" onclick="openLogoutModal(); return false;" style="text-decoration:none;display:inline-flex;align-items:center;">
+            <svg class="logout-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <header class="header">
+        <div class="header-left">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <h2>Orders</h2>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+            <button class="btn btn-completed-orders" onclick="openCompletedOrdersModal()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Completed Orders
+            </button>
+            <button class="btn btn-export-excel" onclick="exportOrdersToCSV()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+                Export Excel
+            </button>
+        </div>
+    </header>
+
+    <div class="orders-content">
+        <div class="orders-header">
+            <h3>{% if status_filter == 'pending' %}Pending Orders{% elif status_filter == 'completed' %}Completed Orders{% else %}All Orders{% endif %}</h3>
+            <div class="status-filter">
+                <select id="statusFilter" class="filter-select">
+                    <option value="all" {% if not status_filter or status_filter == 'all' %}selected{% endif %}>All Status</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                </select>
+                <svg class="dropdown-icon" width="12" height="12" viewBox="0 0 12 12"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;background:#fef9e7;border-left:3px solid #f59e0b;border-radius:6px;padding:8px 14px;margin-bottom:16px;">
+            <span style="font-size:14px;">⚠️</span>
+            <span style="font-size:12px;color:#92400e;">Completed orders will be automatically cleared on <strong id="nextMonthDeletionDate2"></strong>. Export to Excel to save a copy.</span>
+        </div>
+
+        <div class="table-container">
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr data-status="{{ order.status }}"
+                        data-id="{{ order.order_id }}"
+                        data-phone="{{ order.customer_phone }}"
+                        data-address="{{ order.customer_address }}"
+                        data-notes="{{ order.notes }}"
+                        data-date="{{ order.created_at|date:'Y-m-d' }}"
+                        data-time="{{ order.created_at|date:'H:i' }}"
+                        data-delivery="{{ order.delivery_date|date:'Y-m-d'|default:'-' }}"
+                        data-delivery-time="{{ order.delivery_time|date:'H:i'|default:'-' }}"
+                        data-amount="₱ {{ order.total|floatformat:2 }}"
+                        data-fulfilled="{{ order.fulfilled_by|default:'' }}"
+                        data-sender-name="{{ order.sender_name|default:'' }}"
+                        data-sender-phone="{{ order.sender_phone|default:'' }}"
+                        data-rider-name="{{ order.rider_name|default:'' }}"
+                        data-rider-phone="{{ order.rider_phone|default:'' }}"
+                        data-rider-vehicle="{{ order.rider_vehicle|default:'' }}"
+                        data-payment-status="{% with p=order.payments.first %}{% if p %}{{ p.payment_status }}{% else %}pending{% endif %}{% endwith %}"
+                        data-payment-method="{% with p=order.payments.first %}{% if p %}{{ p.payment_method }}{% else %}—{% endif %}{% endwith %}"
+                        data-delivery-type="{% if '[PICK UP]' in order.notes %}pickup{% else %}dropoff{% endif %}">
+                        <td class="order-id">{{ order.order_number|slice:":8" }}-{{ order.created_at|date:'m/d/y' }}</td>
+                        <td class="customer-name">{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
+                        <td class="item-name">
+                            {% for item in order.items.all %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                        </td>
+                        <td class="order-amount">₱ {{ order.total|floatformat:2 }}</td>
+                        <td>
+                            {% if order.status == 'completed' %}
+                                <span class="status-badge completed">✅ Completed</span>
+                            {% else %}
+                                {% with p=order.payments.first %}
+                                    {% if p and p.payment_status == 'completed' %}
+                                        <span class="status-badge fully-paid">💳 Fully Paid</span>
+                                    {% else %}
+                                        <span class="status-badge pending">💰 Down Payment</span>
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-cell">
+                                <button class="btn-view-details" onclick="viewOrderDetails('{{ order.order_id }}')">
+                                    View Details
+                                </button>
+                                {% if order.status != 'completed' %}
+                                <button class="btn-complete-order" onclick="markCompleted('{{ order.order_id }}', this)" title="Mark as Fully Paid">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Done
+                                </button>
+                                {% else %}
+                                <button class="btn-complete-order done" disabled>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Completed
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align:center;padding:50px;color:#9ca3af;">
+                            <div style="font-size:36px;margin-bottom:10px;">📋</div>
+                            <div style="font-size:15px;font-weight:600;margin-bottom:4px;">No orders yet</div>
+                            <div style="font-size:13px;">Click "Add New Order" to create the first order.</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- ── Floating Action Buttons ── -->
+    <div class="fab-container">
+        <button class="btn-add-order" onclick="openAddOrderModal()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add New Order
+        </button>
+    </div>
+
+    <!-- ══ COMPLETED ORDERS MODAL ══ -->
+    <div id="completedOrdersModal" class="modal">
+        <div class="completed-shell">
+            <div class="completed-top">
+                <div>
+                    <div class="completed-title"> Completed Orders</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:3px;">All fully paid & fulfilled orders</div>
+                </div>
+                <button class="close-btn" onclick="closeCompletedOrdersModal()">&times;</button>
+            </div>
+            <div class="completed-body">
+                <table class="completed-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Date Completed</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Amount</th>
+                            <th>Fulfilled By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}{% if order.status == 'completed' %}
+                        <tr>
+                            <td style="font-weight:600;color:#1a1a1a;font-size:13px;">{{ order.order_number }}</td>
+                            <td style="color:#6b7280;font-size:13px;">{{ order.updated_at|date:"M d, Y" }}</td>
+                            <td style="font-weight:600;">{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
+                            <td>{% for item in order.items.all %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                            <td style="font-weight:700;color:#059669;">₱ {{ order.total|floatformat:2 }}</td>
+                            <td>{{ order.fulfilled_by|default:"—" }}</td>
+                        </tr>
+                        {% endif %}{% endfor %}
+                        {% with any_completed=orders|dictsort:"status" %}
+                        {% if not any_completed %}
+                        <tr><td colspan="6" style="text-align:center;padding:40px;color:#9ca3af;">
+                            <div style="font-size:32px;margin-bottom:8px;"></div>
+                            <div style="font-weight:600;">No completed orders yet</div>
+                        </td></tr>
+                        {% endif %}
+                        {% endwith %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ══ CREATE ORDER MODAL ══ -->
+    <div id="addOrderModal" class="modal">
+        <div class="modal-shell">
+
+            <!-- ── Modal Header ── -->
+            <div class="modal-top">
+                <div class="modal-top-inner">
+                    <div class="modal-title-group">
+                        <div class="order-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                        </div>
+                        <div>
+                            <div class="modal-title">New Order</div>
+                            <div class="modal-subtitle">Fill in all details to create a new order</div>
+                        </div>
+                    </div>
+                    <button class="close-btn" onclick="closeAddOrderModal()">&times;</button>
+                </div>
+            </div>
+
+            <!-- ── Modal Body ── -->
+            <div class="modal-body">
+                <form id="addOrderForm" onsubmit="submitAddOrder(event)">
+                    {% csrf_token %}
+
+                    <div class="error-banner" id="formErrorBanner">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span id="errorText">Please fill in all required fields.</span>
+                    </div>
+
+                    <!-- ─── SECTION 1: RECEIVER ─── -->
+                    <div class="nf-section">
+                        <div class="nf-section-head" style="--sec-color:#2563eb;--sec-bg:#eff6ff;">
+                            <div class="nf-sec-icon" style="background:#eff6ff;color:#2563eb;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <span>Receiver Information</span>
+                        </div>
+                        <div class="nf-grid">
+                            <div class="nf-field span-2">
+                                <label>Full Name <span class="req">*</span></label>
+                                <div class="nf-input-wrap">
+                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    <input type="text" id="customerName" name="customerName" placeholder="e.g. Maria Santos" autocomplete="off" required>
+                                </div>
+                            </div>
+                            <div class="nf-field">
+                                <label>Contact Number <span class="req">*</span></label>
+                                <div class="nf-input-wrap">
+                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.82 2 2 0 012 .9h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6z"/></svg>
+                                    <input type="tel" id="contactNumber" name="contactNumber" placeholder="09123456789" autocomplete="off" required>
+                                </div>
+                            </div>
+                            <div class="nf-field">
+                                <label>Fulfilled By</label>
+                                <div class="nf-input-wrap">
+                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                                    <input type="text" id="fulfilledBy" name="fulfilledBy" placeholder="e.g. Anna (florist on duty)" autocomplete="off">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ─── SECTION 2: ORDER ─── -->
+                    <div class="nf-section">
+                        <div class="nf-section-head">
+                            <div class="nf-sec-icon" style="background:#fdf4ff;color:#9333ea;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 14l-4-4 1.4-1.4L12 13.2l4.6-4.6L18 10l-6 6z"/></svg>
+                            </div>
+                            <span>Order Details</span>
+                        </div>
+                        <div class="nf-grid">
+                            <div class="nf-field span-2">
+                                <label>Product / Bouquet <span class="req">*</span></label>
+                                <div class="nf-input-wrap">
+                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                                    <input type="text" id="orderProduct" name="orderProduct" placeholder="e.g. Rose Bouquet, Sunflower Arrangement" autocomplete="off" required>
+                                </div>
+                            </div>
+                            <div class="nf-field">
+                                <label>Amount (₱) <span class="req">*</span></label>
+                                <div class="nf-input-wrap">
+                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                                    <input type="number" id="orderAmount" name="orderAmount" placeholder="0.00" min="0" step="0.01" autocomplete="off" required>
+                                </div>
+                            </div>
+                            <div class="nf-field">
+                                <label>Special Note</label>
+                                <div class="nf-input-wrap">
+                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                    <input type="text" id="specialRequests" name="specialRequests" placeholder="Ribbon color, extra wrapping..." autocomplete="off">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ─── SECTION 3: DELIVERY ─── -->
+                    <div class="nf-section">
+                        <div class="nf-section-head">
+                            <div class="nf-sec-icon" style="background:#f0fdf4;color:#16a34a;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                            </div>
+                            <span>Delivery</span>
+                        </div>
+
+                        <!-- Drop off / Pick up toggle -->
+                        <div class="delivery-type-row">
+                            <label class="delivery-radio" id="radioDropOff">
+                                <input type="radio" name="deliveryType" value="dropoff" checked onchange="onDeliveryTypeChange()">
+                                <span class="delivery-radio-box">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                                    Local Drop Off
+                                </span>
+                            </label>
+                            <label class="delivery-radio" id="radioPickUp">
+                                <input type="radio" name="deliveryType" value="pickup" onchange="onDeliveryTypeChange()">
+                                <span class="delivery-radio-box">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    Local Pick Up
+                                </span>
+                            </label>
+                        </div>
+                        <input type="hidden" id="deliveryType" name="deliveryTypeHidden" value="dropoff">
+
+                        <div class="nf-grid" style="margin-top:12px;">
+                            <div class="nf-field" id="addressField">
+                                <label>Delivery Address <span class="req" id="addressReq">*</span></label>
+                                <div class="nf-input-wrap">
+                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    <input type="text" id="address" name="address" placeholder="e.g. 123 Rizal St, CDO" autocomplete="off" required>
+                                </div>
+                            </div>
+                            <div class="nf-field">
+                                <label id="deliveryDateLabel">Delivery Date <span class="req">*</span></label>
+                                <div class="nf-input-wrap">
+                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                    <input type="date" id="deliveryDate" name="deliveryDate" required>
+                                </div>
+                            </div>
+                            <div class="nf-field span-2">
+                                <label>Delivery Time <span class="req">*</span></label>
+                                <div class="nf-input-wrap">
+                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    <input type="time" id="deliveryTime" name="deliveryTime" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ─── SECTION 3B: SENDER INFORMATION ─── -->
+                    <div class="nf-section" id="senderSection">
+                        <div class="nf-section-head">
+                            <div class="nf-sec-icon" style="background:#fce7f3;color:#ec4899;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <span>Sender Information</span>
+                        </div>
+                        <div class="nf-grid">
+                            <div class="nf-field">
+                                <label>Sender Name <span class="req">*</span></label>
+                                <div class="nf-input-wrap">
+                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    <input type="text" id="senderName" name="senderName" placeholder="e.g. John Doe" autocomplete="off" required>
+                                </div>
+                            </div>
+                            <div class="nf-field">
+                                <label>Sender Contact Number <span class="req">*</span></label>
+                                <div class="nf-input-wrap">
+                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.82 2 2 0 012 .9h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6z"/></svg>
+                                    <input type="tel" id="senderPhone" name="senderPhone" placeholder="09123456789" autocomplete="off" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <!-- ─── hidden stubs so submitAddOrder JS reads them without error ─── -->
+                    <input type="hidden" id="riderName" value="">
+                    <input type="hidden" id="riderPhone" value="">
+                    <input type="hidden" id="riderVehicle" value="">
+
+                    <!-- ─── SECTION 4: PAYMENT ─── -->
+                    <div class="nf-section" style="margin-bottom:0;">
+                        <div class="nf-section-head">
+                            <div class="nf-sec-icon" style="background:#fff7ed;color:#ea580c;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                            </div>
+                            <span>Payment</span>
+                        </div>
+                        <div class="nf-grid">
+                            <div class="nf-field">
+                                <label>Payment Method <span class="req">*</span></label>
+                                <div class="nf-input-wrap">
+                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                                    <select id="paymentMethod" name="paymentMethod" required>
+                                        <option value="">Select method...</option>
+                                        <option value="cash"> Cash</option>
+                                        <option value="gcash"> GCash</option>
+                                        <option value="bank_transfer"> Bank Transfer</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="nf-field">
+                                <label>Payment Status <span class="req">*</span></label>
+                                <div class="chip-group" id="paymentStatusChips">
+                                    <div class="chip selected" data-value="pending" onclick="selectChip(this)">💰 Down Payment</div>
+                                    <div class="chip" data-value="completed" onclick="selectChip(this)">✅ Fully Paid</div>
+                                </div>
+                                <input type="hidden" id="paymentStatus" name="paymentStatus" value="pending">
+                            </div>
+                            <div class="nf-field span-2">
+                                <label id="downPaymentLabel">Down Payment Amount <span class="req">*</span></label>
+                                <div class="nf-input-wrap">
+                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                                    <input type="number" id="downPaymentAmount" name="downPaymentAmount" placeholder="e.g. 1500.00" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- ── Modal Footer ── -->
+            <div class="modal-footer">
+                <div class="footer-hint">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Saved securely to database
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-ghost" onclick="closeAddOrderModal()">Cancel</button>
+                    <button type="submit" form="addOrderForm" class="btn btn-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Create Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ══ ORDER DETAILS MODAL ══ -->
+    <div id="orderDetailsModal" class="modal">
+        <div class="details-shell">
+
+            <!-- ── Header ── -->
+            <div class="details-top">
+                <div>
+                    <div class="details-title">📋 Order Details</div>
+                    <div class="details-subtitle" id="detailOrderIdSub">Order information</div>
+                </div>
+                <button class="close-btn" onclick="closeOrderDetailsModal()">&times;</button>
+            </div>
+
+            <!-- ── Body: 3 columns ── -->
+            <div class="details-body" style="grid-template-columns:1fr 1.1fr 1fr;">
+
+                <!-- ═══ LEFT: Order & Payment ═══ -->
+                <div class="detail-column">
+                    <div class="detail-column-title">💳 Order & Payment</div>
+
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 2V6M16 2V6M3 10H21"/></svg>
+                        </div>
+                        <div class="detail-info"><div class="detail-label">Order ID</div><div class="detail-value" id="detailOrderIdValue">—</div></div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        </div>
+                        <div class="detail-info"><div class="detail-label">Date Created</div><div class="detail-value" id="detailOrderDate">—</div></div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                        </div>
+                        <div class="detail-info"><div class="detail-label">Item / Product</div><div class="detail-value" id="detailOrderItem">—</div></div>
+                    </div>
+
+                    <!-- Amount: Philippine Peso icon -->
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <text x="4" y="19" font-size="18" font-weight="bold" font-family="serif" fill="currentColor" stroke="none">₱</text>
+                            </svg>
+                        </div>
+                        <div class="detail-info"><div class="detail-label">Amount</div><div class="detail-value" id="detailOrderAmount">—</div></div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                        </div>
+                        <div class="detail-info"><div class="detail-label">Payment Method</div><div class="detail-value" id="detailPaymentMethod">—</div></div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <div class="detail-info"><div class="detail-label">Payment Status</div><div class="detail-value" id="detailPaymentStatusDisplay">—</div></div>
+                    </div>
+
+                    <!-- Down payment row (shown only for pending) -->
+                    <div class="detail-row" id="detailDownPaymentRow" style="display:none; background:#fef3c7; padding:10px 8px; margin:0 -8px; border-radius:8px; border-left:3px solid #f59e0b;">
+                        <div class="detail-icon" style="background:linear-gradient(135deg,#fef3c7,#fde68a);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <text x="4" y="19" font-size="18" font-weight="bold" font-family="serif" fill="currentColor" stroke="none">₱</text>
+                            </svg>
+                        </div>
+                        <div class="detail-info"><div class="detail-label">Down Payment</div><div class="detail-value" id="detailDownPaymentAmount">—</div></div>
+                    </div>
+
+                    <div class="detail-row" style="padding-top:12px; border-top:2px solid #f1f5f9; margin-top:8px;">
+                        <div class="detail-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                        </div>
+                        <div class="detail-info"><div class="detail-label">Fulfilled By</div><div class="detail-value" id="detailFulfilledBy">—</div></div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        </div>
+                        <div class="detail-info"><div class="detail-label">Special Note</div><div class="detail-value" id="detailSpecialNote" style="white-space:pre-wrap;font-size:13px;">—</div></div>
+                    </div>
+                </div>
+
+                <!-- ═══ MIDDLE: Receiver & Sender ═══ -->
+                <div class="detail-column">
+                    <div class="detail-column-title">👤 Receiver & Sender</div>
+
+                    <!-- Receiver sub-section -->
+                    <div style="padding-bottom:14px; border-bottom:2px solid #f1f5f9; margin-bottom:14px;">
+                        <div class="detail-label" style="font-size:11px;font-weight:700;color:#4f46e5;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;padding:8px 0;border-bottom:2px solid #e0e7ff;">📌 Receiver</div>
+
+                        <div class="detail-row">
+                            <div class="detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                            <div class="detail-info"><div class="detail-label">Name</div><div class="detail-value" id="detailCustomerName">—</div></div>
+                        </div>
+
+                        <!-- Phone: solid handset icon -->
+                        <div class="detail-row">
+                            <div class="detail-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                    <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
+                                </svg>
+                            </div>
+                            <div class="detail-info"><div class="detail-label">Phone</div><div class="detail-value" id="detailContactNumber">—</div></div>
+                        </div>
+
+                        <div class="detail-row" id="detailAddressRow">
+                            <div class="detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+                            <div class="detail-info"><div class="detail-label">Delivery Address</div><div class="detail-value" id="detailAddress">—</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Sender sub-section -->
+                    <div id="detailSenderSection" style="padding-top:0;">
+                        <div class="detail-label" style="font-size:11px;font-weight:700;color:#059669;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;padding:8px 0;border-bottom:2px solid #dcfce7;">📬 Sender</div>
+
+                        <div class="detail-row">
+                            <div class="detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                            <div class="detail-info"><div class="detail-label">Name</div><div class="detail-value" id="detailSenderName">—</div></div>
+                        </div>
+
+                        <!-- Phone: solid handset icon -->
+                        <div class="detail-row">
+                            <div class="detail-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                    <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
+                                </svg>
+                            </div>
+                            <div class="detail-info"><div class="detail-label">Phone</div><div class="detail-value" id="detailSenderPhone">—</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ RIGHT: Delivery & Rider ═══ -->
+                <div class="detail-column">
+                    <div class="detail-column-title">🚗 Delivery & Rider</div>
+
+                    <!-- Delivery sub-section -->
+                    <div style="padding-bottom:14px; border-bottom:2px solid #f1f5f9; margin-bottom:14px;">
+                        <div class="detail-label" style="font-size:11px;font-weight:700;color:#7c3aed;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;padding:8px 0;border-bottom:2px solid #ede9fe;">🚚 Delivery</div>
+
+                        <div class="detail-row">
+                            <div class="detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+                            <div class="detail-info"><div class="detail-label">Type</div><div class="detail-value" id="detailDeliveryType">—</div></div>
+                        </div>
+
+                        <div class="detail-row">
+                            <div class="detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                            <div class="detail-info"><div class="detail-label">Date</div><div class="detail-value" id="detailDeliveryDate">—</div></div>
+                        </div>
+
+                        <div class="detail-row">
+                            <div class="detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                            <div class="detail-info"><div class="detail-label">Time</div><div class="detail-value" id="detailDeliveryTime">—</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Rider sub-section — only shown for drop-off -->
+                    <div id="detailRiderSection" style="padding-top:0;">
+                        <div class="detail-label" style="font-size:11px;font-weight:700;color:#dc2626;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;padding:8px 0;border-bottom:2px solid #fee2e2;">🏍️ Rider</div>
+
+                        <!-- Rider Name display + input -->
+                        <div class="detail-row" style="flex-direction:column; align-items:stretch; gap:6px; padding-bottom:14px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div class="detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                                <div class="detail-info"><div class="detail-label">Rider Name</div><div class="detail-value" id="detailRiderName">—</div></div>
+                            </div>
+                            <div style="margin-top:6px;">
+                                <input type="text" id="riderNameInput" placeholder="Enter rider name…" autocomplete="off"
+                                    style="width:100%; padding:7px 10px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:12px; font-family:inherit; color:#1e293b; outline:none; transition:border-color 0.2s;"
+                                    oninput="this.value=this.value.replace(/\b\w/g,c=>c.toUpperCase())"
+                                    onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e2e8f0'">
+                            </div>
+                        </div>
+
+                        <!-- Rider Phone display + input -->
+                        <div class="detail-row" style="flex-direction:column; align-items:stretch; gap:6px; padding-bottom:14px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div class="detail-icon">
+                                    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                        <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
+                                    </svg>
+                                </div>
+                                <div class="detail-info"><div class="detail-label">Rider Phone</div><div class="detail-value" id="detailRiderPhone">—</div></div>
+                            </div>
+                            <div style="margin-top:6px;">
+                                <input type="tel" id="riderPhoneInput" placeholder="Enter rider phone…" autocomplete="off"
+                                    style="width:100%; padding:7px 10px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:12px; font-family:inherit; color:#1e293b; outline:none; transition:border-color 0.2s;"
+                                    onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e2e8f0'">
+                            </div>
+                        </div>
+
+                        <!-- Save button — bottom right -->
+                        <div style="display:flex; justify-content:flex-end; margin-top:4px;">
+                            <button onclick="saveRiderInfo()" id="btnSaveRider"
+                                style="padding:8px 20px; background:linear-gradient(135deg,#dc2626,#b91c1c); color:white; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; white-space:nowrap; transition:all 0.2s; letter-spacing:0.4px; box-shadow:0 3px 10px rgba(220,38,38,0.3);">
+                                 Save 
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- end details-body -->
+
+            <!-- ── Footer ── -->
+            <div class="details-footer" style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; gap:12px; background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%); border-top:1px solid #e2e8f0;">
+                <div style="display:flex; align-items:center; gap:8px; flex:1; padding:12px 16px; background:white; border-radius:10px; border:1px solid #e2e8f0;">
+                    <label style="color:#334155; margin:0; white-space:nowrap; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Payment:</label>
+                    <select id="detailPaymentStatusSelect" class="status-select" style="flex:1; border:1px solid #cbd5e1; background:white; margin:0; padding:7px 10px; font-size:12px; border-radius:6px;">
+                        <option value="pending">Down Payment</option>
+                        <option value="completed">Fully Paid</option>
+                    </select>
+                    <button id="btnSavePayment" class="btn-save-status" style="padding:7px 16px; font-size:11px; white-space:nowrap;" onclick="savePaymentStatus()">Update</button>
+                </div>
+                <button class="btn-close-details" onclick="closeOrderDetailsModal()" style="font-size:12px; padding:8px 20px;">Close</button>
+            </div>
+        </div>
+    </div>
+
+</div><!-- end main-content -->
+
+<script>
+// ── CSRF helper ──
+function getCookie(name) {
+    for (const c of document.cookie.split(';')) {
+        const t = c.trim();
+        if (t.startsWith(name + '=')) return decodeURIComponent(t.slice(name.length + 1));
+    }
+    return '';
+}
+function csrfToken() {
+    const el = document.querySelector('[name=csrfmiddlewaretoken]');
+    const token = el ? el.value : getCookie('csrftoken');
+    // Debug: ensure token exists
+    if (!token) {
+        console.warn('CSRF Token not found! Check if {% csrf_token %} is in the form.');
+    }
+    return token;
+}
+
+// ── Notification dropdown functionality ──
+function toggleNotificationDropdown(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropdown = document.getElementById('notificationDropdown');
+    
+    if (dropdown) {
+        dropdown.classList.toggle('show');
+    }
+}
+
+// Close notification dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('notificationDropdown');
+    const notificationIcon = document.querySelector('.notification-icon');
+    
+    if (dropdown && !dropdown.contains(event.target) && !notificationIcon.contains(event.target)) {
+        dropdown.classList.remove('show');
+    }
+});
+
+// ── Delivery Type Toggle (Add Order form) ──
+function onDeliveryTypeChange() {
+    const selected = document.querySelector('input[name="deliveryType"]:checked').value;
+    document.getElementById('deliveryType').value = selected;
+    const addressField  = document.getElementById('addressField');
+    const addressInput  = document.getElementById('address');
+    const dateLabel     = document.getElementById('deliveryDateLabel');
+    const senderSection = document.getElementById('senderSection');
+    const senderNameEl  = document.getElementById('senderName');
+    const senderPhoneEl = document.getElementById('senderPhone');
+
+    if (selected === 'pickup') {
+        addressField.style.opacity  = '0.4';
+        addressInput.required       = false;
+        addressInput.placeholder    = 'N/A — Customer will pick up';
+        dateLabel.innerHTML         = 'Pick-up Date <span class="req">*</span>';
+        // Hide sender section and remove required
+        senderSection.style.display = 'none';
+        senderNameEl.required       = false;
+        senderPhoneEl.required      = false;
+    } else {
+        addressField.style.opacity  = '1';
+        addressInput.required       = true;
+        addressInput.placeholder    = 'e.g. 123 Rizal St, CDO';
+        dateLabel.innerHTML         = 'Delivery Date <span class="req">*</span>';
+        // Show sender section and restore required
+        senderSection.style.display = '';
+        senderNameEl.required       = true;
+        senderPhoneEl.required      = true;
+    }
+}
+
+// ── Open / Close modals ──
+function openAddOrderModal() {
+    document.getElementById('addOrderModal').classList.add('show');
+    clearFormError();
+}
+function closeAddOrderModal() {
+    document.getElementById('addOrderModal').classList.remove('show');
+    document.getElementById('addOrderForm').reset();
+    // reset chips
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    const pendingChip = document.querySelector('.chip[data-value="pending"]');
+    if (pendingChip) pendingChip.classList.add('selected');
+    const ps = document.getElementById('paymentStatus');
+    if (ps) ps.value = 'pending';
+    // reset delivery UI
+    const dt = document.getElementById('deliveryType');
+    if (dt) dt.value = 'dropoff';
+    const af = document.getElementById('addressField');
+    const ai = document.getElementById('address');
+    if (af) af.style.opacity = '1';
+    if (ai) { ai.required = true; ai.placeholder = 'e.g. 123 Rizal St, CDO'; }
+    const dl = document.getElementById('deliveryDateLabel');
+    if (dl) dl.innerHTML = 'Delivery Date <span class="req">*</span>';
+    // restore sender section (default is dropoff)
+    const ss = document.getElementById('senderSection');
+    if (ss) ss.style.display = '';
+    const sn = document.getElementById('senderName');
+    const sp = document.getElementById('senderPhone');
+    if (sn) sn.required = true;
+    if (sp) sp.required = true;
+    clearFormError();
+}
+function closeOrderDetailsModal() {
+    document.getElementById('orderDetailsModal').classList.remove('show');
+    window._currentOrderId = null;
+}
+function openCompletedOrdersModal() {
+    document.getElementById('completedOrdersModal').classList.add('show');
+}
+function closeCompletedOrdersModal() {
+    document.getElementById('completedOrdersModal').classList.remove('show');
+}
+
+// ── Payment chip selector ──
+function selectChip(el) {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    const val = el.getAttribute('data-value');
+    document.getElementById('paymentStatus').value = val;
+    const lbl = document.getElementById('downPaymentLabel');
+    if (lbl) lbl.innerHTML = (val === 'completed' ? 'Payment Amount' : 'Down Payment Amount') + ' <span class="req">*</span>';
+}
+
+// ── Form error helpers ──
+function showFormError(msg) {
+    const b = document.getElementById('formErrorBanner');
+    const t = document.getElementById('errorText');
+    if (b && t) { t.textContent = msg; b.classList.add('show'); b.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+}
+function clearFormError() {
+    const b = document.getElementById('formErrorBanner');
+    if (b) b.classList.remove('show');
+}
+
+// ── Submit: Create Order ──
+function submitAddOrder(event) {
+    event.preventDefault();
+    clearFormError();
+
+    const customerName    = document.getElementById('customerName').value.trim();
+    const contactNumber   = document.getElementById('contactNumber').value.trim();
+    let   address         = document.getElementById('address').value.trim();
+    const deliveryDate    = document.getElementById('deliveryDate').value.trim();
+    const deliveryTime    = document.getElementById('deliveryTime').value.trim();
+    const orderProduct    = document.getElementById('orderProduct').value.trim();
+    const orderAmount     = document.getElementById('orderAmount').value.trim();
+    const specialRequests = document.getElementById('specialRequests').value.trim();
+    const paymentMethod   = document.getElementById('paymentMethod').value;
+    const paymentStatus   = document.getElementById('paymentStatus').value;
+    const downPaymentAmount = document.getElementById('downPaymentAmount').value.trim();
+    const fulfilledBy     = document.getElementById('fulfilledBy').value.trim();
+    const deliveryType    = document.getElementById('deliveryType').value || 'dropoff';
+    const senderName      = document.getElementById('senderName').value.trim();
+    const senderPhone     = document.getElementById('senderPhone').value.trim();
+    const riderName       = document.getElementById('riderName').value.trim();
+    const riderPhone      = document.getElementById('riderPhone').value.trim();
+    const riderVehicle    = document.getElementById('riderVehicle').value.trim();
+
+    if (!customerName)  { showFormError('Please enter receiver name.'); return; }
+    if (!contactNumber) { showFormError('Please enter receiver contact number.'); return; }
+    if (deliveryType === 'dropoff' && !address) { showFormError('Please enter a delivery address.'); return; }
+    if (deliveryType === 'pickup') { address = ''; }
+    if (!orderProduct)  { showFormError('Please enter the product/bouquet.'); return; }
+    if (!orderAmount)   { showFormError('Please enter the order amount.'); return; }
+    if (!deliveryDate)  { showFormError('Please select a delivery date.'); return; }
+    if (!deliveryTime)  { showFormError('Please enter a delivery time.'); return; }
+    if (!paymentMethod) { showFormError('Please select a payment method.'); return; }
+    if (!paymentStatus) { showFormError('Please select a payment status.'); return; }
+    if (!downPaymentAmount) { showFormError('Please enter the down payment amount.'); return; }
+    if (deliveryType === 'dropoff' && !senderName)  { showFormError('Please enter sender name.'); return; }
+    if (deliveryType === 'dropoff' && !senderPhone) { showFormError('Please enter sender contact number.'); return; }
+
+    const toTitle    = s => s.toLowerCase().replace(/\w/g, c => c.toUpperCase());
+    const firstName  = customerName.trim().split(/\s+/)[0].charAt(0).toUpperCase() + customerName.trim().split(/\s+/)[0].slice(1).toLowerCase();
+    const lastName   = (() => { const parts = customerName.trim().split(/\s+/); return parts.length > 1 ? parts.slice(1).map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ') : ''; })();
+    const autoEmail  = 'customer_' + contactNumber.replace(/\D/g, '') + '_' + Date.now() + '@kres.local';
+
+    const payload = {
+        customer_email:      autoEmail,
+        customer_first_name: firstName,
+        customer_last_name:  lastName,
+        customer_phone:      contactNumber,
+        customer_address:    address,
+        items: [{ product_name: capitalize(orderProduct.trim()), quantity: 1, unit_price: parseFloat(orderAmount) || 0 }],
+        notes:          (deliveryType === 'pickup' ? '[PICK UP] ' : '[DROP OFF] ') + specialRequests,
+        payment_method: paymentMethod,
+        payment_status: paymentStatus,
+        payment_amount: parseFloat(downPaymentAmount) || 0,
+        delivery_date:  deliveryDate,
+        delivery_time:  deliveryTime,
+        fulfilled_by:   fulfilledBy ? fulfilledBy.charAt(0).toUpperCase() + fulfilledBy.slice(1).toLowerCase() : '',
+        sender_name:    capitalize(senderName),
+        sender_phone:   senderPhone,
+        rider_name:     deliveryType === 'dropoff' ? capitalize(riderName) : '',
+        rider_phone:    deliveryType === 'dropoff' ? riderPhone : '',
+        rider_vehicle:  deliveryType === 'dropoff' ? riderVehicle : '',
+        tax: 0, discount: 0
+    };
+
+    const btn = document.querySelector('button[form="addOrderForm"]');
+    const origHTML = btn.innerHTML;
+    btn.innerHTML = '⏳ Creating...';
+    btn.disabled  = true;
+
+    fetch('/ajax/order/create/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
+        body: JSON.stringify(payload)
+    })
+    .then(r => { if (!r.ok) throw new Error('Server error ' + r.status); return r.json(); })
+    .then(data => {
+        btn.innerHTML = origHTML;
+        btn.disabled  = false;
+        if (data.success) {
+            btn.innerHTML        = '✓ Created!';
+            btn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            showFormError(data.message || 'Failed to create order.');
+        }
+    })
+    .catch(err => {
+        btn.innerHTML = origHTML;
+        btn.disabled  = false;
+        showFormError('Could not reach server: ' + err.message);
+    });
+}
+
+// ── Convert 24-hour time to 12-hour format ──
+function convertTo12Hour(time24) {
+    if (!time24) return '';
+    const [h, m] = time24.split(':');
+    let hour = parseInt(h, 10);
+    const min = m || '00';
+    const ampm = hour >= 12 ? 'pm' : 'am';
+    if (hour > 12) hour -= 12;
+    if (hour === 0) hour = 12;
+    return hour + ':' + min + ampm;
+}
+
+// ── Capitalize first letter of each word ──
+function capitalizeWords(str) {
+    if (!str) return '';
+    return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+}
+
+function capitalize(str) {
+    if (!str) return '';
+    return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+}
+
+// ── View Order Details ──
+function viewOrderDetails(orderId) {
+    const row = document.querySelector('tr[data-id="' + orderId + '"]');
+    if (!row) return;
+
+    window._currentOrderId = orderId;
+
+    const orderNum  = row.querySelector('.order-id').textContent.trim();
+    const rawDate   = row.getAttribute('data-date') || '';
+    const rawTime   = row.getAttribute('data-time') || '';
+    const payStatus = row.getAttribute('data-payment-status') || 'pending';
+    const rawMethod = row.getAttribute('data-payment-method') || '';
+    const dtRaw     = row.getAttribute('data-delivery-type') || '';
+
+    // Header
+    document.getElementById('detailOrderIdSub').textContent   = orderNum;
+    // Left column
+    document.getElementById('detailOrderIdValue').textContent  = orderNum;
+    const formattedTime = convertTo12Hour(rawTime);
+    document.getElementById('detailOrderDate').textContent     = rawDate + (formattedTime ? ' at ' + formattedTime : '');
+    document.getElementById('detailOrderItem').textContent     = row.querySelector('.item-name').textContent.trim();
+    document.getElementById('detailOrderAmount').textContent   = row.getAttribute('data-amount') || row.querySelector('.order-amount').textContent.trim();
+    const methodMap = { cash: 'Cash', gcash: 'GCash', bank_transfer: 'Bank Transfer', credit_card: 'Credit Card', debit_card: 'Debit Card', paymaya: 'PayMaya', other: 'Other' };
+    document.getElementById('detailPaymentMethod').textContent = methodMap[rawMethod] || rawMethod || '—';
+    document.getElementById('detailPaymentStatusDisplay').textContent = payStatus === 'completed' ? 'Fully Paid' : 'Down Payment';
+    
+    // Middle column - Receiver & Sender
+    document.getElementById('detailCustomerName').textContent  = row.querySelector('.customer-name').textContent.trim();
+    document.getElementById('detailContactNumber').textContent = row.getAttribute('data-phone') || '—';
+    const addressValue = dtRaw === 'pickup' ? '—' : (row.getAttribute('data-address') || '—');
+    document.getElementById('detailAddress').textContent       = addressValue;
+    
+    // Sender information - get from data-sender-* attributes
+    const senderName = row.getAttribute('data-sender-name') || '—';
+    const senderPhone = row.getAttribute('data-sender-phone') || '—';
+    document.getElementById('detailSenderName').textContent    = senderName;
+    document.getElementById('detailSenderPhone').textContent   = senderPhone;
+
+    // Show/hide delivery address row and sender section for pickup orders
+    const detailAddressRow    = document.getElementById('detailAddressRow');
+    const detailSenderSection = document.getElementById('detailSenderSection');
+    if (dtRaw === 'pickup') {
+        if (detailAddressRow)    detailAddressRow.style.display    = 'none';
+        if (detailSenderSection) detailSenderSection.style.display = 'none';
+    } else {
+        if (detailAddressRow)    detailAddressRow.style.display    = '';
+        if (detailSenderSection) detailSenderSection.style.display = '';
+    }
+    
+    // Right column - Delivery & Rider
+    document.getElementById('detailDeliveryType').textContent  = dtRaw === 'pickup' ? 'Local Pick Up' : 'Local Drop Off';
+    document.getElementById('detailDeliveryDate').textContent  = row.getAttribute('data-delivery') || '—';
+    const deliveryTimeRaw = row.getAttribute('data-delivery-time') || '';
+    const deliveryTimeFormatted = deliveryTimeRaw && deliveryTimeRaw !== '-' ? convertTo12Hour(deliveryTimeRaw) : '—';
+    document.getElementById('detailDeliveryTime').textContent  = deliveryTimeFormatted;
+    
+    // Rider information - get from data-rider-* attributes
+    const riderName = row.getAttribute('data-rider-name') || '—';
+    const riderPhone = row.getAttribute('data-rider-phone') || '—';
+    document.getElementById('detailRiderName').textContent     = riderName;
+    document.getElementById('detailRiderPhone').textContent    = riderPhone;
+    // Pre-fill editable rider inputs
+    const riderNameInput = document.getElementById('riderNameInput');
+    const riderPhoneInput = document.getElementById('riderPhoneInput');
+    if (riderNameInput) riderNameInput.value = (riderName === '—' ? '' : riderName);
+    if (riderPhoneInput) riderPhoneInput.value = (riderPhone === '—' ? '' : riderPhone);
+
+    // Disable rider inputs and save button if order is completed
+    const orderStatus = row.getAttribute('data-status') || 'pending';
+    const btnSaveRider = document.getElementById('btnSaveRider');
+    const isCompleted = orderStatus === 'completed';
+    if (riderNameInput) {
+        riderNameInput.disabled = isCompleted;
+        riderNameInput.style.opacity = isCompleted ? '0.5' : '1';
+        riderNameInput.style.cursor = isCompleted ? 'not-allowed' : '';
+        riderNameInput.style.background = isCompleted ? '#f1f5f9' : '';
+    }
+    if (riderPhoneInput) {
+        riderPhoneInput.disabled = isCompleted;
+        riderPhoneInput.style.opacity = isCompleted ? '0.5' : '1';
+        riderPhoneInput.style.cursor = isCompleted ? 'not-allowed' : '';
+        riderPhoneInput.style.background = isCompleted ? '#f1f5f9' : '';
+    }
+    if (btnSaveRider) {
+        btnSaveRider.disabled = isCompleted;
+        btnSaveRider.style.opacity = isCompleted ? '0.4' : '1';
+        btnSaveRider.style.cursor = isCompleted ? 'not-allowed' : 'pointer';
+        btnSaveRider.title = isCompleted ? 'Order is already completed' : '';
+    }
+
+    // Show/hide rider section based on delivery type
+    const riderSection = document.getElementById('detailRiderSection');
+    if (riderSection) {
+        riderSection.style.display = dtRaw === 'dropoff' ? 'block' : 'none';
+    }
+    
+    const fulfilledBy = capitalizeWords(row.getAttribute('data-fulfilled') || '');
+    document.getElementById('detailFulfilledBy').textContent   = fulfilledBy || '—';
+    
+    // Special note — strip delivery prefix
+    let rawNotes = row.getAttribute('data-notes') || '';
+    rawNotes = rawNotes.replace(/^\[(DROP OFF|PICK UP)\]\s*/i, '').trim();
+    document.getElementById('detailSpecialNote').textContent = rawNotes || 'None';
+    // Payment status dropdown
+    const paySelect = document.getElementById('detailPaymentStatusSelect');
+    if (paySelect) paySelect.value = payStatus;
+    window._currentPaymentStatus = payStatus;
+    window._currentOrderStatus   = row.getAttribute('data-status') || 'pending';
+
+    // Show/hide down payment amount row
+    const downPaymentRow = document.getElementById('detailDownPaymentRow');
+    if (payStatus === 'pending') {
+        downPaymentRow.style.display = 'flex';
+        // Fetch payment details from backend
+        fetch('/ajax/payment/get-by-order/?order_id=' + orderId)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.payment) {
+                    const amount = data.payment.amount;
+                    document.getElementById('detailDownPaymentAmount').textContent = '₱ ' + parseFloat(amount).toFixed(2);
+                } else {
+                    document.getElementById('detailDownPaymentAmount').textContent = '—';
+                }
+            })
+            .catch(() => {
+                document.getElementById('detailDownPaymentAmount').textContent = '—';
+            });
+    } else {
+        downPaymentRow.style.display = 'none';
+    }
+
+    document.getElementById('orderDetailsModal').classList.add('show');
+}
+
+// ── Save Payment Status ──
+function savePaymentStatus() {
+    const orderId        = window._currentOrderId;
+    const newPayStatus   = document.getElementById('detailPaymentStatusSelect').value;
+    if (!orderId) return;
+
+    const btn = document.getElementById('btnSavePayment');
+    if (btn) { btn.textContent = 'Saving...'; btn.disabled = true; }
+
+    fetch('/ajax/payment/update-by-order/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
+        body: JSON.stringify({ order_id: orderId, payment_status: newPayStatus })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (btn) { btn.textContent = 'Save'; btn.disabled = false; }
+        if (data.success) {
+            closeOrderDetailsModal();
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Could not update payment.'));
+        }
+    })
+    .catch(() => { if (btn) { btn.textContent = 'Save'; btn.disabled = false; } });
+}
+
+// ── Save Down Payment Amount ──
+function saveDownPaymentAmount() {
+    const orderId = window._currentOrderId;
+    const amount = document.getElementById('downPaymentAmountInput').value.trim();
+    if (!orderId) return;
+    if (!amount || parseFloat(amount) < 0) { alert('Please enter a valid amount.'); return; }
+
+    const btn = document.getElementById('btnSaveDownPayment');
+    if (btn) { btn.textContent = 'Updating...'; btn.disabled = true; }
+
+    fetch('/ajax/payment/update-by-order/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
+        body: JSON.stringify({ order_id: orderId, payment_amount: parseFloat(amount) })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (btn) { btn.textContent = 'Update'; btn.disabled = false; }
+        if (data.success) {
+            document.getElementById('detailDownPaymentAmount').textContent = '₱ ' + parseFloat(amount).toFixed(2);
+        } else {
+            alert('Error: ' + (data.message || 'Could not update down payment amount.'));
+        }
+    })
+    .catch(err => { 
+        if (btn) { btn.textContent = 'Update'; btn.disabled = false; }
+        alert('Error updating amount: ' + err.message);
+    });
+}
+
+// ── Save Rider Info from View Details ──
+function saveRiderInfo() {
+    if (window._currentOrderStatus === 'completed') return;
+    const orderId  = window._currentOrderId;
+    const riderName  = document.getElementById('riderNameInput').value.trim();
+    const riderPhone = document.getElementById('riderPhoneInput').value.trim();
+    if (!orderId) return;
+
+    const btn = document.getElementById('btnSaveRider');
+    if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+
+    fetch('/ajax/order/update-rider/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
+        body: JSON.stringify({ order_id: orderId, rider_name: riderName, rider_phone: riderPhone })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (btn) { btn.textContent = 'Save'; btn.disabled = false; }
+        if (data.success) {
+            document.getElementById('detailRiderName').textContent  = riderName || '—';
+            document.getElementById('detailRiderPhone').textContent = riderPhone || '—';
+            // Update the table row data attributes so it persists without reload
+            const row = document.querySelector('tr[data-id="' + orderId + '"]');
+            if (row) {
+                row.setAttribute('data-rider-name', riderName);
+                row.setAttribute('data-rider-phone', riderPhone);
+            }
+            btn.textContent = '✓ Saved!';
+            btn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
+            setTimeout(() => { if (btn) { btn.textContent = 'Save'; btn.style.background = ''; } }, 1800);
+        } else {
+            alert('Error: ' + (data.message || 'Could not save rider info.'));
+        }
+    })
+    .catch(() => { if (btn) { btn.textContent = 'Save'; btn.disabled = false; } });
+}
+
+// ── Mark Completed (Done button) ──
+function markCompleted(orderId, btnEl) {
+    const origHTML = btnEl.innerHTML;
+    btnEl.innerHTML = '⏳';
+    btnEl.disabled  = true;
+
+    fetch('/ajax/order/update-status/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
+        body: JSON.stringify({ order_id: orderId, status: 'completed' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            btnEl.innerHTML = origHTML;
+            btnEl.disabled  = false;
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(() => { btnEl.innerHTML = origHTML; btnEl.disabled = false; });
+}
+
+// ── Status Filter with sorting ──
+function sortOrdersWithOrd1First() {
+    const tbody = document.querySelector('.orders-table tbody');
+    if (!tbody) return;
+    
+    // Just sort by date ascending - the backend already does this
+    // No special handling needed for ord-1
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    sortOrdersWithOrd1First();
+
+    // Auto-capitalize first letter of every word on these fields
+    function titleCaseInput(el) {
+        if (!el) return;
+        el.addEventListener('input', function () {
+            const pos = this.selectionStart;
+            this.value = this.value.replace(/\b\w/g, c => c.toUpperCase());
+            this.setSelectionRange(pos, pos);
+        });
+    }
+
+    titleCaseInput(document.getElementById('fulfilledBy'));
+    titleCaseInput(document.getElementById('senderName'));
+    titleCaseInput(document.getElementById('riderName'));
+    titleCaseInput(document.getElementById('address'));
+});
+
+// Status filter dropdown - navigate to URL with status parameter
+(function() {
+    const statusFilterEl = document.getElementById('statusFilter');
+    if (statusFilterEl) {
+        statusFilterEl.addEventListener('change', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const value = this.value;
+            console.log('Status filter changed to:', value);
+            if (value === 'all') {
+                window.location.href = '/orders/';
+            } else {
+                window.location.href = '/orders/?status=' + value;
+            }
+        });
+    }
+})();
+
+// Filter to show only completed orders
+function filterByCompleted() {
+    const statusFilterEl = document.getElementById('statusFilter');
+    if (statusFilterEl) {
+        statusFilterEl.value = 'completed';
+        statusFilterEl.dispatchEvent(new Event('change'));
+    }
+}
+
+// ── Close modals on backdrop click ──
+window.addEventListener('click', function (e) {
+    if (e.target === document.getElementById('addOrderModal'))        closeAddOrderModal();
+    if (e.target === document.getElementById('orderDetailsModal'))    closeOrderDetailsModal();
+    if (e.target === document.getElementById('completedOrdersModal')) closeCompletedOrdersModal();
+});
+
+// ── Export Orders to XLSX ──
+function exportOrdersToCSV() {
+    const table = document.querySelector('.orders-table');
+    if (!table) return;
+
+    const today = new Date();
+    const dateStr = today.getFullYear() + '-' +
+                    String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(today.getDate()).padStart(2, '0');
+
+    // Collect data rows
+    const rows = table.querySelectorAll('tr');
+    const data = [];
+
+    rows.forEach((row, rowIndex) => {
+        const cells = row.querySelectorAll('td, th');
+        const rowData = [];
+        cells.forEach((cell, colIndex) => {
+            if (colIndex === cells.length - 1) return; // skip Actions
+            let txt = cell.textContent.trim();
+            // Clean status emojis
+            if (rowIndex > 0 && colIndex === 4) txt = txt.replace(/^\S+\s+/, '').trim();
+            // Clean amount — strip currency symbols, keep number
+            if (rowIndex > 0 && colIndex === 3) {
+                txt = txt.replace(/[₱â,±\s]/g, '').trim();
+                const num = parseFloat(txt);
+                rowData.push(isNaN(num) ? txt : num);
+                return;
+            }
+            rowData.push(txt);
+        });
+        if (rowData.length) data.push(rowData);
+    });
+
+    // Load xlsx-style (supports cell styling) dynamically if not already loaded
+    function buildAndDownload() {
+        const XLSX = window.XLSXStyle || window.XLSX;
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const numCols = data[0] ? data[0].length : 5;
+        const numRows = data.length;
+
+        // Auto-fit column widths based on content
+        const colWidths = Array.from({ length: numCols }, (_, c) => {
+            let max = 10;
+            data.forEach(row => {
+                const val = row[c] !== undefined ? String(row[c]) : '';
+                if (val.length > max) max = val.length;
+            });
+            return { wch: Math.min(max + 4, 50) };
+        });
+        ws['!cols'] = colWidths;
+
+        // Center all cells; header row also bold
+        for (let r = 0; r < numRows; r++) {
+            for (let c = 0; c < numCols; c++) {
+                const cellAddr = XLSX.utils.encode_cell({ r, c });
+                if (!ws[cellAddr]) ws[cellAddr] = { v: '', t: 's' };
+                ws[cellAddr].s = {
+                    alignment: { horizontal: 'center', vertical: 'center', wrapText: false },
+                    font: r === 0 ? { bold: true } : {}
+                };
+            }
+        }
+
+        // Row height for all rows
+        ws['!rows'] = Array.from({ length: numRows }, () => ({ hpt: 20 }));
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Order List');
+        XLSX.writeFile(wb, dateStr + '_ORDER LIST.xlsx');
+    }
+
+    if (window.XLSXStyle) {
+        buildAndDownload();
+    } else {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx-style/0.8.13/xlsx.full.min.js';
+        script.onload = function () { window.XLSXStyle = window.XLSX; buildAndDownload(); };
+        script.onerror = function () {
+            // fallback to plain xlsx without styling
+            const s2 = document.createElement('script');
+            s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+            s2.onload = buildAndDownload;
+            document.head.appendChild(s2);
+        };
+        document.head.appendChild(script);
+    }
+}
+</script>
+
+ {% include 'logout_modal.html' %}
+</body>
+</html>
+
+<script>
+// Populate the next month deletion date in the warning card
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the deletion date from the context variable
+    const nextDeletionDate = new Date('{{ next_deletion_date|date:"Y-m-d" }}');
+    
+    // Format the date as "Month Day, Year"
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    const formattedDate = nextDeletionDate.toLocaleDateString('en-US', options);
+    
+    // Update both the warning card on main page and completed orders modal
+    const dateSpan1 = document.getElementById('nextMonthDeletionDate2');
+    if (dateSpan1) {
+        dateSpan1.textContent = formattedDate;
+    }
+});
+</script>

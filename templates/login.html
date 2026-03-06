@@ -1,0 +1,746 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KRES Admin - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,800;1,400&family=Lato:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family:'Lato',sans-serif;
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            overflow:hidden;
+            background: linear-gradient(145deg, #0d2844 0%, #122d57 25%, #154068 55%, #122f6b 80%, #0e2952 100%);
+        }
+        body::before {
+            content:'';position:fixed;inset:0;
+            background:
+                radial-gradient(ellipse 70% 60% at 10% 50%, rgba(20,70,200,0.20) 0%, transparent 65%),
+                radial-gradient(ellipse 55% 70% at 88% 15%, rgba(8,30,110,0.35) 0%, transparent 65%),
+                radial-gradient(ellipse 40% 50% at 55% 95%, rgba(15,55,140,0.18) 0%, transparent 58%);
+            pointer-events:none;
+        }
+        .star {
+            position:fixed;border-radius:50%;
+            background:rgba(200,230,255,0.75);
+            animation:twinkle var(--td,3s) ease-in-out infinite var(--dd,0s);
+        }
+        @keyframes twinkle {
+            0%,100%{opacity:0.12;transform:scale(1);}
+            50%{opacity:0.85;transform:scale(1.6);}
+        }
+
+        .page-wrapper {
+            position:relative;z-index:2;
+            display:flex;align-items:center;justify-content:center;
+            gap:72px;padding:40px;
+            width:100%;min-height:100vh;
+        }
+        .floral-scene {
+            display:flex;flex-direction:column;align-items:center;gap:16px;
+            flex-shrink:0;
+            animation:sceneZoom 1.0s cubic-bezier(0.36,0,0.66,1) 0.2s both;
+        }
+        @keyframes sceneZoom{from{opacity:0;transform:scale(0.85);}to{opacity:1;transform:scale(1);}}
+
+        .wreath-wrap { width:340px; height:340px; position:relative; }
+        #wreathSVG { width:100%; height:100%; overflow:visible; }
+
+        /* ═══════════════════════════════════════════════════════════
+           RING DRAW ANIMATION  — stroke-dasharray / stroke-dashoffset
+           
+           The ring is TWO half-arc <path> elements:
+             #arcRight : bottom (170,310) → clockwise → top (170,30)
+             #arcLeft  : bottom (170,310) → counter-clockwise → top (170,30)
+           
+           Each path length = π × r  (half circumference)
+           Main ring r=140 → half = 439.82
+           Inner ring r=131 → half = 411.55
+           Outer ring r=148 → half = 464.96
+           
+           stroke-dasharray = <length> (exactly one dash the full length)
+           stroke-dashoffset starts at <length>, animates to 0
+           → the line "draws" from its start point to its end
+           
+           Both arcs start at bottom → draw upward simultaneously.
+        ═══════════════════════════════════════════════════════════ */
+
+        /* ── Main ring r=140, half≈440 (HIDDEN) ── */
+        #arcRight, #arcLeft {
+            display:none;
+        }
+        /* ── Inner ring r=131, half≈412 (HIDDEN) ── */
+        #arcRightI, #arcLeftI {
+            display:none;
+        }
+        /* ── Outer ring r=148, half≈465 (HIDDEN) ── */
+        #arcRightO, #arcLeftO {
+            display:none;
+        }
+
+        @keyframes drawArc  { from{stroke-dashoffset:440;} to{stroke-dashoffset:0;} }
+        @keyframes drawArcI { from{stroke-dashoffset:412;} to{stroke-dashoffset:0;} }
+        @keyframes drawArcO { from{stroke-dashoffset:465;} to{stroke-dashoffset:0;} }
+
+        /* ── Leaves pop ── */
+        .leaf {
+            opacity:0;
+            animation:leafPop 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+        }
+        @keyframes leafPop{from{opacity:0;transform:scale(0);}to{opacity:1;transform:scale(1);}}
+
+        /* ── White dot pop ── */
+        .dot {
+            opacity:0;
+            animation:dotPop 0.35s cubic-bezier(0.34,1.8,0.64,1) forwards;
+        }
+        @keyframes dotPop{from{opacity:0;transform:scale(0);}to{opacity:1;transform:scale(1);}}
+
+        /* ── Wreath flower smooth fade-in ── */
+        .wf {
+            opacity:0;
+            transform-box:fill-box;
+            transform-origin:center;
+            animation:wfPop 0.3s ease-in forwards;
+        }
+        @keyframes wfPop{
+            0%{opacity:0;}
+            100%{opacity:1;}
+        }
+
+        /* ── Rose petal open ── */
+        .rp {
+            opacity:0;
+            transform-box:fill-box;
+            transform-origin:50% 100%;
+            animation:rpOpen 0.5s cubic-bezier(0.22,1.4,0.36,1) forwards;
+        }
+        @keyframes rpOpen{
+            0%  {opacity:0;transform:scale(0.1) scaleY(0.05) scaleX(0.15);}
+            25% {opacity:0.6;}
+            50% {opacity:1;transform:scale(1.15) scaleY(1.08) scaleX(1.08);}
+            100%{opacity:1;transform:scale(1) scaleY(1) scaleX(1);}
+        }
+
+        /* ── Rose center smooth fade-in ── */
+        .rc {
+            opacity:0;
+            transform-box:fill-box;
+            transform-origin:center;
+            animation:rcPop 0.5s ease-in forwards;
+        }
+        @keyframes rcPop{
+            0%{opacity:0;}
+            100%{opacity:1;}
+        }
+
+        /* Pulse glow on rose center */
+        .pulse { animation:pulseGlow 3.5s ease-in-out infinite; }
+        @keyframes pulseGlow{0%,100%{opacity:0.4;transform:scale(1);}50%{opacity:1;transform:scale(1.08);}}
+
+        /* Rose gentle bob with glow */
+        .rose-g { animation:roseBob 6s ease-in-out infinite 7.8s; }
+        @keyframes roseBob{0%,100%{transform:translateY(0);filter:drop-shadow(0 0 12px rgba(30,120,255,0.35));}50%{transform:translateY(-6px);filter:drop-shadow(0 0 20px rgba(60,140,255,0.50));}}
+
+        .tagline {
+            font-size:11px;font-weight:700;
+            color:rgba(140,195,255,0.55);
+            letter-spacing:5px;text-transform:uppercase;
+            animation:fadeUp 0.5s ease-out 5.4s both;
+            margin-top:8px;
+        }
+        @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+        /* ── GLASSMORPHISM CARD ── */
+        .login-card {
+            background:rgba(255,255,255,0.075);
+            backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);
+            border:1px solid rgba(255,255,255,0.18);
+            border-top-color:rgba(255,255,255,0.32);
+            border-radius:26px;
+            padding:38px 44px 34px;
+            width:100%;max-width:480px;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,0.16),0 28px 80px rgba(0,0,30,0.60),0 8px 32px rgba(0,10,60,0.35);
+            animation:cardIn 0.5s cubic-bezier(0.34,1.2,0.64,1) 4.2s both;
+            display:flex;
+            flex-direction:column;
+        }
+        @keyframes cardIn{from{opacity:0;transform:translateY(48px) scale(0.95);}to{opacity:1;transform:translateY(0) scale(1);}}
+        .card-brand{display:none;}
+        .card-logo-ring{display:none;}
+        .card-logo-ring img{display:none;}
+        .kres-co-text {
+            font-family:'Playfair Display',serif;
+            font-size:28px;
+            font-weight:700;
+            color:rgba(255,255,255,0.95);
+            text-align:center;
+            margin-top:12px;
+            animation:fadeUp 0.5s ease-in 4.8s both;
+            text-shadow:0 2px 8px rgba(0,0,0,0.3);
+        }
+        .kres-sub{font-size:10px;color:rgba(160,205,255,0.50);letter-spacing:2px;margin-top:3px;}
+        .card-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);margin:15px 0;order:1;}
+        .welcome-block{margin-bottom:18px;margin-top:-8px;order:-1;}
+        .welcome-block h2{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:rgba(255,255,255,0.95);margin-bottom:6px;}
+        .welcome-block p{font-size:12px;color:rgba(160,205,255,0.50);}
+        .form-group{margin-bottom:13px;}
+        .form-group label{display:block;font-size:10px;font-weight:700;color:rgba(160,205,255,0.60);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;}
+        .input-wrap{position:relative;}
+        .input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:rgba(140,190,255,0.38);font-size:14px;line-height:1;pointer-events:none;}
+        .form-group input[type="text"],.form-group input[type="password"]{width:100%;padding:11px 16px 11px 40px;border:1px solid rgba(255,255,255,0.13);border-radius:10px;background:rgba(255,255,255,0.07);font-size:14px;color:rgba(255,255,255,0.92);font-family:'Lato',sans-serif;transition:all 0.3s ease;}
+        .form-group input:focus{outline:none;background:rgba(255,255,255,0.12);border-color:rgba(80,160,255,0.55);box-shadow:0 0 0 3px rgba(60,140,255,0.14);}
+        .form-group input::placeholder{color:rgba(160,205,255,0.25);}
+        .form-options{display:flex;align-items:center;margin-bottom:18px;}
+        .remember-me{display:flex;align-items:center;gap:8px;}
+        .remember-me input[type="checkbox"]{width:14px;height:14px;cursor:pointer;accent-color:#38bdf8;}
+        .remember-me label{font-size:12px;color:rgba(160,205,255,0.50);cursor:pointer;margin:0;font-weight:500;}
+        .btn-wrap{display:flex;justify-content:center;}
+        .login-btn{width:72%;padding:12px;background:linear-gradient(135deg, #64B5F6 0%, #90CAF9 50%, #BBDEFB 100%);color:#1565C0;border:none;border-radius:50px;font-size:13px;font-weight:700;font-family:'Lato',sans-serif;cursor:pointer;letter-spacing:1.2px;text-transform:uppercase;box-shadow:0 4px 16px rgba(100,181,246,0.35);position:relative;overflow:hidden;transition:all 0.3s ease;}
+        .login-btn::after{content:'';position:absolute;top:0;left:-100%;width:55%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.28),transparent);transition:left 0.55s ease;}
+        .login-btn:hover::after{left:150%;}
+        .login-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(100,181,246,0.45);}
+        .login-btn:active{transform:translateY(0);}
+        .messages-container{margin-bottom:12px;}
+        .message-error{padding:10px 14px;background:rgba(220,38,38,0.12);color:#fca5a5;border-radius:8px;border-left:3px solid #dc2626;font-size:13px;}
+        .card-footer{text-align:center;margin-top:14px;font-size:10px;color:rgba(140,190,255,0.18);letter-spacing:1px;}
+
+        @media(max-width:960px){.page-wrapper{flex-direction:column;gap:32px;padding:24px 16px;}}
+        @media(max-width:540px){.login-card{padding:30px 22px 26px;max-width:100%;}.wreath-wrap{width:270px;height:270px;}}
+    </style>
+</head>
+<body>
+
+    <div class="star" style="width:2px;height:2px;top:7%;left:14%;--td:2.8s;--dd:0s;"></div>
+    <div class="star" style="width:3px;height:3px;top:13%;left:68%;--td:3.5s;--dd:0.8s;"></div>
+    <div class="star" style="width:2px;height:2px;top:22%;left:85%;--td:2.2s;--dd:1.6s;"></div>
+    <div class="star" style="width:2px;height:2px;top:52%;left:4%;--td:3.1s;--dd:0.4s;"></div>
+    <div class="star" style="width:3px;height:3px;top:68%;left:78%;--td:2.6s;--dd:1.2s;"></div>
+    <div class="star" style="width:2px;height:2px;top:78%;left:38%;--td:3.8s;--dd:2.0s;"></div>
+    <div class="star" style="width:2px;height:2px;top:38%;left:92%;--td:2.4s;--dd:0.6s;"></div>
+    <div class="star" style="width:3px;height:3px;top:88%;left:8%;--td:3.2s;--dd:1.4s;"></div>
+    <div class="star" style="width:2px;height:2px;top:5%;left:52%;--td:2.9s;--dd:1.0s;"></div>
+
+    <div class="page-wrapper">
+
+        <div class="floral-scene">
+            <div class="wreath-wrap">
+
+                <!--
+                ╔══════════════════════════════════════════════════════════╗
+                ║  SVG CIRCULAR WREATH — viewBox 0 0 340 340              ║
+                ║  Circle centre: cx=170, cy=170, r=140                   ║
+                ║                                                          ║
+                ║  Two half-arc PATH elements drawn simultaneously         ║
+                ║  from the bottom (270°) moving upward on both sides.    ║
+                ║                                                          ║
+                ║  Right arc: M 170,310  A 140,140 0 0,1 170,30           ║
+                ║    → sweeps clockwise (right side) bottom→top           ║
+                ║    → path length = π×140 ≈ 440                          ║
+                ║                                                          ║
+                ║  Left arc:  M 170,310  A 140,140 0 0,0 170,30           ║
+                ║    → sweeps counter-clockwise (left side) bottom→top    ║
+                ║    → same length ≈ 440                                   ║
+                ║                                                          ║
+                ║  stroke-dasharray = 440 (one dash = full length)        ║
+                ║  stroke-dashoffset 440 → 0 via CSS animation            ║
+                ║  Both animate simultaneously → draw from bottom upward  ║
+                ╚══════════════════════════════════════════════════════════╝
+                -->
+
+                <svg id="wreathSVG" viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <!-- Ring gradients — vertical, so dark at bottom/top, bright in middle -->
+                        <linearGradient id="ringGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%"   stop-color="#0e6848"/>
+                            <stop offset="45%"  stop-color="#28c882"/>
+                            <stop offset="100%" stop-color="#0e6848"/>
+                        </linearGradient>
+                        <linearGradient id="ringGradI" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%"   stop-color="#0a5038"/>
+                            <stop offset="50%"  stop-color="#1aa868"/>
+                            <stop offset="100%" stop-color="#0a5038"/>
+                        </linearGradient>
+                        <linearGradient id="ringGradO" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%"   stop-color="#083828"/>
+                            <stop offset="50%"  stop-color="#128858"/>
+                            <stop offset="100%" stop-color="#083828"/>
+                        </linearGradient>
+
+                        <!-- Leaf -->
+                        <radialGradient id="lgA" cx="30%" cy="28%" r="75%">
+                            <stop offset="0%"   stop-color="#72ea9e"/>
+                            <stop offset="100%" stop-color="#145a2e"/>
+                        </radialGradient>
+                        <radialGradient id="lgB" cx="30%" cy="28%" r="75%">
+                            <stop offset="0%"   stop-color="#52d882"/>
+                            <stop offset="100%" stop-color="#0e4820"/>
+                        </radialGradient>
+
+                        <!-- Cyan/light-blue wreath flower petals - KRES logo color -->
+                        <radialGradient id="wpCyan" cx="50%" cy="25%" r="72%">
+                            <stop offset="0%"   stop-color="#E3F2FD"/>
+                            <stop offset="40%"  stop-color="#64B5F6"/>
+                            <stop offset="100%" stop-color="#1976D2"/>
+                        </radialGradient>
+                        <radialGradient id="wpCyan2" cx="50%" cy="25%" r="72%">
+                            <stop offset="0%"   stop-color="#BBDEFB"/>
+                            <stop offset="40%"  stop-color="#42A5F5"/>
+                            <stop offset="100%" stop-color="#1565C0"/>
+                        </radialGradient>
+
+                        <!-- Stamen gold -->
+                        <radialGradient id="stG" cx="50%" cy="50%" r="55%">
+                            <stop offset="0%"   stop-color="#fff590"/>
+                            <stop offset="100%" stop-color="#d09010"/>
+                        </radialGradient>
+
+                        <!-- Blue rose petals — rich deep blue with light tips -->
+                        <radialGradient id="rpG1" cx="45%" cy="20%" r="75%">
+                            <stop offset="0%"   stop-color="#b8e0ff"/>
+                            <stop offset="38%"  stop-color="#2460d8"/>
+                            <stop offset="100%" stop-color="#0c1860"/>
+                        </radialGradient>
+                        <radialGradient id="rpG2" cx="55%" cy="20%" r="75%">
+                            <stop offset="0%"   stop-color="#c8e8ff"/>
+                            <stop offset="38%"  stop-color="#3470e8"/>
+                            <stop offset="100%" stop-color="#102070"/>
+                        </radialGradient>
+                        <radialGradient id="rpG3" cx="50%" cy="18%" r="75%">
+                            <stop offset="0%"   stop-color="#d4eeff"/>
+                            <stop offset="38%"  stop-color="#4480f0"/>
+                            <stop offset="100%" stop-color="#162878"/>
+                        </radialGradient>
+
+                        <!-- Rose center -->
+                        <radialGradient id="rcG" cx="50%" cy="50%" r="55%">
+                            <stop offset="0%"   stop-color="#eef8ff"/>
+                            <stop offset="30%"  stop-color="#70b8f8"/>
+                            <stop offset="100%" stop-color="#0c38b0"/>
+                        </radialGradient>
+
+                        <!-- Sepal -->
+                        <linearGradient id="sepG" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%"   stop-color="#145c38"/>
+                            <stop offset="100%" stop-color="#3ec878"/>
+                        </linearGradient>
+
+                        <!-- Glow filter for rose -->
+                        <filter id="blueGlow" x="-80%" y="-80%" width="260%" height="260%">
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b"/>
+                            <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                        <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+                            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                        <filter id="cGlow" x="-60%" y="-60%" width="220%" height="220%">
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/>
+                            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                    </defs>
+
+                    <!-- ═══════════════════════════════════════════
+                         RING — 3 concentric half-arc pairs
+                         Each pair: right arc (cw) + left arc (ccw)
+                         Both start at bottom (170,310), end at top (170,30)
+
+                         SVG arc: A rx,ry x-rotation large-arc-flag sweep-flag x,y
+                         large-arc-flag=1 means take the longer arc (half circle)
+                         sweep-flag=1 → clockwise (right half)
+                         sweep-flag=0 → counter-clockwise (left half)
+                    ═══════════════════════════════════════════ -->
+
+                    <!-- Outer ring (r=148) — starts first, subtle -->
+                    <path id="arcRightO" d="M 170,318 A 148,148 0 0,1 170,22"/>
+                    <path id="arcLeftO"  d="M 170,318 A 148,148 0 0,0 170,22"/>
+
+                    <!-- Main ring (r=140) — primary visual -->
+                    <path id="arcRight"  d="M 170,310 A 140,140 0 0,1 170,30"/>
+                    <path id="arcLeft"   d="M 170,310 A 140,140 0 0,0 170,30"/>
+
+                    <!-- Inner ring (r=131) — detail line -->
+                    <path id="arcRightI" d="M 170,301 A 131,131 0 0,1 170,39"/>
+                    <path id="arcLeftI"  d="M 170,301 A 131,131 0 0,0 170,39"/>
+
+                    <!-- ═══════════════════════════════════════════
+                         LEAVES — teardrop Bezier, placed at radius 140
+                         around the ring. Leaf base on ring, tip outward.
+                         Positioned by angle in degrees (0°=right, clockwise).
+                         
+                         Leaf macro (angle A, cx=170, cy=170, r=140):
+                           px = 170 + 140·cos(A·π/180)
+                           py = 170 + 140·sin(A·π/180)
+                           rotation = A (so tip points away from centre)
+                         
+                         Animation-delay staggered so they appear as
+                         the ring "passes" their position drawing upward.
+                         Bottom (270°) first ~1.2s, sides ~1.8s, top ~2.5s
+                    ═══════════════════════════════════════════ -->
+
+                    <!-- BOTTOM cluster (270° ± small offsets) — delay 1.2–1.5s -->
+                    <!-- 270° → (170, 310) -->
+                    <g class="leaf" style="animation-delay:1.20s;transform-origin:170px 310px">
+                        <path transform="translate(170,310) rotate(-90)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgA)" opacity="0.93"/>
+                    </g>
+                    <!-- 255° → (134, 306) -->
+                    <g class="leaf" style="animation-delay:1.28s;transform-origin:134px 306px">
+                        <path transform="translate(134,306) rotate(-75)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgB)" opacity="0.90"/>
+                    </g>
+                    <!-- 285° → (206, 306) -->
+                    <g class="leaf" style="animation-delay:1.28s;transform-origin:206px 306px">
+                        <path transform="translate(206,306) rotate(-105)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgB)" opacity="0.90"/>
+                    </g>
+                    <!-- 240° → (100, 291) -->
+                    <g class="leaf" style="animation-delay:1.38s;transform-origin:100px 291px">
+                        <path transform="translate(100,291) rotate(-60)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgA)" opacity="0.88"/>
+                    </g>
+                    <!-- 300° → (240, 291) -->
+                    <g class="leaf" style="animation-delay:1.38s;transform-origin:240px 291px">
+                        <path transform="translate(240,291) rotate(-120)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgA)" opacity="0.88"/>
+                    </g>
+
+                    <!-- LOWER SIDES (225°, 315° and 210°, 330°) — delay 1.5–1.75s -->
+                    <!-- 225° → (71, 269) -->
+                    <g class="leaf" style="animation-delay:1.50s;transform-origin:71px 269px">
+                        <path transform="translate(71,269) rotate(-45)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgB)" opacity="0.90"/>
+                    </g>
+                    <!-- 315° → (269, 269) -->
+                    <g class="leaf" style="animation-delay:1.50s;transform-origin:269px 269px">
+                        <path transform="translate(269,269) rotate(-135)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgB)" opacity="0.90"/>
+                    </g>
+                    <!-- 210° → (49, 240) -->
+                    <g class="leaf" style="animation-delay:1.62s;transform-origin:49px 240px">
+                        <path transform="translate(49,240) rotate(-30)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgA)" opacity="0.88"/>
+                    </g>
+                    <!-- 330° → (291, 240) -->
+                    <g class="leaf" style="animation-delay:1.62s;transform-origin:291px 240px">
+                        <path transform="translate(291,240) rotate(-150)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgA)" opacity="0.88"/>
+                    </g>
+
+                    <!-- MID SIDES (180°, 0°) — delay 1.75–2.0s -->
+                    <!-- 195° → (35, 206) -->
+                    <g class="leaf" style="animation-delay:1.75s;transform-origin:35px 206px">
+                        <path transform="translate(35,206) rotate(-15)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgB)" opacity="0.90"/>
+                    </g>
+                    <!-- 345° → (305, 206) -->
+                    <g class="leaf" style="animation-delay:1.75s;transform-origin:305px 206px">
+                        <path transform="translate(305,206) rotate(-165)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgB)" opacity="0.90"/>
+                    </g>
+                    <!-- 180° → (30, 170) -->
+                    <g class="leaf" style="animation-delay:1.88s;transform-origin:30px 170px">
+                        <path transform="translate(30,170) rotate(0)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgA)" opacity="0.92"/>
+                    </g>
+                    <!-- 0° → (310, 170) -->
+                    <g class="leaf" style="animation-delay:1.88s;transform-origin:310px 170px">
+                        <path transform="translate(310,170) rotate(-180)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgA)" opacity="0.92"/>
+                    </g>
+
+                    <!-- UPPER SIDES (165°, 15° and 150°, 30°) — delay 2.0–2.25s -->
+                    <!-- 165° → (35, 134) -->
+                    <g class="leaf" style="animation-delay:2.00s;transform-origin:35px 134px">
+                        <path transform="translate(35,134) rotate(15)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgB)" opacity="0.88"/>
+                    </g>
+                    <!-- 15° → (305, 134) -->
+                    <g class="leaf" style="animation-delay:2.00s;transform-origin:305px 134px">
+                        <path transform="translate(305,134) rotate(165)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgB)" opacity="0.88"/>
+                    </g>
+                    <!-- 150° → (49, 100) -->
+                    <g class="leaf" style="animation-delay:2.12s;transform-origin:49px 100px">
+                        <path transform="translate(49,100) rotate(30)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgA)" opacity="0.90"/>
+                    </g>
+                    <!-- 30° → (291, 100) -->
+                    <g class="leaf" style="animation-delay:2.12s;transform-origin:291px 100px">
+                        <path transform="translate(291,100) rotate(150)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgA)" opacity="0.90"/>
+                    </g>
+                    <!-- 135° → (71, 71) -->
+                    <g class="leaf" style="animation-delay:2.22s;transform-origin:71px 71px">
+                        <path transform="translate(71,71) rotate(45)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgB)" opacity="0.90"/>
+                    </g>
+                    <!-- 45° → (269, 71) -->
+                    <g class="leaf" style="animation-delay:2.22s;transform-origin:269px 71px">
+                        <path transform="translate(269,71) rotate(135)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgB)" opacity="0.90"/>
+                    </g>
+
+                    <!-- TOP cluster (90° ± small offsets) — delay 2.35–2.55s -->
+                    <!-- 120° → (100, 49) -->
+                    <g class="leaf" style="animation-delay:2.35s;transform-origin:100px 49px">
+                        <path transform="translate(100,49) rotate(60)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgA)" opacity="0.90"/>
+                    </g>
+                    <!-- 60° → (240, 49) -->
+                    <g class="leaf" style="animation-delay:2.35s;transform-origin:240px 49px">
+                        <path transform="translate(240,49) rotate(120)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgA)" opacity="0.90"/>
+                    </g>
+                    <!-- 105° → (134, 34) -->
+                    <g class="leaf" style="animation-delay:2.45s;transform-origin:134px 34px">
+                        <path transform="translate(134,34) rotate(75)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgB)" opacity="0.90"/>
+                    </g>
+                    <!-- 75° → (206, 34) -->
+                    <g class="leaf" style="animation-delay:2.45s;transform-origin:206px 34px">
+                        <path transform="translate(206,34) rotate(105)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgB)" opacity="0.90"/>
+                    </g>
+                    <!-- 90° = top → (170, 30) -->
+                    <g class="leaf" style="animation-delay:2.55s;transform-origin:170px 30px">
+                        <path transform="translate(170,30) rotate(90)"
+                              d="M0,0 C9,-6 11,-15 0,-24 C-11,-15 -9,-6 0,0Z"
+                              fill="url(#lgA)" opacity="0.92"/>
+                    </g>
+
+                    <!-- ═══════════════════════════════════════════
+                         WHITE ACCENT DOTS — appear along ring as it draws
+                    ═══════════════════════════════════════════ -->
+                    <circle class="dot" cx="170" cy="316" r="2.2" fill="rgba(255,255,255,0.65)" style="animation-delay:1.22s;transform-origin:170px 316px"/>
+                    <circle class="dot" cx="90"  cy="293" r="1.8" fill="rgba(255,255,255,0.55)" style="animation-delay:1.42s;transform-origin:90px 293px"/>
+                    <circle class="dot" cx="250" cy="293" r="1.8" fill="rgba(255,255,255,0.55)" style="animation-delay:1.42s;transform-origin:250px 293px"/>
+                    <circle class="dot" cx="40"  cy="220" r="1.8" fill="rgba(255,255,255,0.55)" style="animation-delay:1.68s;transform-origin:40px 220px"/>
+                    <circle class="dot" cx="300" cy="220" r="1.8" fill="rgba(255,255,255,0.55)" style="animation-delay:1.68s;transform-origin:300px 220px"/>
+                    <circle class="dot" cx="30"  cy="148" r="2.2" fill="rgba(255,255,255,0.65)" style="animation-delay:1.92s;transform-origin:30px 148px"/>
+                    <circle class="dot" cx="310" cy="148" r="2.2" fill="rgba(255,255,255,0.65)" style="animation-delay:1.92s;transform-origin:310px 148px"/>
+                    <circle class="dot" cx="42"  cy="85"  r="1.8" fill="rgba(255,255,255,0.55)" style="animation-delay:2.18s;transform-origin:42px 85px"/>
+                    <circle class="dot" cx="298" cy="85"  r="1.8" fill="rgba(255,255,255,0.55)" style="animation-delay:2.18s;transform-origin:298px 85px"/>
+                    <circle class="dot" cx="112" cy="32"  r="1.8" fill="rgba(255,255,255,0.55)" style="animation-delay:2.42s;transform-origin:112px 32px"/>
+                    <circle class="dot" cx="228" cy="32"  r="1.8" fill="rgba(255,255,255,0.55)" style="animation-delay:2.42s;transform-origin:228px 32px"/>
+
+                    <!-- ═══════════════════════════════════════════
+                         CYAN WREATH FLOWERS — 8 positions on ring
+                         Each flower: 5 oval petals + gold stamen center
+                         Petals are proper ellipses rotated around center
+                         Appear after ring reaches their position
+                    ═══════════════════════════════════════════ -->
+
+                    <!-- Helper macro: flower at (fx,fy) rotated fAngle -->
+                    <!-- Petal shape: ellipse cx=0,cy=-10 rx=5.5,ry=9 rotated 0/72/144/216/288 -->
+
+                    <!-- 270° = bottom (170,310) — delay 2.70s -->
+                    <g class="wf" style="animation-delay:2.70s;transform-origin:170px 310px">
+                        <g transform="translate(170,310)" filter="url(#cGlow)">
+                            <ellipse transform="rotate(0)"   cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(72)"  cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(144)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(216)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(288)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <circle cx="0" cy="0" r="4.5" fill="url(#stG)"/>
+                            <circle cx="0" cy="0" r="2"   fill="rgba(255,252,210,0.95)"/>
+                        </g>
+                    </g>
+
+                    <!-- 315° = lower-right (269,269) — delay 2.78s -->
+                    <g class="wf" style="animation-delay:2.78s;transform-origin:269px 269px">
+                        <g transform="translate(269,269) rotate(45)" filter="url(#cGlow)">
+                            <ellipse transform="rotate(0)"   cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(72)"  cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(144)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(216)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(288)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <circle cx="0" cy="0" r="4.5" fill="url(#stG)"/>
+                            <circle cx="0" cy="0" r="2"   fill="rgba(255,252,210,0.95)"/>
+                        </g>
+                    </g>
+
+                    <!-- 0° = right (310,170) — delay 2.88s -->
+                    <g class="wf" style="animation-delay:2.88s;transform-origin:310px 170px">
+                        <g transform="translate(310,170) rotate(90)" filter="url(#cGlow)">
+                            <ellipse transform="rotate(0)"   cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(72)"  cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(144)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(216)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(288)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <circle cx="0" cy="0" r="4.5" fill="url(#stG)"/>
+                            <circle cx="0" cy="0" r="2"   fill="rgba(255,252,210,0.95)"/>
+                        </g>
+                    </g>
+
+                    <!-- 45° = upper-right (269,71) — delay 3.00s -->
+                    <g class="wf" style="animation-delay:3.00s;transform-origin:269px 71px">
+                        <g transform="translate(269,71) rotate(135)" filter="url(#cGlow)">
+                            <ellipse transform="rotate(0)"   cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(72)"  cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(144)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(216)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(288)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <circle cx="0" cy="0" r="4.5" fill="url(#stG)"/>
+                            <circle cx="0" cy="0" r="2"   fill="rgba(255,252,210,0.95)"/>
+                        </g>
+                    </g>
+
+                    <!-- 90° = top (170,30) — delay 3.10s -->
+                    <g class="wf" style="animation-delay:3.10s;transform-origin:170px 30px">
+                        <g transform="translate(170,30) rotate(180)" filter="url(#cGlow)">
+                            <ellipse transform="rotate(0)"   cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(72)"  cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(144)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(216)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(288)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <circle cx="0" cy="0" r="4.5" fill="url(#stG)"/>
+                            <circle cx="0" cy="0" r="2"   fill="rgba(255,252,210,0.95)"/>
+                        </g>
+                    </g>
+
+                    <!-- 135° = upper-left (71,71) — delay 3.20s -->
+                    <g class="wf" style="animation-delay:3.20s;transform-origin:71px 71px">
+                        <g transform="translate(71,71) rotate(225)" filter="url(#cGlow)">
+                            <ellipse transform="rotate(0)"   cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(72)"  cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(144)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(216)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(288)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <circle cx="0" cy="0" r="4.5" fill="url(#stG)"/>
+                            <circle cx="0" cy="0" r="2"   fill="rgba(255,252,210,0.95)"/>
+                        </g>
+                    </g>
+
+                    <!-- 180° = left (30,170) — delay 3.30s -->
+                    <g class="wf" style="animation-delay:3.30s;transform-origin:30px 170px">
+                        <g transform="translate(30,170) rotate(270)" filter="url(#cGlow)">
+                            <ellipse transform="rotate(0)"   cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(72)"  cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(144)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(216)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(288)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <circle cx="0" cy="0" r="4.5" fill="url(#stG)"/>
+                            <circle cx="0" cy="0" r="2"   fill="rgba(255,252,210,0.95)"/>
+                        </g>
+                    </g>
+
+                    <!-- 225° = lower-left (71,269) — delay 3.40s -->
+                    <g class="wf" style="animation-delay:3.40s;transform-origin:71px 269px">
+                        <g transform="translate(71,269) rotate(315)" filter="url(#cGlow)">
+                            <ellipse transform="rotate(0)"   cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(72)"  cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(144)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <ellipse transform="rotate(216)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan)"  opacity="0.95"/>
+                            <ellipse transform="rotate(288)" cx="0" cy="-10" rx="5" ry="9" fill="url(#wpCyan2)" opacity="0.95"/>
+                            <circle cx="0" cy="0" r="4.5" fill="url(#stG)"/>
+                            <circle cx="0" cy="0" r="2"   fill="rgba(255,252,210,0.95)"/>
+                        </g>
+                    </g>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             SEPARATE KRES LOGO IMAGE SECTION
+             Edit the href below to change the logo image
+             Default: {% static 'images/admin-logo.png' %}
+             To use a different logo, change the path below:
+             ═════════════════════════════════════════════════════════════════════ -->
+                    <g class="rose-g">
+                        <!-- KRES LOGO IMAGE (Editable) -->
+                        <image class="rc logo-img" 
+                               href="{% static 'images/admin-logo.png' %}"
+                               x="70" y="70" width="200" height="200"
+                               preserveAspectRatio="xMidYMid meet"
+                               style="animation-delay:3.4s;transform-origin:170px 170px;filter:drop-shadow(0 0 24px rgba(220,240,255,0.85))"/>
+                    </g><!-- end rose-g -->
+                    <!-- ═════════════════════════════════════════════════════════════════════ -->
+
+                </svg>
+            </div>
+            <p class="kres-co-text">KRES CO.</p>
+            <p class="tagline">Track &nbsp;·&nbsp; Manage &nbsp;·&nbsp; Monitor</p>
+        </div>
+
+        <!-- ═══════════════════════════════════════════
+             GLASSMORPHISM LOGIN CARD 
+        ═══════════════════════════════════════════ -->
+        <div class="login-card">
+            <div class="card-brand">
+                <div class="card-logo-ring">
+                    <img src="{% static 'images/admin-logo.png' %}" alt="KRES Logo">
+                </div>
+                <div class="kres-presents">KRES Presents</div>
+                <div class="kres-sub">Admin Portal</div>
+            </div>
+            <div class="card-divider"></div>
+            <div class="welcome-block">
+                <h2>Welcome Back</h2>
+                <p>Login to your admin portal</p>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                {% if messages %}
+                    <div class="messages-container">
+                        {% for message in messages %}
+                            <div class="message-error">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="form-group">
+                    <label for="email">Email or Username</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">✉</span>
+                        <input type="text" id="email" name="email" placeholder="kres_admin" required autofocus>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    </div>
+                </div>
+                <div class="form-options">
+                    <div class="remember-me">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Remember Me</label>
+                    </div>
+                </div>
+                <div class="btn-wrap">
+                    <button type="submit" class="login-btn">Login to Dashboard</button>
+                </div>
+            </form>
+            <p class="card-footer">KRES Co. &nbsp;·&nbsp; Secure Admin Access</p>
+        </div>
+
+    </div>
+</body>
+</html>

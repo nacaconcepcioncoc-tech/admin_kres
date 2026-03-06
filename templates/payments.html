@@ -1,0 +1,271 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KRES Co. Admin - Payments</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'DM Sans',sans-serif; background:#CCDEE4; display:flex; min-height:100vh; }
+        .sidebar { width:310px; background:#02182E; color:white; display:flex; flex-direction:column; position:fixed; height:100vh; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+        .logo-section {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 25px 20px;
+            gap: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .logo {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 0;
+        }
+        .logo img {
+            display: block;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: transparent;
+            padding: 0;
+        }
+        .logo-text h1 { font-family:'Times New Roman',serif; font-size:21px; font-weight:700; margin-bottom:2px; letter-spacing:.3px; }
+        .logo-text p { font-size:11px; color:#d0dce8; font-weight:400; letter-spacing:.5px; text-transform:uppercase; }
+        .nav-menu { flex:1; padding:10px; overflow-y:auto; margin-top:40px; }
+        .nav-item { display:flex; align-items:center; gap:15px; padding:15px 20px; color:#b8c9d9; text-decoration:none; border-radius:8px; margin-bottom:5px; transition:all .3s; font-size:15px; }
+        .nav-item:hover { background:rgba(255,255,255,.1); color:white; }
+        .nav-item.active { background:#85C4E4; color:#02182E; }
+        .nav-item svg { width:24px; height:24px; flex-shrink:0; }
+        .user-profile { display:flex; align-items:center; gap:12px; padding:20px; border-top:1px solid rgba(255,255,255,.1); margin-top:auto; }
+        .avatar { width:42px; height:42px; background:#5d7a8f; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:600; }
+        .user-name { font-size:14px; font-weight:600; flex:1; }
+        .logout-icon { width:24px; height:24px; color:#b8c9d9; cursor:pointer; transition:color .3s; }
+        .logout-icon:hover { color:white; }
+        .main-content { margin-left:310px; flex:1; background:#CCDEE4; min-height:100vh; }
+        .header { background:#FFFFFF; padding:25px 35px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 8px rgba(2,24,46,0.1); border-bottom:1.5px solid rgba(72,141,180,0.2); }
+        .header-left { display:flex; align-items:center; gap:15px; }
+        .header-left svg { width:24px; height:24px; color:#333; }
+        .header h2 { font-size:28px; font-weight:600; color:#022F56; }
+        .notification-icon { position:relative; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; }
+        .notification-icon svg { width:28px; height:28px; color:#1a1a1a; }
+        .notification-badge { position:absolute; top:2px; right:2px; background:#ef4444; color:white; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
+        .notification-dropdown { position:absolute; top:60px; right:20px; background:white; border:1px solid #e0e0e0; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.1); width:300px; max-height:400px; overflow-y:auto; z-index:1000; display:none; }
+        .notification-dropdown.show { display:block; }
+        .notification-header { padding:15px; border-bottom:1px solid #e0e0e0; font-weight:600; color:#1a1a1a; }
+        .notification-item { padding:12px 15px; border-bottom:1px solid #f0f0f0; cursor:pointer; }
+        .notification-item:hover { background:#f5f5f5; }
+        .notification-item-title { font-weight:600; color:#1a1a1a; margin-bottom:4px; }
+        .notification-item-text { font-size:12px; color:#666; }
+        .notification-footer { padding:10px 15px; text-align:center; border-top:1px solid #e0e0e0; color:#3d5a73; font-size:13px; font-weight:600; }
+        .page-content { padding:30px 35px; }
+
+        /* Summary Cards */
+        .summary-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:20px; margin-bottom:28px; }
+        .summary-card { background:white; border-radius:12px; padding:22px 24px; box-shadow:0 2px 8px rgba(2,24,46,0.1); border:1.2px solid rgba(133,196,228,0.3); transition:all .3s; text-decoration:none; display:block; cursor:pointer; }
+        .summary-card:hover { transform:translateY(-3px); box-shadow:0 6px 16px rgba(72,141,180,0.15); border-color:rgba(72,141,180,0.4); }
+        .summary-card h4 { font-size:12px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.6px; margin-bottom:12px; }
+        .summary-card .val { font-size:28px; font-weight:700; color:#022F56; }
+        .summary-card .val.green { color:#059669; }
+
+        /* Table */
+        .content-card { background:white; border-radius:12px; padding:24px; box-shadow:0 2px 8px rgba(2,24,46,0.1); border:1.2px solid rgba(133,196,228,0.3); }
+        .content-card h3 { font-size:18px; font-weight:700; color:#022F56; margin-bottom:20px; }
+        .payment-table { width:100%; border-collapse:collapse; }
+        .payment-table thead { background:rgba(133,196,228,0.15); }
+        .payment-table th { padding:14px 16px; text-align:left; font-size:12px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.5px; border-bottom:2px solid rgba(72,141,180,0.2); }
+        .payment-table td { padding:16px; border-bottom:1px solid #f0f0f0; color:#374151; font-size:14px; }
+        .payment-table tbody tr:hover { background:rgba(133,196,228,0.1); }
+        .payment-table tbody tr:last-child td { border-bottom:none; }
+        .status-badge { display:inline-block; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600; }
+        .st-completed { background:#dcfce7; color:#16a34a; }
+        .st-paid { background:#dbeafe; color:#1d4ed8; }
+        .st-pending { background:#fef3c7; color:#d97706; }
+        .st-failed { background:#fee2e2; color:#dc2626; }
+        .method-badge { display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:6px; font-size:13px; font-weight:600; }
+        .m-gcash { background:#e0f2fe; color:#0369a1; }
+        .m-cash { background:#dcfce7; color:#16a34a; }
+        .m-bank { background:#f3e8ff; color:#7c3aed; }
+        .empty-msg { text-align:center; padding:50px; color:#9ca3af; }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <div class="logo-section">
+        <div class="logo"><img src="{% static 'images/logo.png' %}" alt="KRES Logo" style="width: 70px; height: 70px; object-fit: contain;"></div>
+        <div class="logo-text"><h1>KRES  Co. Admin</h1><p>Management Panel</p></div>
+    </div>
+    <nav class="nav-menu">
+        <a href="{% url 'pages:dashboard' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/></svg><span>Dashboard</span></a>
+        <a href="{% url 'pages:inventory' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><path d="M20 7H4C2.9 7 2 7.9 2 9V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V9C22 7.9 21.1 7 20 7Z" stroke="currentColor" stroke-width="2"/><path d="M12 7V3M8 7V5M16 7V5" stroke="currentColor" stroke-width="2"/></svg><span>Inventory</span></a>
+        <a href="{% url 'pages:orders' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><path d="M9 2L7 6H3L8 10L6 14L12 11L18 14L16 10L21 6H17L15 2H9Z" stroke="currentColor" stroke-width="2"/><path d="M6 14L4 22H20L18 14" stroke="currentColor" stroke-width="2"/></svg><span>Orders</span></a>
+        <a href="{% url 'pages:customers' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="10" r="3" stroke="currentColor" stroke-width="2"/><path d="M2 20C2 16.5 5 14 9 14C13 14 16 16.5 16 20" stroke="currentColor" stroke-width="2"/><path d="M13 20C13 17.5 15 16 17 16C19 16 22 17.5 22 20" stroke="currentColor" stroke-width="2"/></svg><span>Customers</span></a>
+        <a href="{% url 'pages:payments' %}" class="nav-item active"><svg viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M2 10H22M6 14H10M6 17H8" stroke="currentColor" stroke-width="2"/></svg><span>Payments</span></a>
+        <a href="{% url 'pages:reports' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 2V6M16 2V6M3 10H21" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="14" r="1" fill="currentColor"/><circle cx="12" cy="14" r="1" fill="currentColor"/><circle cx="16" cy="14" r="1" fill="currentColor"/><circle cx="8" cy="18" r="1" fill="currentColor"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg><span>Reports</span></a>
+    </nav>
+    <div class="user-profile">
+        <div class="avatar">A</div>
+        <div class="user-name">Admin User</div>
+       <a href="#" onclick="openLogoutModal(); return false;" style="text-decoration:none;display:inline-flex;align-items:center;">
+            <svg class="logout-icon" viewBox="0 0 24 24" fill="none"><path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+    </div>
+</div>
+
+<div class="main-content">
+    <header class="header">
+        <div class="header-left">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <h2>Payments</h2>
+        </div>
+        <div class="notification-icon" onclick="toggleNotificationDropdown(event)">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="width: 28px; height: 28px;"><path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.89 22 12 22ZM18 16V11C18 7.93 16.36 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.64 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z"/></svg>
+            {% with total=low_stock_count|add:pending_payments_count|add:new_customers_count %}{% if total > 0 %}<span class="notification-badge">{{ total }}</span>{% endif %}{% endwith %}
+            <div id="notificationDropdown" class="notification-dropdown">
+                <div class="notification-header">Notifications</div>
+                {% if new_customers_count > 0 %}<a href="{% url 'pages:customers' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">👥 New Customers</div><div class="notification-item-text">{{ new_customers_count }} new customer(s) today</div></div></a>{% endif %}
+                {% if low_stock_count > 0 %}<a href="{% url 'pages:inventory' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">⚠️ Low Stock Alert</div><div class="notification-item-text">{{ low_stock_count }} product(s) running low</div></div></a>{% endif %}
+                {% if pending_payments_count > 0 %}<a href="{% url 'pages:payments' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">💳 Pending Payments</div><div class="notification-item-text">{{ pending_payments_count }} payment(s) waiting</div></div></a>{% endif %}
+                {% with total=low_stock_count|add:pending_payments_count|add:new_customers_count %}
+                    <div class="notification-footer">{% if total == 0 %}No new notifications{% else %}All notifications{% endif %}</div>
+                {% endwith %}
+            </div>
+        </div>
+    </header>
+
+    <div class="page-content">
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+            <a href="{% url 'pages:customers' %}" class="summary-card">
+                <h4>Customers Transacted</h4>
+                <div class="val">{{ customers_transacted }}</div>
+            </a>
+            <a href="{% url 'pages:orders' %}" class="summary-card">
+                <h4>Orders Completed</h4>
+                <div class="val">{{ orders_completed }}</div>
+            </a>
+        </div>
+
+        <!-- Transactions Table with Status Filter -->
+        <div class="content-card" id="transactions-table">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3 style="margin:0;">Recent Payment Transactions</h3>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <label style="font-size:13px; font-weight:600; color:#6b7280; white-space:nowrap;">Status:</label>
+                    <select id="paymentStatusFilter" style="padding:8px 12px; border:2px solid #e5e7eb; border-radius:8px; font-size:13px; background:white; color:#374151; cursor:pointer;">
+                        <option value="all" {% if not status_filter or status_filter == 'all' %}selected{% endif %}>All</option>
+                        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;background:#fef9e7;border-left:3px solid #f59e0b;border-radius:6px;padding:8px 14px;margin-bottom:16px;">
+                <span style="font-size:14px;">⚠️</span>
+                <span style="font-size:12px;color:#92400e;">Payments for completed orders will be automatically cleared on <strong id="nextMonthDeletionDate"></strong>.</span>
+            </div>
+            <table class="payment-table">
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>Order ID</th>
+                        <th>Amount</th>
+                        <th>Payment Method</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr data-payment-status="{{ payment.payment_status }}">
+                        <td style="font-weight:600;color:#1a1a1a;">{{ payment.order.customer.first_name }} {{ payment.order.customer.last_name }}</td>
+                        <td style="font-family:monospace;font-size:13px;">{{ payment.order.order_number|slice:":8" }}-{{ payment.order.created_at|date:'m/d/y' }}</td>
+                        <td style="font-weight:700;">₱ {{ payment.amount|floatformat:2 }}</td>
+                        <td>
+                            {% if payment.payment_method == 'gcash' %}<span class="method-badge m-gcash"> GCash</span>
+                            {% elif payment.payment_method == 'cash' %}<span class="method-badge m-cash"> Cash</span>
+                            {% elif payment.payment_method == 'bank_transfer' %}<span class="method-badge m-bank"> Bank Transfer</span>
+                            {% else %}<span class="method-badge m-cash">{{ payment.payment_method }}</span>{% endif %}
+                        </td>
+                        <td>
+                            {% if payment.order.status == 'completed' %}
+                                <span class="status-badge st-completed">✅ Completed</span>
+                            {% elif payment.payment_status == 'completed' %}
+                                <span class="status-badge st-paid">💳 Fully Paid</span>
+                            {% else %}
+                                <span class="status-badge st-pending">💰 Down Payment</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="empty-msg">
+                        <div style="font-size:36px;margin-bottom:8px;">💳</div>
+                        <div style="font-size:15px;font-weight:600;color:#6b7280;">No transactions yet</div>
+                        <div style="font-size:13px;margin-top:4px;">Payments will appear here when orders are created.</div>
+                    </td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+// ── Notification dropdown functionality ──
+function toggleNotificationDropdown(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropdown = document.getElementById('notificationDropdown');
+    
+    if (dropdown) {
+        dropdown.classList.toggle('show');
+    }
+}
+
+// Close notification dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('notificationDropdown');
+    const notificationIcon = document.querySelector('.notification-icon');
+    
+    if (dropdown && !dropdown.contains(event.target) && !notificationIcon.contains(event.target)) {
+        dropdown.classList.remove('show');
+    }
+});
+
+// Payment status filter - navigate with URL parameter
+const paymentStatusFilter = document.getElementById('paymentStatusFilter');
+if (paymentStatusFilter) {
+    paymentStatusFilter.addEventListener('change', function() {
+        const value = this.value;
+        if (value === 'all') {
+            window.location.href = '/payments/';
+        } else {
+            window.location.href = '/payments/?status=' + value;
+        }
+    });
+}
+</script>
+
+<script>
+// Populate the next month deletion date in the warning banner
+(function() {
+    const nextDeletionDate = new Date('{{ next_deletion_date|date:"Y-m-d" }}');
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    const formattedDate = nextDeletionDate.toLocaleDateString('en-US', options);
+    const dateSpan = document.getElementById('nextMonthDeletionDate');
+    if (dateSpan) {
+        dateSpan.textContent = formattedDate;
+    }
+})();
+</script>
+
+ {% include 'logout_modal.html' %}
+</body>
+</html>

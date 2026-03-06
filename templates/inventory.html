@@ -1,0 +1,862 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KRES Co. Admin - Inventory</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'DM Sans',sans-serif; background:#CCDEE4; display:flex; min-height:100vh; }
+        .sidebar { width:310px; background:#02182E; color:white; display:flex; flex-direction:column; position:fixed; height:100vh; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+        .logo-section {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 25px 20px;
+            gap: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .logo {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 0;
+        }
+        .logo img {
+            display: block;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: transparent;
+            padding: 0;
+        }
+        .logo-text h1 { font-family:'Times New Roman',serif; font-size:21px; font-weight:700; margin-bottom:2px; letter-spacing:.3px; }
+        .logo-text p { font-size:11px; color:#d0dce8; font-weight:400; letter-spacing:.5px; text-transform:uppercase; }
+        .nav-menu { flex:1; padding:10px; overflow-y:auto; margin-top:40px; }
+        .nav-item { display:flex; align-items:center; gap:15px; padding:15px 20px; color:#b8c9d9; text-decoration:none; border-radius:8px; margin-bottom:5px; transition:all .3s; font-size:15px; }
+        .nav-item:hover { background:rgba(255,255,255,.1); color:white; }
+        .nav-item.active { background:#85C4E4; color:#02182E; }
+        .nav-item svg { width:24px; height:24px; flex-shrink:0; }
+        .user-profile { display:flex; align-items:center; gap:12px; padding:20px; border-top:1px solid rgba(255,255,255,.1); margin-top:auto; }
+        .avatar { width:42px; height:42px; background:#5d7a8f; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:600; }
+        .user-name { font-size:14px; font-weight:600; flex:1; }
+        .logout-icon { width:24px; height:24px; color:#b8c9d9; cursor:pointer; transition:color .3s; }
+        .logout-icon:hover { color:white; }
+        .main-content { margin-left:310px; flex:1; background:#CCDEE4; min-height:100vh; }
+        .header { background:white; padding:25px 35px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+        .header-left { display:flex; align-items:center; gap:15px; }
+        .header-left svg { width:24px; height:24px; color:#333; }
+        .header h2 { font-size:28px; font-weight:600; color:#022F56; }
+        .notification-icon { position:relative; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; }
+        .notification-icon svg { width:28px; height:28px; color:#1a1a1a; }
+        .notification-badge { position:absolute; top:2px; right:2px; background:#ef4444; color:white; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
+        .notification-dropdown { position:absolute; top:60px; right:20px; background:white; border:1px solid #e0e0e0; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.1); width:300px; max-height:400px; overflow-y:auto; z-index:1000; display:none; }
+        .notification-dropdown.show { display:block; }
+        .notification-header { padding:15px; border-bottom:1px solid #e0e0e0; font-weight:600; color:#1a1a1a; }
+        .notification-item { padding:12px 15px; border-bottom:1px solid #f0f0f0; cursor:pointer; }
+        .notification-item:hover { background:#f5f5f5; }
+        .notification-item-title { font-weight:600; color:#1a1a1a; margin-bottom:4px; }
+        .notification-item-text { font-size:12px; color:#666; }
+        .notification-footer { padding:10px 15px; text-align:center; border-top:1px solid #e0e0e0; color:#3d5a73; font-size:13px; font-weight:600; }
+        .page-content { padding:30px 35px; }
+        .search-wrap { position:relative; }
+        .search-wrap svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:#9ca3af; pointer-events:none; }
+        .search-wrap input { padding:10px 12px 10px 36px; border:2px solid #e5e7eb; border-radius:9px; font-size:14px; font-family:inherit; color:#374151; background:white; width:260px; }
+        .search-wrap input:focus { outline:none; border-color:#3d5a73; }
+        .filter-select { padding:10px 14px; border:2px solid #e5e7eb; border-radius:9px; font-size:14px; font-family:inherit; background:white; color:#374151; cursor:pointer; }
+        .filter-select:focus { outline:none; border-color:#3d5a73; }
+
+        /* Table */
+        .table-container { background:#FFFFFF; border-radius:12px; box-shadow:0 2px 8px rgba(2,24,46,0.1); border:1.2px solid rgba(133,196,228,0.3); overflow:hidden; }
+        table { width:100%; border-collapse:collapse; }
+        thead { background:#f9fafb; }
+        th { padding:16px 18px; text-align:left; font-size:12px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.5px; border-bottom:2px solid rgba(72,141,180,0.2); }
+        td { padding:16px 18px; font-size:14px; color:#374151; border-bottom:1px solid rgba(133,196,228,0.15); vertical-align:middle; }
+        tbody tr:hover { background:rgba(133,196,228,0.1); }
+        tbody tr:last-child td { border-bottom:none; }
+        .stock-badge { display:inline-block; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; }
+        .st-in { background:#d1fae5; color:#059669; }
+        .st-low { background:#fef3c7; color:#d97706; }
+        .st-out { background:#fee2e2; color:#dc2626; }
+        /* Action buttons */
+        .action-cell { display:flex; gap:8px; align-items:center; }
+        .btn-edit { background:#f0f4f8; color:#3d5a73; border:1.5px solid #d0dce8; padding:6px 14px; border-radius:7px; font-size:12.5px; font-weight:600; cursor:pointer; transition:all .2s; font-family:inherit; }
+        .btn-edit:hover { background:#3d5a73; color:white; border-color:#3d5a73; }
+        .btn-delete { background:#fef2f2; color:#dc2626; border:1.5px solid #fecaca; padding:6px 14px; border-radius:7px; font-size:12.5px; font-weight:600; cursor:pointer; transition:all .2s; font-family:inherit; }
+        .btn-delete:hover { background:#dc2626; color:white; border-color:#dc2626; }
+        .btn-add { background:#3d5a73; color:white; border:none; padding:10px 22px; border-radius:9px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .2s; display:flex; align-items:center; gap:7px; }
+        .btn-add:hover { background:#2c4456; transform:translateY(-1px); }
+        /* Modal */
+        .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(10,16,26,.6); backdrop-filter:blur(4px); align-items:center; justify-content:center; }
+        .modal.show { display:flex; }
+        .modal-shell { background:white; border-radius:16px; width:90%; max-width:520px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.25); animation:slideUp .3s cubic-bezier(.34,1.56,.64,1); max-height:90vh; overflow-y:auto; }
+        @keyframes slideUp { from{opacity:0;transform:translateY(20px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+        .modal-top { background:linear-gradient(135deg,#2c4456,#3d6680); padding:22px 26px; display:flex; align-items:center; justify-content:space-between; }
+        .modal-title { font-family:'DM Serif Display',serif; font-size:19px; color:white; }
+        .modal-sub { font-size:11px; color:rgba(255,255,255,.6); margin-top:2px; }
+        .close-btn { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:white; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+        .close-btn:hover { background:rgba(255,255,255,.25); transform:rotate(90deg); }
+        .modal-body { padding:22px 26px; }
+        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+        .span-2 { grid-column:span 2; }
+        .field { display:flex; flex-direction:column; gap:5px; }
+        .field label { font-size:11.5px; font-weight:600; color:#374151; }
+        .field input, .field select, .field textarea { width:100%; padding:9px 12px; background:white; border:1.5px solid #e5e7eb; border-radius:9px; font-size:13px; font-family:inherit; color:#1f2937; transition:all .2s; outline:none; }
+        .field input:focus, .field select:focus { border-color:#3d6680; box-shadow:0 0 0 3px rgba(61,102,128,.1); }
+        .modal-footer { padding:14px 26px 22px; background:#fafafa; border-top:1px solid #f0f0f0; display:flex; justify-content:flex-end; gap:9px; }
+        .btn-ghost { background:transparent; color:#6b7280; border:1.5px solid #e5e7eb; padding:9px 20px; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+        .btn-primary { background:linear-gradient(135deg,#2c4456,#3d6680); color:white; border:none; padding:9px 20px; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; box-shadow:0 4px 12px rgba(44,68,86,.25); }
+        .btn-primary:hover { transform:translateY(-1px); }
+        .error-banner { display:none; background:#fef2f2; border:1.5px solid #fecaca; border-radius:8px; padding:9px 13px; font-size:12.5px; font-weight:500; color:#dc2626; margin-bottom:14px; }
+        .error-banner.show { display:block; }
+        .success-toast { position:fixed; bottom:24px; right:24px; background:#059669; color:white; padding:12px 20px; border-radius:10px; font-size:14px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,.2); z-index:9999; display:none; }
+        .success-toast.show { display:block; }
+        .confirm-modal { display:none; position:fixed; z-index:3000; left:0; top:0; width:100%; height:100%; background:rgba(10,16,26,.6); align-items:center; justify-content:center; }
+        .confirm-modal.show { display:flex; }
+        .confirm-shell { background:white; border-radius:16px; width:90%; max-width:400px; padding:30px; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.25); }
+        .confirm-icon { font-size:48px; margin-bottom:16px; }
+        .confirm-title { font-size:18px; font-weight:700; color:#1a1a1a; margin-bottom:8px; }
+        .confirm-text { font-size:14px; color:#6b7280; margin-bottom:24px; }
+        .confirm-btns { display:flex; gap:10px; justify-content:center; }
+        .btn-cancel-del { background:#f3f4f6; color:#374151; border:1.5px solid #e5e7eb; padding:9px 22px; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+        .btn-confirm-del { background:#dc2626; color:white; border:none; padding:9px 22px; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <div class="logo-section">
+        <div class="logo"><img src="{% static 'images/logo.png' %}" alt="KRES Logo" style="width: 70px; height: 70px; object-fit: contain;"></div>
+        <div class="logo-text"><h1>KRES Co. Admin</h1><p>Management Panel</p></div>
+    </div>
+    <nav class="nav-menu">
+        <a href="{% url 'pages:dashboard' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/></svg><span>Dashboard</span></a>
+        <a href="{% url 'pages:inventory' %}" class="nav-item active"><svg viewBox="0 0 24 24" fill="none"><path d="M20 7H4C2.9 7 2 7.9 2 9V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V9C22 7.9 21.1 7 20 7Z" stroke="currentColor" stroke-width="2"/><path d="M12 7V3M8 7V5M16 7V5" stroke="currentColor" stroke-width="2"/></svg><span>Inventory</span></a>
+        <a href="{% url 'pages:orders' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><path d="M9 2L7 6H3L8 10L6 14L12 11L18 14L16 10L21 6H17L15 2H9Z" stroke="currentColor" stroke-width="2"/><path d="M6 14L4 22H20L18 14" stroke="currentColor" stroke-width="2"/></svg><span>Orders</span></a>
+        <a href="{% url 'pages:customers' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="10" r="3" stroke="currentColor" stroke-width="2"/><path d="M2 20C2 16.5 5 14 9 14C13 14 16 16.5 16 20" stroke="currentColor" stroke-width="2"/><path d="M13 20C13 17.5 15 16 17 16C19 16 22 17.5 22 20" stroke="currentColor" stroke-width="2"/></svg><span>Customers</span></a>
+        <a href="{% url 'pages:payments' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M2 10H22M6 14H10M6 17H8" stroke="currentColor" stroke-width="2"/></svg><span>Payments</span></a>
+        <a href="{% url 'pages:reports' %}" class="nav-item"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 2V6M16 2V6M3 10H21" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="14" r="1" fill="currentColor"/><circle cx="12" cy="14" r="1" fill="currentColor"/><circle cx="16" cy="14" r="1" fill="currentColor"/><circle cx="8" cy="18" r="1" fill="currentColor"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg><span>Reports</span></a>
+    </nav>
+    <div class="user-profile">
+        <div class="avatar">A</div>
+        <div class="user-name">Admin User</div>
+      <a href="#" onclick="openLogoutModal(); return false;" style="text-decoration:none;display:inline-flex;align-items:center;">
+            <svg class="logout-icon" viewBox="0 0 24 24" fill="none"><path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+    </div>
+</div>
+
+<div class="main-content">
+    <header class="header">
+        <div class="header-left">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <h2>Inventory</h2>
+        </div>
+        <div class="notification-icon" onclick="toggleNotifications(event)">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="width: 28px; height: 28px;"><path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.89 22 12 22ZM18 16V11C18 7.93 16.36 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.64 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z"/></svg>
+            {% with total=low_stock_count|add:pending_payments|add:new_customers_count %}{% if total > 0 %}<span class="notification-badge">{{ total }}</span>{% endif %}{% endwith %}
+            <div id="notificationDropdown" class="notification-dropdown">
+                <div class="notification-header">Notifications</div>
+                {% if new_customers_count > 0 %}<a href="{% url 'pages:customers' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">👥 New Customers</div><div class="notification-item-text">{{ new_customers_count }} new customer(s) today</div></div></a>{% endif %}
+                {% if low_stock_count > 0 %}<a href="{% url 'pages:inventory' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">⚠️ Low Stock Alert</div><div class="notification-item-text">{{ low_stock_count }} product(s) running low</div></div></a>{% endif %}
+                {% if pending_payments > 0 %}<a href="{% url 'pages:payments' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">💳 Pending Payments</div><div class="notification-item-text">{{ pending_payments }} payment(s) waiting</div></div></a>{% endif %}
+                {% with total=low_stock_count|add:pending_payments|add:new_customers_count %}
+                    <div class="notification-footer">{% if total == 0 %}No new notifications{% else %}All notifications{% endif %}</div>
+                {% endwith %}
+            </div>
+        </div>
+    </header>
+
+    <div class="page-content">
+
+        <!-- Toolbar -->
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+
+            <!-- Row 1: Search left, Add Product right -->
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                <div class="search-wrap">
+                    <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    <input type="text" id="searchInput" placeholder="Search products..." oninput="filterTable()">
+                </div>
+                <button class="btn-add" onclick="openAddModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Product
+                </button>
+            </div>
+
+            <!-- Row 2: Category pill, Stock pill, Low Stock alert — all same style -->
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+
+                <!-- Category Filter Pill -->
+                <div style="position:relative;">
+                    <div onclick="toggleCategoryDropdown()" id="categoryPill" style="display:inline-flex; align-items:center; gap:8px; background:white; border-left:4px solid #d1d5db; border-radius:8px; padding:9px 16px; cursor:pointer; transition:background .15s; white-space:nowrap; border:1.5px solid #d1d5db;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h8m-8 6h16"/></svg>
+                        <div>
+                            <div id="categoryPillLabel" style="font-size:13px; font-weight:700; color:#374151;">All Categories</div>
+                            <div style="font-size:11px; color:#23458a; margin-top:1px;">Click to filter</div>
+                        </div>
+                        <svg id="categoryChevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="3" style="transition:transform .2s; margin-left:4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </div>
+                    <div id="categoryDropdown" style="display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:100; background:white; border:1.5px solid #fef08a; border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,.12); min-width:180px; padding:6px;">
+                        <div onclick="setCategoryFilter('')"  class="filter-pill-option" style="padding:8px 12px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; color:#374151;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">All Categories</div>
+                        <div onclick="setCategoryFilter('flowers')" class="filter-pill-option" style="padding:8px 12px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; color:#065f46; background:white;" onmouseover="this.style.background='#d1fae5'" onmouseout="this.style.background='white'">Flowers</div>
+                        <div onclick="setCategoryFilter('fillers')" class="filter-pill-option" style="padding:8px 12px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; color:#1e3a8a; background:white;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='white'">Fillers</div>
+                    </div>
+                    <select id="categoryFilter" style="display:none;" onchange="filterTable();">
+                        <option value="">All Categories</option>
+                        <option value="flowers">Flowers</option>
+                        <option value="fillers">Fillers</option>
+                    </select>
+                </div>
+
+                <!-- Stock Filter Pill -->
+                <div style="position:relative;">
+                    <div onclick="toggleStockDropdown()" id="stockPill" style="display:inline-flex; align-items:center; gap:8px; background:white; border:1.5px solid #d1d5db; border-radius:8px; padding:9px 16px; cursor:pointer; transition:background .15s; white-space:nowrap;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div>
+                            <div id="stockPillLabel" style="font-size:13px; font-weight:700; color:#374151;">All Stock</div>
+                            <div id="stockPillSub" style="font-size:11px; color:#284786; margin-top:1px;">Click to filter</div>
+                        </div>
+                        <svg id="stockChevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="3" style="transition:transform .2s; margin-left:4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </div>
+                    <div id="stockDropdown" style="display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:100; background:white; border:1.5px solid #fed7aa; border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,.12); min-width:180px; padding:6px;">
+                        <div onclick="setStockFilter('')"    style="padding:8px 12px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; color:#374151; background:white;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">All Stock</div>
+                        <div onclick="setStockFilter('in')"  style="padding:8px 12px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; color:#065f46; background:white;" onmouseover="this.style.background='#d1fae5'" onmouseout="this.style.background='white'">In Stock</div>
+                        <div onclick="setStockFilter('low')" style="padding:8px 12px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; color:#92400e; background:white;" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='white'">Low Stock</div>
+                        <div onclick="setStockFilter('out')" style="padding:8px 12px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; color:#991b1b; background:white;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='white'">Out of Stock</div>
+                    </div>
+                    <select id="stockFilter" style="display:none;" onchange="filterTable();">
+                        <option value="">All Stock</option>
+                        <option value="in">In Stock</option>
+                        <option value="low">Low Stock</option>
+                        <option value="out">Out of Stock</option>
+                    </select>
+                </div>
+
+                <!-- Low Stock Alert -->
+                {% if low_stock_items %}
+                <div style="position:relative;">
+                    <div onclick="toggleStockAlerts()" style="display:inline-flex; align-items:center; gap:8px; background:#fee2e2; border-left:4px solid #dc2626; border-radius:8px; padding:9px 16px; cursor:pointer; transition:background .15s; white-space:nowrap;" onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                        <div>
+                            <div style="font-size:13px; font-weight:700; color:#991b1b;">{{ low_stock_items|length }} Item(s) Low on Stock</div>
+                            <div style="font-size:11px; color:#b91c1c; margin-top:1px;">Click to view details</div>
+                        </div>
+                        <svg id="alertToggleIcon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#991b1b" stroke-width="3" style="transition:transform .2s; margin-left:4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </div>
+                    <div id="stockAlertsExpanded" style="display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:100; background:white; border:1.5px solid #fecaca; border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,.12); min-width:320px; padding:10px;">
+                        <div style="display:grid; gap:6px;">
+                            {% for item in low_stock_items %}
+                            <div style="padding:8px 12px; background:#fff5f5; border-radius:6px; font-size:13px; display:flex; justify-content:space-between; align-items:center; border-left:3px solid #dc2626;">
+                                <span><strong>{{ item.name }}</strong> — {{ item.stock_quantity }} {{ item.unit }} left</span>
+                                <span style="color:#dc2626; font-weight:600; font-size:11px; background:#fecaca; padding:2px 8px; border-radius:4px; margin-left:10px;">Low Stock</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:8px;background:#fef9e7;border-left:3px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:16px;">
+            <span style="font-size:14px;margin-top:1px;">⚠️</span>
+            <span style="font-size:12px;color:#92400e;line-height:1.5;">Stock quantities and stock statuses will be automatically deleted on <strong id="nextMonthDeletionDate"></strong> to start a new inventory cycle. Your product information (product name, category, price, and unit) will remain intact and will not be deleted. Please update the new stock quantities for the new month or export your data if you need a backup.</span>
+        </div>
+
+        <!-- Products Table -->
+        <div class="table-container">
+            <table id="productsTable">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Category</th>
+                        <th>Price (₱)</th>
+                        <th>Stock</th>
+                        <th>Unit</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr data-id="{{ product.product_id }}"
+                        data-name="{{ product.name }}"
+                        data-category="{{ product.category }}"
+                        data-price="{{ product.price }}"
+                        data-stock="{{ product.stock_quantity }}"
+                        data-unit="{{ product.unit }}"
+                        data-stockstatus="{% if product.stock_quantity == 0 %}out{% elif product.is_low_stock %}low{% else %}in{% endif %}">
+                        <td style="font-weight:600;color:#1a1a1a;">{{ product.name }}</td>
+                        <td>
+                            {% if product.category == 'FLOWERS' %}
+                                <span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:#d1fae5;color:#065f46;">Flowers</span>
+                            {% elif product.category == 'FILLERS' %}
+                                <span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:#dbeafe;color:#1e3a8a;">Fillers</span>
+                            {% else %}
+                                <span>{{ product.category|default:"—" }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-weight:700;">₱ {{ product.price|floatformat:2 }}</td>
+                        <td style="font-weight:700;">{{ product.stock_quantity }}</td>
+                        <td>{{ product.unit }}</td>
+                        <td>
+                            {% if product.stock_quantity == 0 %}
+                                <span class="stock-badge st-out">Out of Stock</span>
+                            {% elif product.is_low_stock %}
+                                <span class="stock-badge st-low">Low Stock</span>
+                            {% else %}
+                                <span class="stock-badge st-in">In Stock</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-cell">
+                                <button class="btn-edit" onclick="openEditModal(this.closest('tr'))">Edit</button>
+                                <button class="btn-delete" onclick="openDeleteConfirm('{{ product.product_id }}', '{{ product.name }}')">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" style="text-align:center;padding:60px;color:#9ca3af;">
+                        <div style="font-size:38px;margin-bottom:10px;">📦</div>
+                        <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:#6b7280;">No products yet</div>
+                        <div style="font-size:13px;">Click "Add Product" to add your first inventory item.</div>
+                    </td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Product Modal -->
+<div id="productModal" class="modal">
+    <div class="modal-shell">
+        <div class="modal-top">
+            <div><div class="modal-title" id="modalTitle">Add Product</div><div class="modal-sub" id="modalSub">Fill in product details</div></div>
+            <button class="close-btn" onclick="closeProductModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="error-banner" id="formError"></div>
+            <input type="hidden" id="editProductId">
+            <div class="form-grid">
+                <div class="field span-2">
+                    <label>Product Name *</label>
+                    <input type="text" id="pName" placeholder="e.g. Red Roses" style="text-transform:capitalize;">
+                </div>
+                <div class="field">
+                    <label>Category *</label>
+                    <select id="pCategory">
+                        <option value="">— Select —</option>
+                        <option value="FLOWERS">Flowers</option>
+                        <option value="FILLERS">Fillers</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Price (₱) *</label>
+                    <input type="number" id="pPrice" placeholder="0.00" min="0" step="0.01">
+                </div>
+                <div class="field">
+                    <label>Stock Quantity</label>
+                    <input type="number" id="pStock" placeholder="0" min="0">
+                </div>
+                <div class="field">
+                    <label>Unit</label>
+                    <select id="pUnit">
+                        <option value="pcs">pcs</option>
+                        <option value="bundles">bundles</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-ghost" onclick="closeProductModal()">Cancel</button>
+            <button class="btn-primary" id="saveProductBtn" onclick="saveProduct()">Save Product</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div id="confirmModal" class="confirm-modal">
+    <div class="confirm-shell">
+        <div class="confirm-icon">🗑️</div>
+        <div class="confirm-title">Delete Product?</div>
+        <div class="confirm-text" id="confirmText">This action cannot be undone.</div>
+        <div class="confirm-btns">
+            <button class="btn-cancel-del" onclick="closeConfirmModal()">Cancel</button>
+            <button class="btn-confirm-del" id="confirmDeleteBtn">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Success Toast -->
+<div class="success-toast" id="successToast"></div>
+
+{% csrf_token %}
+
+<script>
+function getCookie(name) {
+    for (const c of document.cookie.split(';')) {
+        const t = c.trim();
+        if (t.startsWith(name + '=')) return decodeURIComponent(t.slice(name.length + 1));
+    }
+    return '';
+}
+const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value || getCookie('csrftoken');
+
+function showToast(msg, isError) {
+    const t = document.getElementById('successToast');
+    t.textContent = msg;
+    t.style.background = isError ? '#dc2626' : '#059669';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Notifications ──
+function toggleNotifications(event) {
+    event.stopPropagation();
+    document.getElementById('notificationDropdown').classList.toggle('show');
+}
+document.addEventListener('click', function(e) {
+    const icon = document.querySelector('.notification-icon');
+    if (icon && !icon.contains(e.target)) {
+        const dd = document.getElementById('notificationDropdown');
+        if (dd) dd.classList.remove('show');
+    }
+});
+
+// ── Filter + Sort ──
+function filterTable() {
+    const q  = document.getElementById('searchInput').value.toLowerCase();
+    const sf = document.getElementById('stockFilter').value;
+    const cf = document.getElementById('categoryFilter').value.toLowerCase();
+    const tbody = document.querySelector('#productsTable tbody');
+    const rows  = Array.from(tbody.querySelectorAll('tr[data-id]'));
+
+    rows.forEach(row => {
+        const name = (row.getAttribute('data-name') || '').toLowerCase();
+        const cat  = (row.getAttribute('data-category') || '').toLowerCase();
+        const ss   = row.getAttribute('data-stockstatus') || '';
+        const matchQ = !q  || name.includes(q);
+        const matchS = !sf || ss === sf;
+        const matchC = !cf || cat === cf;
+        row.style.display = (matchQ && matchS && matchC) ? '' : 'none';
+    });
+
+    // Sort visible rows alphabetically by name
+    const visibleRows = rows.filter(r => r.style.display !== 'none');
+    visibleRows.sort((a, b) => {
+        const nameA = (a.getAttribute('data-name') || '').toLowerCase();
+        const nameB = (b.getAttribute('data-name') || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+    });
+    visibleRows.forEach(row => tbody.appendChild(row));
+}
+
+// ── Add Modal ──
+function openAddModal() {
+    document.getElementById('modalTitle').textContent = 'Add Product';
+    document.getElementById('modalSub').textContent = 'Fill in product details';
+    document.getElementById('editProductId').value = '';
+    document.getElementById('pName').value = '';
+    document.getElementById('pCategory').value = '';
+    document.getElementById('pPrice').value = '';
+    document.getElementById('pStock').value = '';
+    document.getElementById('pUnit').value = 'pcs';
+    document.getElementById('formError').textContent = '';
+    document.getElementById('formError').classList.remove('show');
+    document.getElementById('saveProductBtn').textContent = 'Save Product';
+    document.getElementById('productModal').classList.add('show');
+}
+
+// ── Edit Modal ──
+function openEditModal(row) {
+    document.getElementById('modalTitle').textContent = 'Edit Product';
+    document.getElementById('modalSub').textContent = 'Update product details';
+    document.getElementById('editProductId').value = row.getAttribute('data-id');
+    document.getElementById('pName').value = row.getAttribute('data-name') || '';
+    document.getElementById('pCategory').value = row.getAttribute('data-category') || '';
+    document.getElementById('pPrice').value = row.getAttribute('data-price') || '';
+    document.getElementById('pStock').value = row.getAttribute('data-stock') || '0';
+    document.getElementById('pUnit').value = row.getAttribute('data-unit') || 'pcs';
+    document.getElementById('formError').textContent = '';
+    document.getElementById('formError').classList.remove('show');
+    document.getElementById('saveProductBtn').textContent = 'Update Product';
+    document.getElementById('productModal').classList.add('show');
+}
+
+function closeProductModal() {
+    document.getElementById('productModal').classList.remove('show');
+}
+
+// ── Add Product Row to Table ──
+function addProductRow(product) {
+    const tbody = document.querySelector('#productsTable tbody');
+    const emptyRow = tbody.querySelector('tr:has(td[colspan="7"])');
+    if (emptyRow) emptyRow.remove();
+
+    const threshold = product.unit === 'bundles' ? 1 : 12;
+    const stockStatus = product.stock_quantity == 0 ? 'out' : (product.stock_quantity <= threshold ? 'low' : 'in');
+    const statusBadge = product.stock_quantity == 0
+        ? '<span class="stock-badge st-out">Out of Stock</span>'
+        : (product.stock_quantity <= threshold
+            ? '<span class="stock-badge st-low">Low Stock</span>'
+            : '<span class="stock-badge st-in">In Stock</span>');
+
+    const cat = (product.category || '').toUpperCase();
+    const catBadge = cat === 'FLOWERS'
+        ? '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:#d1fae5;color:#065f46;">Flowers</span>'
+        : cat === 'FILLERS'
+            ? '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:#dbeafe;color:#1e3a8a;">Fillers</span>'
+            : (product.category || '—');
+
+    const html = `<tr data-id="${product.product_id}"
+        data-name="${product.name}"
+        data-category="${product.category}"
+        data-price="${product.price}"
+        data-stock="${product.stock_quantity}"
+        data-unit="${product.unit}"
+        data-stockstatus="${stockStatus}">
+        <td style="font-weight:600;color:#1a1a1a;">${product.name}</td>
+        <td>${catBadge}</td>
+        <td style="font-weight:700;">₱ ${parseFloat(product.price).toFixed(2)}</td>
+        <td style="font-weight:700;">${product.stock_quantity}</td>
+        <td>${product.unit}</td>
+        <td>${statusBadge}</td>
+        <td>
+            <div class="action-cell">
+                <button class="btn-edit" onclick="openEditModal(this.closest('tr'))">Edit</button>
+                <button class="btn-delete" onclick="openDeleteConfirm('${product.product_id}', '${product.name}')">Delete</button>
+            </div>
+        </td>
+    </tr>`;
+
+    tbody.insertAdjacentHTML('beforeend', html);
+}
+
+// ── Update Product Row ──
+function updateProductRow(productId, product) {
+    const row = document.querySelector(`#productsTable tbody tr[data-id="${productId}"]`);
+    if (!row) return;
+
+    const threshold = product.unit === 'bundles' ? 1 : 12;
+    const stockStatus = product.stock_quantity == 0 ? 'out' : (product.stock_quantity <= threshold ? 'low' : 'in');
+    const statusBadge = product.stock_quantity == 0
+        ? '<span class="stock-badge st-out">Out of Stock</span>'
+        : (product.stock_quantity <= threshold
+            ? '<span class="stock-badge st-low">Low Stock</span>'
+            : '<span class="stock-badge st-in">In Stock</span>');
+
+    const cat = (product.category || '').toUpperCase();
+    const catBadge = cat === 'FLOWERS'
+        ? '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:#d1fae5;color:#065f46;">Flowers</span>'
+        : cat === 'FILLERS'
+            ? '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:#dbeafe;color:#1e3a8a;">Fillers</span>'
+            : (product.category || '—');
+
+    row.setAttribute('data-name', product.name);
+    row.setAttribute('data-category', product.category);
+    row.setAttribute('data-price', product.price);
+    row.setAttribute('data-stock', product.stock_quantity);
+    row.setAttribute('data-unit', product.unit);
+    row.setAttribute('data-stockstatus', stockStatus);
+
+    row.children[0].textContent = product.name;
+    row.children[1].innerHTML = catBadge;
+    row.children[2].textContent = '₱ ' + parseFloat(product.price).toFixed(2);
+    row.children[3].textContent = product.stock_quantity;
+    row.children[4].textContent = product.unit;
+    row.children[5].innerHTML = statusBadge;
+}
+
+// ── Save Product (Create or Edit) ──
+function saveProduct() {
+    const productId = document.getElementById('editProductId').value;
+    const toTitle = s => s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    const name = toTitle(document.getElementById('pName').value.trim());
+    const category = document.getElementById('pCategory').value;
+    const price = document.getElementById('pPrice').value;
+    const errEl = document.getElementById('formError');
+
+    if (!name) { errEl.textContent = 'Product name is required.'; errEl.classList.add('show'); return; }
+    if (!category) { errEl.textContent = 'Please select a category.'; errEl.classList.add('show'); return; }
+    if (!price) { errEl.textContent = 'Price is required.'; errEl.classList.add('show'); return; }
+    errEl.classList.remove('show');
+
+    // Auto-generate SKU from name
+    const autoSku = (category.substring(0,3) + '-' + name.replace(/\s+/g,'-').toUpperCase()).substring(0,30) + '-' + Date.now().toString().slice(-4);
+
+    const unit = document.getElementById('pUnit').value || 'pcs';
+    // Unit-aware low stock threshold: pcs = 12, bundles = 1
+    const lowStockThreshold = unit === 'bundles' ? 1 : 12;
+
+    const stockQty = parseInt(document.getElementById('pStock').value) || 0;
+
+    const payload = {
+        name,
+        sku: productId ? undefined : autoSku,
+        category,
+        price: parseFloat(price) || 0,
+        stock_quantity: stockQty,
+        low_stock_threshold: lowStockThreshold,
+        unit: unit,
+    };
+    if (productId) {
+        payload.product_id = productId;
+        delete payload.sku;
+    }
+
+    const url = productId ? '/ajax/product/edit/' : '/ajax/product/create/';
+
+    const btn = document.getElementById('saveProductBtn');
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.textContent = productId ? 'Update Product' : 'Save Product';
+        if (data.success) {
+            // Record history to localStorage
+            recordProductHistory(data.product, productId ? 'edit' : 'add', stockQty, productId ? null : null);
+            closeProductModal();
+            if (productId) {
+                updateProductRow(productId, data.product);
+            } else {
+                addProductRow(data.product);
+            }
+            showToast(data.message);
+        } else {
+            errEl.textContent = data.message || 'An error occurred.';
+            errEl.classList.add('show');
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.textContent = productId ? 'Update Product' : 'Save Product';
+        errEl.textContent = 'Server error: ' + err.message;
+        errEl.classList.add('show');
+    });
+}
+
+// ── Product History (localStorage) ──
+function recordProductHistory(product, action, newQty, prevQty) {
+    const key = 'kres_product_history';
+    let history = [];
+    try { history = JSON.parse(localStorage.getItem(key)) || []; } catch(e) {}
+    const threshold = product.unit === 'bundles' ? 1 : 12;
+    let stockStatus = newQty === 0 ? 'Out of Stock' : (newQty <= threshold ? 'Low Stock' : 'In Stock');
+    let label = '';
+    if (action === 'add') {
+        label = `Added product — ${newQty} ${product.unit} (${stockStatus})`;
+    } else {
+        label = `Stock updated to ${newQty} ${product.unit} (${stockStatus})`;
+    }
+    history.push({
+        productId: String(product.product_id),
+        productName: product.name,
+        unit: product.unit,
+        action,
+        qty: newQty,
+        stockStatus,
+        label,
+        timestamp: new Date().toISOString()
+    });
+    // Keep last 200 entries
+    if (history.length > 200) history = history.slice(-200);
+    try { localStorage.setItem(key, JSON.stringify(history)); } catch(e) {}
+}
+
+// ── Delete Confirm ──
+let _deleteId = null;
+function openDeleteConfirm(id, name) {
+    _deleteId = id;
+    document.getElementById('confirmText').textContent = `Delete "${name}"? This cannot be undone.`;
+    document.getElementById('confirmModal').classList.add('show');
+    document.getElementById('confirmDeleteBtn').onclick = function() {
+        this.textContent = 'Deleting...';
+        this.disabled = true;
+        fetch('/ajax/product/delete/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ product_id: _deleteId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            this.textContent = 'Delete';
+            this.disabled = false;
+            closeConfirmModal();
+            if (data.success) {
+                const row = document.querySelector(`#productsTable tbody tr[data-id="${_deleteId}"]`);
+                if (row) row.remove();
+                const option = document.querySelector(`#stockProductSelect option[value="${_deleteId}"]`);
+                if (option) option.remove();
+                showToast(data.message);
+                if (document.querySelectorAll('#productsTable tbody tr[data-id]').length === 0) {
+                    document.querySelector('#productsTable tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:60px;color:#9ca3af;"><div style="font-size:38px;margin-bottom:10px;">📦</div><div style="font-size:15px;font-weight:600;margin-bottom:4px;color:#6b7280;">No products yet</div><div style="font-size:13px;">Click "Add Product" to add your first inventory item.</div></td></tr>';
+                }
+            } else {
+                showToast(data.message || 'Delete failed.', true);
+            }
+        })
+        .catch(() => { this.textContent = 'Delete'; this.disabled = false; closeConfirmModal(); });
+    };
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.remove('show');
+    _deleteId = null;
+}
+
+function toggleStockAlerts() {
+    const expanded = document.getElementById('stockAlertsExpanded');
+    const icon = document.getElementById('alertToggleIcon');
+    if (!expanded) return;
+    const isOpen = expanded.style.display === 'block';
+    expanded.style.display = isOpen ? 'none' : 'block';
+    if (icon) icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+document.addEventListener('click', function(e) {
+    const expanded = document.getElementById('stockAlertsExpanded');
+    if (!expanded) return;
+    if (!e.target.closest('[onclick="toggleStockAlerts()"]') && !expanded.contains(e.target)) {
+        expanded.style.display = 'none';
+        const icon = document.getElementById('alertToggleIcon');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+    }
+});
+
+// Close modals on backdrop click
+window.addEventListener('click', function(e) {
+    if (e.target === document.getElementById('productModal')) closeProductModal();
+    if (e.target === document.getElementById('confirmModal')) closeConfirmModal();
+});
+
+// Apply filter from sessionStorage (from dashboard low stock link) + initial sort
+document.addEventListener('DOMContentLoaded', function() {
+    const filter = sessionStorage.getItem('inventoryFilter');
+    if (filter === 'lowstock') {
+        setStockFilter('low');
+        sessionStorage.removeItem('inventoryFilter');
+    }
+    filterTable();
+});
+
+// ── Pill filter helpers ──
+const stockPillStyles = {
+    '':    { bg:'white', border:'#d1d5db', color:'#374151', subColor:'#6b7280', label:'All Stock' },
+    'in':  { bg:'white', border:'#d1d5db', color:'#374151', subColor:'#6b7280', label:'In Stock' },
+    'low': { bg:'white', border:'#d1d5db', color:'#374151', subColor:'#6b7280', label:'Low Stock' },
+    'out': { bg:'white', border:'#d1d5db', color:'#374151', subColor:'#6b7280', label:'Out of Stock' },
+};
+const catPillStyles = {
+    '':        { bg:'white', border:'#d1d5db', color:'#374151', subColor:'#6b7280', label:'All Categories' },
+    'flowers': { bg:'white', border:'#d1d5db', color:'#374151', subColor:'#6b7280', label:'Flowers' },
+    'fillers': { bg:'white', border:'#d1d5db', color:'#374151', subColor:'#6b7280', label:'Fillers' },
+};
+
+function stockPillBg() {
+    const v = document.getElementById('stockFilter').value;
+    return (stockPillStyles[v] || stockPillStyles['']).bg;
+}
+
+function setStockFilter(val) {
+    document.getElementById('stockFilter').value = val;
+    const s = stockPillStyles[val] || stockPillStyles[''];
+    const pill = document.getElementById('stockPill');
+    pill.style.background    = s.bg;
+    pill.style.borderLeftColor = s.border;
+    pill.querySelector('svg').setAttribute('stroke', s.color);
+    document.getElementById('stockPillLabel').style.color = s.color;
+    document.getElementById('stockPillLabel').textContent = s.label;
+    document.getElementById('stockPillSub').style.color   = s.subColor;
+    document.getElementById('stockChevron').setAttribute('stroke', s.color);
+    pill.setAttribute('onmouseout', `this.style.background='${s.bg}'`);
+    document.getElementById('stockDropdown').style.display = 'none';
+    document.getElementById('stockChevron').style.transform = 'rotate(0deg)';
+    filterTable();
+}
+
+function setCategoryFilter(val) {
+    document.getElementById('categoryFilter').value = val;
+    const c = catPillStyles[val] || catPillStyles[''];
+    const pill = document.getElementById('categoryPill');
+    pill.style.background      = c.bg;
+    pill.style.borderLeftColor = c.border;
+    pill.querySelector('svg').setAttribute('stroke', c.color);
+    document.getElementById('categoryPillLabel').style.color   = c.color;
+    document.getElementById('categoryPillLabel').textContent   = c.label;
+    pill.querySelectorAll('div')[1].style.color = c.subColor;
+    document.getElementById('categoryChevron').setAttribute('stroke', c.color);
+    pill.setAttribute('onmouseout', `this.style.background='${c.bg}'`);
+    document.getElementById('categoryDropdown').style.display = 'none';
+    document.getElementById('categoryChevron').style.transform = 'rotate(0deg)';
+    filterTable();
+}
+
+function toggleStockDropdown() {
+    const dd  = document.getElementById('stockDropdown');
+    const chv = document.getElementById('stockChevron');
+    const isOpen = dd.style.display === 'block';
+    // close other dropdowns
+    document.getElementById('categoryDropdown').style.display = 'none';
+    document.getElementById('categoryChevron').style.transform = 'rotate(0deg)';
+    dd.style.display = isOpen ? 'none' : 'block';
+    chv.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function toggleCategoryDropdown() {
+    const dd  = document.getElementById('categoryDropdown');
+    const chv = document.getElementById('categoryChevron');
+    const isOpen = dd.style.display === 'block';
+    // close other dropdowns
+    document.getElementById('stockDropdown').style.display = 'none';
+    document.getElementById('stockChevron').style.transform = 'rotate(0deg)';
+    dd.style.display = isOpen ? 'none' : 'block';
+    chv.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+// close pill dropdowns on outside click
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#stockPill') && !e.target.closest('#stockDropdown')) {
+        const dd = document.getElementById('stockDropdown');
+        if (dd) { dd.style.display = 'none'; document.getElementById('stockChevron').style.transform = 'rotate(0deg)'; }
+    }
+    if (!e.target.closest('#categoryPill') && !e.target.closest('#categoryDropdown')) {
+        const dd = document.getElementById('categoryDropdown');
+        if (dd) { dd.style.display = 'none'; document.getElementById('categoryChevron').style.transform = 'rotate(0deg)'; }
+    }
+});
+</script>
+
+<script>
+// Populate the next month stock reset date in the warning banner
+(function() {
+    const nextDeletionDate = new Date('{{ next_deletion_date|date:"Y-m-d" }}');
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    const formattedDate = nextDeletionDate.toLocaleDateString('en-US', options);
+    const dateSpan = document.getElementById('nextMonthDeletionDate');
+    if (dateSpan) {
+        dateSpan.textContent = formattedDate;
+    }
+})();
+</script>
+
+ {% include 'logout_modal.html' %}
+</body>
+</html>
