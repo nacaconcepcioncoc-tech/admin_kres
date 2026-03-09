@@ -231,8 +231,8 @@ def check_and_delete_completed_payments():
 def check_and_reset_monthly_stock():
     """
     Check if today is the first day of the month.
-    If so, reset all product stock quantities to 0 and clear stock alerts
-    to start a new inventory cycle. Product info (name, category, price, unit) stays intact.
+    If so, delete all active products and clear stock alerts
+    to start a new inventory cycle. This allows admins to input fresh products every month.
     """
     today = timezone.now().date()
 
@@ -240,19 +240,19 @@ def check_and_reset_monthly_stock():
     if today.day != 1:
         return False
 
-    # Reset stock_quantity to 0 for all active products
-    updated_count = Product.objects.filter(is_active=True).update(stock_quantity=0)
+    # Delete all active products
+    deleted_count, _ = Product.objects.filter(is_active=True).delete()
 
-    # Resolve all active stock alerts since stock has been reset
+    # Resolve all active stock alerts since products have been deleted
     StockAlert.objects.filter(alert_status='active').update(
         alert_status='resolved',
         resolved_at=timezone.now()
     )
 
-    if updated_count == 0:
+    if deleted_count == 0:
         return False
 
-    return True, updated_count
+    return True, deleted_count
 
 
 def get_next_month_deletion_date():

@@ -270,7 +270,7 @@
 
         <div style="display:flex;align-items:flex-start;gap:8px;background:#fef9e7;border-left:3px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:16px;">
             <span style="font-size:14px;margin-top:1px;">⚠️</span>
-            <span style="font-size:12px;color:#92400e;line-height:1.5;">Stock quantities and stock statuses will be automatically deleted on <strong id="nextMonthDeletionDate"></strong> to start a new inventory cycle. Your product information (product name, category, price, and unit) will remain intact and will not be deleted. Please update the new stock quantities for the new month or export your data if you need a backup.</span>
+            <span style="font-size:12px;color:#92400e;line-height:1.5;">All products will be automatically deleted on <strong id="nextMonthDeletionDate"></strong> to start a new inventory cycle. Export your data before this date if you need a backup. You can then input fresh products for the new month.</span>
         </div>
 
         <!-- Products Table -->
@@ -320,8 +320,8 @@
                         </td>
                         <td>
                             <div class="action-cell">
-                                <button class="btn-edit" onclick="openEditModal(this.closest('tr'))">Edit</button>
-                                <button class="btn-delete" onclick="openDeleteConfirm('{{ product.product_id }}', '{{ product.name }}')">Delete</button>
+                                <button class="btn-edit" onclick="openEditModal(this.closest('tr'))" type="button">Edit</button>
+                                <button class="btn-delete" onclick="openDeleteConfirm('{{ product.product_id }}', '{{ product.name|escapejs }}')" type="button">Delete</button>
                             </div>
                         </td>
                     </tr>
@@ -392,8 +392,8 @@
         <div class="confirm-title">Delete Product?</div>
         <div class="confirm-text" id="confirmText">This action cannot be undone.</div>
         <div class="confirm-btns">
-            <button class="btn-cancel-del" onclick="closeConfirmModal()">Cancel</button>
-            <button class="btn-confirm-del" id="confirmDeleteBtn">Delete</button>
+            <button class="btn-cancel-del" onclick="closeConfirmModal()" type="button">Cancel</button>
+            <button class="btn-confirm-del" id="confirmDeleteBtn" type="button">Delete</button>
         </div>
     </div>
 </div>
@@ -519,6 +519,7 @@ function addProductRow(product) {
             ? '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:#dbeafe;color:#1e3a8a;">Fillers</span>'
             : (product.category || '—');
 
+    const escapedName = product.name.replace(/'/g, "\\'");
     const html = `<tr data-id="${product.product_id}"
         data-name="${product.name}"
         data-category="${product.category}"
@@ -534,8 +535,8 @@ function addProductRow(product) {
         <td>${statusBadge}</td>
         <td>
             <div class="action-cell">
-                <button class="btn-edit" onclick="openEditModal(this.closest('tr'))">Edit</button>
-                <button class="btn-delete" onclick="openDeleteConfirm('${product.product_id}', '${product.name}')">Delete</button>
+                <button class="btn-edit" onclick="openEditModal(this.closest('tr'))" type="button">Edit</button>
+                <button class="btn-delete" onclick="openDeleteConfirm('${product.product_id}', '${escapedName}')" type="button">Delete</button>
             </div>
         </td>
     </tr>`;
@@ -688,8 +689,9 @@ function openDeleteConfirm(id, name) {
     document.getElementById('confirmText').textContent = `Delete "${name}"? This cannot be undone.`;
     document.getElementById('confirmModal').classList.add('show');
     document.getElementById('confirmDeleteBtn').onclick = function() {
-        this.textContent = 'Deleting...';
-        this.disabled = true;
+        const btn = this;
+        btn.textContent = 'Deleting...';
+        btn.disabled = true;
         fetch('/ajax/product/delete/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
@@ -697,8 +699,8 @@ function openDeleteConfirm(id, name) {
         })
         .then(r => r.json())
         .then(data => {
-            this.textContent = 'Delete';
-            this.disabled = false;
+            btn.textContent = 'Delete';
+            btn.disabled = false;
             closeConfirmModal();
             if (data.success) {
                 const row = document.querySelector(`#productsTable tbody tr[data-id="${_deleteId}"]`);
@@ -713,8 +715,16 @@ function openDeleteConfirm(id, name) {
                 showToast(data.message || 'Delete failed.', true);
             }
         })
-        .catch(() => { this.textContent = 'Delete'; this.disabled = false; closeConfirmModal(); });
+        .catch(() => { btn.textContent = 'Delete'; btn.disabled = false; closeConfirmModal(); });
     };
+}
+
+function deleteProductRow(productId) {
+    const row = document.querySelector(`#productsTable tbody tr[data-id="${productId}"]`);
+    if (row) row.remove();
+    if (document.querySelectorAll('#productsTable tbody tr[data-id]').length === 0) {
+        document.querySelector('#productsTable tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:60px;color:#9ca3af;"><div style="font-size:38px;margin-bottom:10px;">📦</div><div style="font-size:15px;font-weight:600;margin-bottom:4px;color:#6b7280;">No products yet</div><div style="font-size:13px;">Click "Add Product" to add your first inventory item.</div></td></tr>';
+    }
 }
 
 function closeConfirmModal() {

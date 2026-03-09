@@ -208,7 +208,17 @@
         .login-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(100,181,246,0.45);}
         .login-btn:active{transform:translateY(0);}
         .messages-container{margin-bottom:12px;}
-        .message-error{padding:10px 14px;background:rgba(220,38,38,0.12);color:#fca5a5;border-radius:8px;border-left:3px solid #dc2626;font-size:13px;}
+        .message-error{
+            padding:10px 14px;background:rgba(220,38,38,0.12);color:#fca5a5;border-radius:8px;border-left:3px solid #dc2626;font-size:13px;
+            max-height:0;opacity:0;overflow:hidden;
+            transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+            margin-bottom:0;
+        }
+        .message-error.show{
+            max-height:100px;opacity:1;margin-bottom:12px;
+            animation:slideDown 0.4s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes slideDown{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
         .card-footer{text-align:center;margin-top:14px;font-size:10px;color:rgba(140,190,255,0.18);letter-spacing:1px;}
 
         @media(max-width:960px){.page-wrapper{flex-direction:column;gap:32px;padding:24px 16px;}}
@@ -705,15 +715,9 @@
                 <h2>Welcome Back</h2>
                 <p>Login to your admin portal</p>
             </div>
-            <form method="POST">
+            <form method="POST" id="loginForm">
                 {% csrf_token %}
-                {% if messages %}
-                    <div class="messages-container">
-                        {% for message in messages %}
-                            <div class="message-error">{{ message }}</div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+                <div class="messages-container" id="messagesContainer"></div>
                 <div class="form-group">
                     <label for="email">Email or Username</label>
                     <div class="input-wrap">
@@ -735,7 +739,7 @@
                     </div>
                 </div>
                 <div class="btn-wrap">
-                    <button type="submit" class="login-btn">Login to Dashboard</button>
+                    <button type="submit" class="login-btn" id="loginBtn">Login to Dashboard</button>
                 </div>
             </form>
             <p class="card-footer">KRES Co. &nbsp;·&nbsp; Secure Admin Access</p>
@@ -743,4 +747,107 @@
 
     </div>
 </body>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('loginForm');
+    
+    if (loginForm) {
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log('[LOGIN] Form submitted via AJAX');
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('remember').checked;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const btn = document.getElementById('loginBtn');
+            const originalBtnText = btn.textContent;
+            const messagesContainer = document.getElementById('messagesContainer');
+            
+            // Clear previous messages
+            messagesContainer.innerHTML = '';
+            
+            // Disable button and show loading state
+            btn.disabled = true;
+            btn.textContent = 'Logging in...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('email', email);
+                formData.append('password', password);
+                formData.append('remember', rememberMe ? 'on' : 'off');
+                formData.append('csrfmiddlewaretoken', csrfToken);
+                
+                const response = await fetch('/login/', {
+                    method: 'POST',
+                    body: formData,
+                    redirect: 'follow'
+                });
+                
+                console.log('[LOGIN] Response status:', response.status, 'URL:', response.url);
+                
+                // Check if login was successful by checking the final URL
+                if (!response.url.includes('/login')) {
+                    // Login successful, redirect to the new page
+                    console.log('[LOGIN] Success! Redirecting to:', response.url);
+                    window.location.href = response.url;
+                    return;
+                }
+                
+                // Still on login page - means login failed
+                console.log('[LOGIN] Failed - still on login page');
+                
+                const html = await response.text();
+                
+                // Extract error message or use default
+                const errorMsg = 'Invalid email or password. Please try again.';
+                
+                // Show error message with animation
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'message-error';
+                errorDiv.textContent = errorMsg;
+                messagesContainer.innerHTML = '';
+                messagesContainer.appendChild(errorDiv);
+                
+                // Trigger animation
+                setTimeout(() => errorDiv.classList.add('show'), 10);
+                
+                // Clear password field and focus email
+                document.getElementById('password').value = '';
+                document.getElementById('email').focus();
+                
+                // Re-enable button
+                btn.disabled = false;
+                btn.textContent = originalBtnText;
+                
+            } catch (error) {
+                console.error('[LOGIN] Error:', error);
+                
+                // Show generic error
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'message-error';
+                errorDiv.textContent = 'Connection error. Please try again.';
+                messagesContainer.innerHTML = '';
+                messagesContainer.appendChild(errorDiv);
+                
+                // Trigger animation
+                setTimeout(() => errorDiv.classList.add('show'), 10);
+                
+                // Re-enable button
+                btn.disabled = false;
+                btn.textContent = originalBtnText;
+            }
+        });
+    }
+    
+    // Display any initial server-side error messages with animation
+    const messagesContainer = document.getElementById('messagesContainer');
+    const innerMessages = messagesContainer.querySelectorAll('.message-error');
+    if (innerMessages.length > 0) {
+        innerMessages.forEach(msg => {
+            setTimeout(() => msg.classList.add('show'), 10);
+        });
+    }
+});
+</script>
 </html>

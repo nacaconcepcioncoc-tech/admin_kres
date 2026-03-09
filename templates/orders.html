@@ -340,11 +340,11 @@
         /* ── ORDER DETAILS MODAL ── */
         .details-shell {
             background:white; border-radius:24px;
-            width:90%; max-width:1000px;
+            width:95%; max-width:1280px;
             overflow:hidden;
             box-shadow:0 20px 60px rgba(0,0,0,0.2), 0 0 1px rgba(0,0,0,0.1);
             animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
-            display:flex; flex-direction:column; max-height:90vh;
+            display:flex; flex-direction:column; max-height:88vh; height:88vh;
             border:1px solid rgba(255,255,255,0.8);
         }
 
@@ -371,12 +371,13 @@
         .close-btn { position:relative; z-index:2; }
 
         .details-body { 
-            padding:40px; 
+            padding:28px; 
             display:grid; 
-            grid-template-columns:1fr 1.1fr 1fr; 
-            gap:36px; 
+            grid-template-columns:1fr 1fr 1fr 1fr; 
+            gap:20px; 
             overflow-y:auto; 
             flex:1;
+            min-height:0;
             background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
         }
         .details-body::-webkit-scrollbar { width:6px; }
@@ -387,13 +388,15 @@
         .detail-column { 
             display:flex; 
             flex-direction:column; 
-            gap:20px;
-            padding:24px;
+            gap:0;
+            padding:0;
             background:white;
             border-radius:16px;
             border:1px solid #e2e8f0;
             box-shadow:0 4px 12px rgba(0,0,0,0.05);
             transition:all 0.3s ease;
+            overflow:hidden;
+            align-self:start;
         }
         .detail-column:hover {
             box-shadow:0 8px 24px rgba(0,0,0,0.08);
@@ -932,6 +935,22 @@
                                     <input type="text" id="specialRequests" name="specialRequests" placeholder="Ribbon color, extra wrapping..." autocomplete="off">
                                 </div>
                             </div>
+                            <div class="nf-field span-2">
+                                <label>Reference Photo <span style="font-size:10px;color:#9ca3af;font-weight:400;">(optional)</span></label>
+                                <div id="photoUploadArea" onclick="document.getElementById('orderPhoto').click()" style="border:2px dashed #d1d5db;border-radius:10px;padding:18px;text-align:center;cursor:pointer;background:#f8fafc;transition:all 0.2s;">
+                                    <input type="file" id="orderPhoto" name="orderPhoto" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)">
+                                    <div id="photoPlaceholder">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" style="margin-bottom:6px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                        <p style="font-size:12px;color:#9ca3af;margin:0;">Click to upload a photo or reference image</p>
+                                        <p style="font-size:11px;color:#c4c9d4;margin:4px 0 0;">JPG, PNG, WEBP accepted</p>
+                                    </div>
+                                    <div id="photoPreview" style="display:none;position:relative;">
+                                        <img id="photoPreviewImg" src="" alt="Preview" style="max-height:140px;max-width:100%;border-radius:8px;object-fit:contain;">
+                                        <button type="button" onclick="removePhoto(event)" style="position:absolute;top:-8px;right:-8px;background:#ef4444;color:white;border:none;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+                                        <p id="photoFileName" style="font-size:11px;color:#6b7280;margin:6px 0 0;"></p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1095,201 +1114,238 @@
             </div>
 
             <!-- ── Body: 3 columns ── -->
-            <div class="details-body" style="grid-template-columns:1fr 1.1fr 1fr;">
+            <div class="details-body" style="grid-template-columns:1fr 1fr 1fr; padding:28px; gap:24px;">
 
-                <!-- ═══ LEFT: Order & Payment ═══ -->
-                <div class="detail-column">
-                    <div class="detail-column-title">💳 Order & Payment</div>
-
-                    <div class="detail-row">
-                        <div class="detail-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 2V6M16 2V6M3 10H21"/></svg>
-                        </div>
-                        <div class="detail-info"><div class="detail-label">Order ID</div><div class="detail-value" id="detailOrderIdValue">—</div></div>
+                <!-- ═══ COL 1: Order Information ═══ -->
+                <div class="detail-column" style="gap:0; padding:0; overflow:hidden;">
+                    <div class="detail-column-title" style="padding:14px 18px 12px; margin-bottom:0; background:#334155; -webkit-text-fill-color:white; color:white; border-radius:0; font-size:11px; letter-spacing:1.2px; font-weight:700;">
+                        📋 ORDER INFORMATION
                     </div>
+                    <div style="padding:16px 18px; display:flex; flex-direction:column; gap:2px;">
 
-                    <div class="detail-row">
-                        <div class="detail-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        <div class="detail-row" style="padding:12px 0; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                            <div class="detail-icon" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:18px;height:18px;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 2V6M16 2V6M3 10H21"/></svg>
+                            </div>
+                            <div class="detail-info"><div class="detail-label" style="font-size:10px; color:#64748b; font-weight:600;">ORDER ID</div><div class="detail-value" id="detailOrderIdValue" style="font-size:14px; color:#1e293b; font-weight:700;">—</div></div>
                         </div>
-                        <div class="detail-info"><div class="detail-label">Date Created</div><div class="detail-value" id="detailOrderDate">—</div></div>
-                    </div>
 
-                    <div class="detail-row">
-                        <div class="detail-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                        <div class="detail-row" style="padding:12px 0; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                            <div class="detail-icon" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:18px;height:18px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                            </div>
+                            <div class="detail-info"><div class="detail-label" style="font-size:10px; color:#64748b; font-weight:600;">DATE CREATED</div><div class="detail-value" id="detailOrderDate" style="font-size:13px; color:#1e293b;">—</div></div>
                         </div>
-                        <div class="detail-info"><div class="detail-label">Item / Product</div><div class="detail-value" id="detailOrderItem">—</div></div>
-                    </div>
 
-                    <!-- Amount: Philippine Peso icon -->
-                    <div class="detail-row">
-                        <div class="detail-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <text x="4" y="19" font-size="18" font-weight="bold" font-family="serif" fill="currentColor" stroke="none">₱</text>
-                            </svg>
+                        <div class="detail-row" style="padding:12px 0; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                            <div class="detail-icon" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:18px;height:18px;"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+                            </div>
+                            <div class="detail-info"><div class="detail-label" style="font-size:10px; color:#64748b; font-weight:600;">PRODUCT</div><div class="detail-value" id="detailOrderItem" style="font-size:13px; color:#1e293b;">—</div></div>
                         </div>
-                        <div class="detail-info"><div class="detail-label">Amount</div><div class="detail-value" id="detailOrderAmount">—</div></div>
-                    </div>
 
-                    <div class="detail-row">
-                        <div class="detail-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                        <div class="detail-row" style="padding:12px 0; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                            <div class="detail-icon" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:18px;height:18px;"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <div class="detail-info"><div class="detail-label" style="font-size:10px; color:#64748b; font-weight:600;">AMOUNT</div><div class="detail-value" id="detailOrderAmount" style="font-size:14px; color:#059669; font-weight:700;">—</div></div>
                         </div>
-                        <div class="detail-info"><div class="detail-label">Payment Method</div><div class="detail-value" id="detailPaymentMethod">—</div></div>
-                    </div>
 
-                    <div class="detail-row">
-                        <div class="detail-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        <div class="detail-row" style="padding:12px 0; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                            <div class="detail-icon" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:18px;height:18px;"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                            </div>
+                            <div class="detail-info"><div class="detail-label" style="font-size:10px; color:#64748b; font-weight:600;">PAYMENT METHOD</div><div class="detail-value" id="detailPaymentMethod" style="font-size:13px; color:#1e293b;">—</div></div>
                         </div>
-                        <div class="detail-info"><div class="detail-label">Payment Status</div><div class="detail-value" id="detailPaymentStatusDisplay">—</div></div>
-                    </div>
 
-                    <!-- Down payment row (shown only for pending) -->
-                    <div class="detail-row" id="detailDownPaymentRow" style="display:none; background:#fef3c7; padding:10px 8px; margin:0 -8px; border-radius:8px; border-left:3px solid #f59e0b;">
-                        <div class="detail-icon" style="background:linear-gradient(135deg,#fef3c7,#fde68a);">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <text x="4" y="19" font-size="18" font-weight="bold" font-family="serif" fill="currentColor" stroke="none">₱</text>
-                            </svg>
+                        <div class="detail-row" style="padding:12px 0; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                            <div class="detail-icon" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:18px;height:18px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            </div>
+                            <div class="detail-info"><div class="detail-label" style="font-size:10px; color:#64748b; font-weight:600;">PAYMENT STATUS</div><div class="detail-value" id="detailPaymentStatusDisplay" style="font-size:13px; color:#1e293b;">—</div></div>
                         </div>
-                        <div class="detail-info"><div class="detail-label">Down Payment</div><div class="detail-value" id="detailDownPaymentAmount">—</div></div>
-                    </div>
 
-                    <div class="detail-row" style="padding-top:12px; border-top:2px solid #f1f5f9; margin-top:8px;">
-                        <div class="detail-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                        <div class="detail-row" id="detailDownPaymentRow" style="display:none; padding:12px 0; gap:12px; border-bottom:none;">
+                            <div class="detail-icon" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:18px;height:18px;"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <div class="detail-info"><div class="detail-label" style="font-size:10px; color:#64748b; font-weight:600;">DOWN PAYMENT</div><div class="detail-value" id="detailDownPaymentAmount" style="font-size:13px; color:#1e293b; font-weight:600;">—</div></div>
                         </div>
-                        <div class="detail-info"><div class="detail-label">Fulfilled By</div><div class="detail-value" id="detailFulfilledBy">—</div></div>
-                    </div>
 
-                    <div class="detail-row">
-                        <div class="detail-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        <div class="detail-row" style="padding:12px 0; gap:12px; border-bottom:none; margin-top:4px;">
+                            <div class="detail-icon" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:18px;height:18px;"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                            </div>
+                            <div class="detail-info"><div class="detail-label" style="font-size:10px; color:#64748b; font-weight:600;">FULFILLED BY</div><div class="detail-value" id="detailFulfilledBy" style="font-size:13px; color:#1e293b;">—</div></div>
                         </div>
-                        <div class="detail-info"><div class="detail-label">Special Note</div><div class="detail-value" id="detailSpecialNote" style="white-space:pre-wrap;font-size:13px;">—</div></div>
+
                     </div>
                 </div>
 
-                <!-- ═══ MIDDLE: Receiver & Sender ═══ -->
-                <div class="detail-column">
-                    <div class="detail-column-title">👤 Receiver & Sender</div>
-
-                    <!-- Receiver sub-section -->
-                    <div style="padding-bottom:14px; border-bottom:2px solid #f1f5f9; margin-bottom:14px;">
-                        <div class="detail-label" style="font-size:11px;font-weight:700;color:#4f46e5;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;padding:8px 0;border-bottom:2px solid #e0e7ff;">📌 Receiver</div>
-
-                        <div class="detail-row">
-                            <div class="detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-                            <div class="detail-info"><div class="detail-label">Name</div><div class="detail-value" id="detailCustomerName">—</div></div>
-                        </div>
-
-                        <!-- Phone: solid handset icon -->
-                        <div class="detail-row">
-                            <div class="detail-icon">
-                                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                                    <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
-                                </svg>
-                            </div>
-                            <div class="detail-info"><div class="detail-label">Phone</div><div class="detail-value" id="detailContactNumber">—</div></div>
-                        </div>
-
-                        <div class="detail-row" id="detailAddressRow">
-                            <div class="detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-                            <div class="detail-info"><div class="detail-label">Delivery Address</div><div class="detail-value" id="detailAddress">—</div></div>
-                        </div>
+                <!-- ═══ COL 2: People & Delivery ═══ -->
+                <div class="detail-column" style="gap:0; padding:0; overflow:hidden;">
+                    <div class="detail-column-title" style="padding:14px 18px 12px; margin-bottom:0; background:#334155; -webkit-text-fill-color:white; color:white; border-radius:0; font-size:11px; letter-spacing:1.2px; font-weight:700;">
+                        👥 PEOPLE & DELIVERY
                     </div>
+                    <div style="padding:16px 18px; display:flex; flex-direction:column; gap:0;">
 
-                    <!-- Sender sub-section -->
-                    <div id="detailSenderSection" style="padding-top:0;">
-                        <div class="detail-label" style="font-size:11px;font-weight:700;color:#059669;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;padding:8px 0;border-bottom:2px solid #dcfce7;">📬 Sender</div>
+                        <!-- Receiver section -->
+                        <div style="margin-bottom:14px; padding-bottom:14px; border-bottom:2px solid #e2e8f0;">
+                            <div style="font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:1px; padding:0 0 10px; margin:0;">📌 RECEIVER</div>
 
-                        <div class="detail-row">
-                            <div class="detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-                            <div class="detail-info"><div class="detail-label">Name</div><div class="detail-value" id="detailSenderName">—</div></div>
-                        </div>
-
-                        <!-- Phone: solid handset icon -->
-                        <div class="detail-row">
-                            <div class="detail-icon">
-                                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                                    <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
-                                </svg>
+                            <div class="detail-row" style="padding:8px 0; gap:12px;">
+                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:16px;height:16px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                </div>
+                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Name</div><div class="detail-value" id="detailCustomerName" style="font-size:12px; color:#1e293b;">—</div></div>
                             </div>
-                            <div class="detail-info"><div class="detail-label">Phone</div><div class="detail-value" id="detailSenderPhone">—</div></div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- ═══ RIGHT: Delivery & Rider ═══ -->
-                <div class="detail-column">
-                    <div class="detail-column-title">🚗 Delivery & Rider</div>
-
-                    <!-- Delivery sub-section -->
-                    <div style="padding-bottom:14px; border-bottom:2px solid #f1f5f9; margin-bottom:14px;">
-                        <div class="detail-label" style="font-size:11px;font-weight:700;color:#7c3aed;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;padding:8px 0;border-bottom:2px solid #ede9fe;">🚚 Delivery</div>
-
-                        <div class="detail-row">
-                            <div class="detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
-                            <div class="detail-info"><div class="detail-label">Type</div><div class="detail-value" id="detailDeliveryType">—</div></div>
-                        </div>
-
-                        <div class="detail-row">
-                            <div class="detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-                            <div class="detail-info"><div class="detail-label">Date</div><div class="detail-value" id="detailDeliveryDate">—</div></div>
-                        </div>
-
-                        <div class="detail-row">
-                            <div class="detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-                            <div class="detail-info"><div class="detail-label">Time</div><div class="detail-value" id="detailDeliveryTime">—</div></div>
-                        </div>
-                    </div>
-
-                    <!-- Rider sub-section — only shown for drop-off -->
-                    <div id="detailRiderSection" style="padding-top:0;">
-                        <div class="detail-label" style="font-size:11px;font-weight:700;color:#dc2626;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;padding:8px 0;border-bottom:2px solid #fee2e2;">🏍️ Rider</div>
-
-                        <!-- Rider Name display + input -->
-                        <div class="detail-row" style="flex-direction:column; align-items:stretch; gap:6px; padding-bottom:14px;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <div class="detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-                                <div class="detail-info"><div class="detail-label">Rider Name</div><div class="detail-value" id="detailRiderName">—</div></div>
-                            </div>
-                            <div style="margin-top:6px;">
-                                <input type="text" id="riderNameInput" placeholder="Enter rider name…" autocomplete="off"
-                                    style="width:100%; padding:7px 10px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:12px; font-family:inherit; color:#1e293b; outline:none; transition:border-color 0.2s;"
-                                    oninput="this.value=this.value.replace(/\b\w/g,c=>c.toUpperCase())"
-                                    onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e2e8f0'">
-                            </div>
-                        </div>
-
-                        <!-- Rider Phone display + input -->
-                        <div class="detail-row" style="flex-direction:column; align-items:stretch; gap:6px; padding-bottom:14px;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <div class="detail-icon">
-                                    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                            <div class="detail-row" style="padding:8px 0; gap:12px;">
+                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" style="width:16px;height:16px;color:#475569;">
                                         <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
                                     </svg>
                                 </div>
-                                <div class="detail-info"><div class="detail-label">Rider Phone</div><div class="detail-value" id="detailRiderPhone">—</div></div>
+                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Phone</div><div class="detail-value" id="detailContactNumber" style="font-size:12px; color:#1e293b;">—</div></div>
                             </div>
-                            <div style="margin-top:6px;">
-                                <input type="tel" id="riderPhoneInput" placeholder="Enter rider phone…" autocomplete="off"
-                                    style="width:100%; padding:7px 10px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:12px; font-family:inherit; color:#1e293b; outline:none; transition:border-color 0.2s;"
-                                    onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e2e8f0'">
+
+                            <div class="detail-row" id="detailAddressRow" style="padding:8px 0; gap:12px;">
+                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:16px;height:16px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                </div>
+                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Address</div><div class="detail-value" id="detailAddress" style="font-size:12px; color:#1e293b; line-height:1.4;">—</div></div>
                             </div>
                         </div>
 
-                        <!-- Save button — bottom right -->
-                        <div style="display:flex; justify-content:flex-end; margin-top:4px;">
-                            <button onclick="saveRiderInfo()" id="btnSaveRider"
-                                style="padding:8px 20px; background:linear-gradient(135deg,#dc2626,#b91c1c); color:white; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; white-space:nowrap; transition:all 0.2s; letter-spacing:0.4px; box-shadow:0 3px 10px rgba(220,38,38,0.3);">
-                                 Save 
-                            </button>
+                        <!-- Sender section -->
+                        <div id="detailSenderSection" style="margin-bottom:14px; padding-bottom:14px; border-bottom:2px solid #e2e8f0;">
+                            <div style="font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:1px; padding:0 0 10px; margin:0;">📬 SENDER</div>
+
+                            <div class="detail-row" style="padding:8px 0; gap:12px;">
+                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:16px;height:16px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                </div>
+                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Name</div><div class="detail-value" id="detailSenderName" style="font-size:12px; color:#1e293b;">—</div></div>
+                            </div>
+
+                            <div class="detail-row" style="padding:8px 0; gap:12px; border-bottom:none;">
+                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" style="width:16px;height:16px;color:#475569;">
+                                        <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
+                                    </svg>
+                                </div>
+                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Phone</div><div class="detail-value" id="detailSenderPhone" style="font-size:12px; color:#1e293b;">—</div></div>
+                            </div>
                         </div>
+
+                        <!-- Delivery Info -->
+                        <div style="margin-bottom:14px; padding-bottom:14px; border-bottom:2px solid #e2e8f0;">
+                            <div style="font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:1px; padding:0 0 10px; margin:0;">🚚 DELIVERY</div>
+
+                            <div class="detail-row" style="padding:8px 0; gap:12px;">
+                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:16px;height:16px;"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                                </div>
+                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Type</div><div class="detail-value" id="detailDeliveryType" style="font-size:12px; color:#1e293b;">—</div></div>
+                            </div>
+
+                            <div class="detail-row" style="padding:8px 0; gap:12px;">
+                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:16px;height:16px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                </div>
+                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Date</div><div class="detail-value" id="detailDeliveryDate" style="font-size:12px; color:#1e293b;">—</div></div>
+                            </div>
+
+                            <div class="detail-row" style="padding:8px 0; gap:12px; border-bottom:none;">
+                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                </div>
+                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Time</div><div class="detail-value" id="detailDeliveryTime" style="font-size:12px; color:#1e293b;">—</div></div>
+                            </div>
+                        </div>
+
+                        <!-- Rider section -->
+                        <div id="detailRiderSection" style="margin-bottom:0;">
+                            <div style="font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:1px; padding:0 0 10px; margin:0;">🏍️ RIDER</div>
+
+                            <div class="detail-row" style="flex-direction:column; align-items:stretch; gap:6px; padding:8px 0; border-bottom:1px solid #e2e8f0; margin-bottom:8px;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:16px;height:16px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    </div>
+                                    <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Name</div><div class="detail-value" id="detailRiderName" style="font-size:12px; color:#1e293b;">—</div></div>
+                                </div>
+                                <input type="text" id="riderNameInput" placeholder="Enter rider name…" autocomplete="off"
+                                    style="width:100%; padding:8px 10px; border:1.5px solid #d1d5db; border-radius:7px; font-size:12px; font-family:inherit; color:#1e293b; outline:none; transition:border-color 0.2s; background:#fff;"
+                                    oninput="this.value=this.value.replace(/\b\w/g,c=>c.toUpperCase())"
+                                    onfocus="this.style.borderColor='#334155'" onblur="this.style.borderColor='#d1d5db'">
+                            </div>
+
+                            <div class="detail-row" style="flex-direction:column; align-items:stretch; gap:6px; padding:8px 0; border-bottom:none;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" style="width:16px;height:16px;color:#475569;">
+                                            <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Phone</div><div class="detail-value" id="detailRiderPhone" style="font-size:12px; color:#1e293b;">—</div></div>
+                                </div>
+                                <input type="tel" id="riderPhoneInput" placeholder="Enter rider phone…" autocomplete="off"
+                                    style="width:100%; padding:8px 10px; border:1.5px solid #d1d5db; border-radius:7px; font-size:12px; font-family:inherit; color:#1e293b; outline:none; transition:border-color 0.2s; background:#fff;"
+                                    onfocus="this.style.borderColor='#334155'" onblur="this.style.borderColor='#d1d5db'">
+                            </div>
+
+                            <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+                                <button onclick="saveRiderInfo()" id="btnSaveRider"
+                                    style="padding:8px 16px; background:#334155; color:white; border:none; border-radius:7px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.2s; letter-spacing:0.4px;">
+                                    Save Rider
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
+
+                <!-- ═══ COL 3: Reference Photo & Special Note ═══ -->
+                <div class="detail-column" style="gap:0; padding:0; overflow:hidden; display:flex; flex-direction:column;">
+                    <div class="detail-column-title" style="padding:14px 18px 12px; margin-bottom:0; background:#334155; -webkit-text-fill-color:white; color:white; border-radius:0; font-size:11px; letter-spacing:1.2px; font-weight:700;">
+                        🖼️ REFERENCE & NOTES
+                    </div>
+                    <div style="padding:16px 18px; display:flex; flex-direction:column; gap:12px; flex:1;">
+
+                        <!-- Photo section -->
+                        <div id="detailPhotoWrapper" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border:2px dashed #d1d5db; border-radius:10px; background:#f8fafc; padding:14px; min-height:180px; cursor:pointer; transition:all 0.2s;" onclick="document.getElementById('detailPhotoLightbox').style.display='flex'">
+                            <!-- No photo state -->
+                            <div id="detailNoPhoto" style="text-align:center;">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#a8b5c0" stroke-width="1.5" style="margin-bottom:8px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                <p style="font-size:12px;color:#64748b;margin:0;font-weight:500;">No photo attached</p>
+                                <p style="font-size:11px;color:#9ca3af;margin:4px 0 0;">Upload during order creation</p>
+                            </div>
+                            <!-- Photo preview -->
+                            <img id="detailPhotoImg" src="" alt="Reference Photo" style="display:none; max-width:100%; max-height:100%; border-radius:8px; object-fit:contain; box-shadow:0 2px 8px rgba(0,0,0,0.1); cursor:zoom-in;">
+                        </div>
+
+                        <div id="detailPhotoMeta" style="display:none; background:#f8fafc; border-radius:8px; padding:10px 12px; border:1px solid #e2e8f0;">
+                            <p style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin:0 0 4px;">📎 File</p>
+                            <p id="detailPhotoName" style="font-size:11px;color:#64748b;margin:0;word-break:break-all;"></p>
+                        </div>
+
+                        <!-- Special notes -->
+                        <div style="background:#f8fafc; border-radius:10px; padding:12px; border:1px solid #e2e8f0;">
+                            <p style="font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:1px; padding:0 0 8px; margin:0;">📝 SPECIAL NOTES</p>
+                            <p id="detailSpecialNote" style="font-size:12px;color:#1e293b;margin:0;white-space:pre-wrap;line-height:1.5;">—</p>
+                        </div>
+
+                    </div>
+                </div>
+
             </div><!-- end details-body -->
+
+            <!-- Lightbox for photo zoom -->
+            <div id="detailPhotoLightbox" style="display:none; position:fixed; z-index:9999; inset:0; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;" onclick="this.style.display='none'">
+                <img id="detailPhotoLightboxImg" src="" alt="Reference Photo" style="max-width:90vw; max-height:90vh; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.5); object-fit:contain;">
+                <button onclick="document.getElementById('detailPhotoLightbox').style.display='none'" style="position:fixed;top:20px;right:24px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:50%;width:36px;height:36px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+            </div>
 
             <!-- ── Footer ── -->
             <div class="details-footer" style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; gap:12px; background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%); border-top:1px solid #e2e8f0;">
@@ -1410,6 +1466,17 @@ function closeAddOrderModal() {
     const sp = document.getElementById('senderPhone');
     if (sn) sn.required = true;
     if (sp) sp.required = true;
+    // reset photo upload
+    const pf = document.getElementById('orderPhoto');
+    if (pf) pf.value = '';
+    const ppImg = document.getElementById('photoPreviewImg');
+    if (ppImg) ppImg.src = '';
+    const ppDiv = document.getElementById('photoPreview');
+    if (ppDiv) ppDiv.style.display = 'none';
+    const ppPh = document.getElementById('photoPlaceholder');
+    if (ppPh) ppPh.style.display = 'block';
+    const ppArea = document.getElementById('photoUploadArea');
+    if (ppArea) { ppArea.style.borderColor = '#d1d5db'; ppArea.style.background = '#f8fafc'; }
     clearFormError();
 }
 function closeOrderDetailsModal() {
@@ -1524,6 +1591,17 @@ function submitAddOrder(event) {
         btn.innerHTML = origHTML;
         btn.disabled  = false;
         if (data.success) {
+            // Save reference photo for this order to localStorage
+            const previewImg = document.getElementById('photoPreviewImg');
+            const photoFileNameEl = document.getElementById('photoFileName');
+            if (previewImg && previewImg.src && previewImg.src !== window.location.href && previewImg.style.display !== 'none') {
+                const newOrderId = (data.order && data.order.id) || data.order_id || data.id || null;
+                if (newOrderId) {
+                    try {
+                        localStorage.setItem('orderPhoto_' + newOrderId, JSON.stringify({ src: previewImg.src, name: photoFileNameEl ? photoFileNameEl.textContent : '' }));
+                    } catch(e) { console.warn('Could not save photo to localStorage', e); }
+                }
+            }
             btn.innerHTML        = '✓ Created!';
             btn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
             setTimeout(() => location.reload(), 1200);
@@ -1693,6 +1771,39 @@ function viewOrderDetails(orderId) {
     }
 
     document.getElementById('orderDetailsModal').classList.add('show');
+
+    // ── Photo: show uploaded reference photo if available ──
+    const detailPhotoImg = document.getElementById('detailPhotoImg');
+    const detailNoPhoto = document.getElementById('detailNoPhoto');
+    const detailPhotoMeta = document.getElementById('detailPhotoMeta');
+    const detailPhotoName = document.getElementById('detailPhotoName');
+    const detailPhotoWrapper = document.getElementById('detailPhotoWrapper');
+    const lightboxImg = document.getElementById('detailPhotoLightboxImg');
+
+    // Try to get stored photo from localStorage
+    let storedPhoto = null;
+    try {
+        const raw = localStorage.getItem('orderPhoto_' + orderId);
+        if (raw) storedPhoto = JSON.parse(raw);
+    } catch(e) {}
+    if (storedPhoto && storedPhoto.src) {
+        detailPhotoImg.src = storedPhoto.src;
+        detailPhotoImg.style.display = 'block';
+        detailNoPhoto.style.display = 'none';
+        detailPhotoMeta.style.display = 'block';
+        detailPhotoName.textContent = storedPhoto.name || '';
+        detailPhotoWrapper.style.borderColor = '#6ee7b7';
+        detailPhotoWrapper.style.background = 'linear-gradient(135deg,#f0fdf9,#ecfdf5)';
+        lightboxImg.src = storedPhoto.src;
+    } else {
+        detailPhotoImg.src = '';
+        detailPhotoImg.style.display = 'none';
+        detailNoPhoto.style.display = 'block';
+        detailPhotoMeta.style.display = 'none';
+        detailPhotoWrapper.style.borderColor = '#d1fae5';
+        detailPhotoWrapper.style.background = 'linear-gradient(135deg,#f0fdf9,#ecfdf5)';
+        lightboxImg.src = '';
+    }
 }
 
 // ── Save Payment Status ──
@@ -1963,6 +2074,32 @@ function exportOrdersToCSV() {
         };
         document.head.appendChild(script);
     }
+}
+
+function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('photoPreviewImg').src = e.target.result;
+        document.getElementById('photoFileName').textContent = file.name;
+        document.getElementById('photoPlaceholder').style.display = 'none';
+        document.getElementById('photoPreview').style.display = 'block';
+        document.getElementById('photoUploadArea').style.borderColor = '#6366f1';
+        document.getElementById('photoUploadArea').style.background = '#f5f3ff';
+    };
+    reader.readAsDataURL(file);
+}
+
+function removePhoto(event) {
+    event.stopPropagation();
+    document.getElementById('orderPhoto').value = '';
+    document.getElementById('photoPreviewImg').src = '';
+    document.getElementById('photoFileName').textContent = '';
+    document.getElementById('photoPlaceholder').style.display = 'block';
+    document.getElementById('photoPreview').style.display = 'none';
+    document.getElementById('photoUploadArea').style.borderColor = '#d1d5db';
+    document.getElementById('photoUploadArea').style.background = '#f8fafc';
 }
 </script>
 
