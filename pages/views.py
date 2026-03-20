@@ -7,6 +7,8 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.core.files.storage import default_storage
+from django.conf import settings
 from datetime import timedelta, datetime, date
 from decimal import Decimal
 import json
@@ -1375,26 +1377,23 @@ def order_update_rider_ajax(request):
 # ============================================================================
 import os
 import hashlib
-from django.conf import settings
 
-# Helper: Generate photo hash for change detection
+def get_order_photo_prefix(order_id):
+    """Get the storage prefix for order photos (works with both local and S3)"""
+    return f'order_photos/{order_id}'
+
+def get_order_photo_url(order_id, filename):
+    """Get the URL for accessing an order photo (works with both local and S3)"""
+    storage_path = f'{get_order_photo_prefix(order_id)}/{filename}'
+    return default_storage.url(storage_path)
+
 def generate_photo_hash(file_obj):
-    """Generate MD5 hash of file for change detection"""
+    """Generate MD5 hash of photo file"""
     hasher = hashlib.md5()
-    for chunk in file_obj.chunks():
+    file_obj.seek(0)
+    for chunk in iter(lambda: file_obj.read(8192), b''):
         hasher.update(chunk)
     return hasher.hexdigest()
-
-# Helper: Get media path for order photos
-def get_order_photo_path(order_id):
-    """Get the directory path for storing order photos"""
-    return os.path.join(settings.MEDIA_ROOT, 'order_photos', str(order_id))
-
-# Helper: Get media URL for order photos
-def get_order_photo_url(order_id, filename):
-    """Get the URL for accessing an order photo"""
-    return f"{settings.MEDIA_URL}order_photos/{order_id}/{filename}"
-
 
 @login_required(login_url='login')
 @require_http_methods(["POST"])
@@ -1402,9 +1401,10 @@ def get_order_photo_url(order_id, filename):
 def upload_order_photo(request):
     """
     AJAX endpoint to upload a photo for an order.
+    - Works with: Local filesystem OR AWS S3 (auto-detected via settings)
     - Receives: order_id (POST data), photo (file)
     - Returns: JSON with success flag and photo_hash for change detection
-    - Stores: Photo in media/order_photos/{order_id}/ with timestamp
+    - Stores: Photo in order_photos/{order_id}/ with timestamp
     - Polling: Client will poll /get-order-photo/ to detect updates from other devices
     """
     try:
@@ -1420,30 +1420,29 @@ def upload_order_photo(request):
         except Order.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Order not found'}, status=404)
 
-        # Create directory if not exists
-        photo_dir = get_order_photo_path(order_id)
-        os.makedirs(photo_dir, exist_ok=True)
-
+        photo_prefix = get_order_photo_prefix(order_id)
+        
         # Delete existing photos for this order (keep only latest)
         try:
-            for existing_file in os.listdir(photo_dir):
-                existing_path = os.path.join(photo_dir, existing_file)
-                if os.path.isfile(existing_path):
-                    os.remove(existing_path)
-        except OSError:
+            existing_files = default_storage.listdir(photo_prefix)
+            if existing_files and existing_files[1]:  # existing_files = (dirs, files)
+                for existing_file in existing_files[1]:
+                    file_path = f'{photo_prefix}/{existing_file}'
+                    default_storage.delete(file_path)
+        except (OSError, FileNotFoundError):
             pass
 
         # Save new photo with timestamp in filename
         timestamp = int(timezone.now().timestamp() * 1000)  # milliseconds
         original_name = photo_file.name
-        name_parts = os.path.splitext(original_name)
-        new_filename = f"photo_{timestamp}{name_parts[1]}"
-        photo_path = os.path.join(photo_dir, new_filename)
+        name_parts = original_name.rsplit('.', 1)
+        extension = f'.{name_parts[1]}' if len(name_parts) > 1 else ''
+        new_filename = f"photo_{timestamp}{extension}"
+        storage_path = f'{photo_prefix}/{new_filename}'
 
-        # Save file
-        with open(photo_path, 'wb') as destination:
-            for chunk in photo_file.chunks():
-                destination.write(chunk)
+        # Save file using Django's storage backend
+        photo_file.seek(0)
+        saved_path = default_storage.save(storage_path, photo_file)
 
         # Generate hash
         photo_file.seek(0)
@@ -1451,7 +1450,7 @@ def upload_order_photo(request):
 
         return JsonResponse({
             'success': True,
-            'photo_url': get_order_photo_url(order_id, new_filename),
+            'photo_url': default_storage.url(saved_path),
             'photo_hash': photo_hash,
             'photo_name': original_name
         })
@@ -1463,6 +1462,7 @@ def upload_order_photo(request):
 def get_order_photo(request):
     """
     AJAX endpoint to retrieve a photo for an order.
+    - Works with: Local filesystem OR AWS S3 (auto-detected via settings)
     - Receives: order_id (query param)
     - Returns: JSON with photo_url, photo_hash, and photo_name
     - Used by: Polling mechanism (3-second intervals) to detect cross-device updates
@@ -1480,25 +1480,20 @@ def get_order_photo(request):
         except Order.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Order not found'}, status=404)
 
-        photo_dir = get_order_photo_path(order_id)
-
-        # Check if directory exists and has photos
-        if not os.path.exists(photo_dir):
-            return JsonResponse({'success': True, 'photo_url': None, 'photo_hash': None, 'photo_name': None})
+        photo_prefix = get_order_photo_prefix(order_id)
 
         try:
-            files = os.listdir(photo_dir)
-            photo_files = [f for f in files if os.path.isfile(os.path.join(photo_dir, f))]
-
-            if not photo_files:
+            dirs, files = default_storage.listdir(photo_prefix)
+            
+            if not files:
                 return JsonResponse({'success': True, 'photo_url': None, 'photo_hash': None, 'photo_name': None})
 
             # Get most recently modified file
-            latest_file = max(photo_files, key=lambda f: os.path.getmtime(os.path.join(photo_dir, f)))
-            photo_path = os.path.join(photo_dir, latest_file)
+            latest_file = max(files, key=lambda f: default_storage.get_modified_time(f'{photo_prefix}/{f}'))
+            storage_path = f'{photo_prefix}/{latest_file}'
 
             # Generate hash from current file
-            with open(photo_path, 'rb') as f:
+            with default_storage.open(storage_path, 'rb') as f:
                 hasher = hashlib.md5()
                 for chunk_data in iter(lambda: f.read(8192), b''):
                     hasher.update(chunk_data)
@@ -1506,11 +1501,11 @@ def get_order_photo(request):
 
             return JsonResponse({
                 'success': True,
-                'photo_url': get_order_photo_url(order_id, latest_file),
+                'photo_url': default_storage.url(storage_path),
                 'photo_hash': photo_hash,
                 'photo_name': latest_file
             })
-        except OSError:
+        except (OSError, FileNotFoundError):
             return JsonResponse({'success': True, 'photo_url': None, 'photo_hash': None, 'photo_name': None})
 
     except Exception as e:
@@ -1523,6 +1518,7 @@ def get_order_photo(request):
 def delete_order_photo(request):
     """
     AJAX endpoint to delete a photo for an order.
+    - Works with: Local filesystem OR AWS S3 (auto-detected via settings)
     - Receives: order_id (JSON body)
     - Returns: JSON with success flag
     - Deletes: All photos in order's photo directory
@@ -1540,18 +1536,16 @@ def delete_order_photo(request):
         except Order.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Order not found'}, status=404)
 
-        photo_dir = get_order_photo_path(order_id)
+        photo_prefix = get_order_photo_prefix(order_id)
 
-        # Delete directory and all photos
-        if os.path.exists(photo_dir):
-            try:
-                for file in os.listdir(photo_dir):
-                    file_path = os.path.join(photo_dir, file)
-                    if os.path.isfile(file_path):
-                        os.remove(file_path)
-                os.rmdir(photo_dir)
-            except OSError as e:
-                return JsonResponse({'success': False, 'message': f'Error deleting photo: {str(e)}'}, status=500)
+        # Delete all photos in the prefix
+        try:
+            dirs, files = default_storage.listdir(photo_prefix)
+            for file in files:
+                file_path = f'{photo_prefix}/{file}'
+                default_storage.delete(file_path)
+        except (OSError, FileNotFoundError):
+            pass
 
         return JsonResponse({'success': True})
     except json.JSONDecodeError:

@@ -26,3 +26,12 @@ services:
         value: "https://*.onrender.com"
       - key: PYTHON_VERSION
         value: "3.14.0"
+      # AWS S3 Configuration (add these in Render dashboard)
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_STORAGE_BUCKET_NAME
+        value: "kres-admin-photos"
+      - key: AWS_S3_REGION_NAME
+        value: "us-east-1"

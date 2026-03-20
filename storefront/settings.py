@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'storages',
     'pages',
 ]
 
@@ -130,8 +131,29 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files (User uploads - Order Photos)
 # https://docs.djangoproject.com/en/6.0/topics/files/
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+
+import cloudinary
+import cloudinary.api
+
+# Check if Cloudinary credentials are available (free cloud storage)
+USE_CLOUDINARY = os.environ.get('CLOUDINARY_CLOUD_NAME') and os.environ.get('CLOUDINARY_API_KEY')
+
+if USE_CLOUDINARY:
+    # Cloudinary Configuration (Free tier - 25GB storage)
+    cloudinary.config(
+        cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+        api_key=os.environ.get('CLOUDINARY_API_KEY'),
+        api_secret=os.environ.get('CLOUDINARY_API_SECRET')
+    )
+    
+    # Use Cloudinary for media files
+    DEFAULT_FILE_STORAGE = 'cloudinary.storage.MediaCloudinaryStorage'
+    MEDIA_URL = 'https://res.cloudinary.com/'
+    MEDIA_ROOT = ''
+else:
+    # Development: Use local filesystem
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
