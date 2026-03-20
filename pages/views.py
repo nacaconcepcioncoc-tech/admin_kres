@@ -56,6 +56,7 @@ def login_view(request):
     if request.method == 'POST':
         username_or_email = request.POST.get('email')
         password = request.POST.get('password')
+        staff_Id = request.POST.get('staff_Id')
        
         # Try to authenticate with the provided username/email
         user = authenticate(request, username=username_or_email, password=password)
@@ -1363,5 +1364,197 @@ def order_update_rider_ajax(request):
         return JsonResponse({'success': True})
     except Order.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Order not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+
+
+# ============================================================================
+# ORDER PHOTO MANAGEMENT (Real-time Image Sync)
+# ============================================================================
+import os
+import hashlib
+from django.conf import settings
+
+# Helper: Generate photo hash for change detection
+def generate_photo_hash(file_obj):
+    """Generate MD5 hash of file for change detection"""
+    hasher = hashlib.md5()
+    for chunk in file_obj.chunks():
+        hasher.update(chunk)
+    return hasher.hexdigest()
+
+# Helper: Get media path for order photos
+def get_order_photo_path(order_id):
+    """Get the directory path for storing order photos"""
+    return os.path.join(settings.MEDIA_ROOT, 'order_photos', str(order_id))
+
+# Helper: Get media URL for order photos
+def get_order_photo_url(order_id, filename):
+    """Get the URL for accessing an order photo"""
+    return f"{settings.MEDIA_URL}order_photos/{order_id}/{filename}"
+
+
+@login_required(login_url='login')
+@require_http_methods(["POST"])
+@csrf_protect
+def upload_order_photo(request):
+    """
+    AJAX endpoint to upload a photo for an order.
+    - Receives: order_id (POST data), photo (file)
+    - Returns: JSON with success flag and photo_hash for change detection
+    - Stores: Photo in media/order_photos/{order_id}/ with timestamp
+    - Polling: Client will poll /get-order-photo/ to detect updates from other devices
+    """
+    try:
+        order_id = request.POST.get('order_id')
+        photo_file = request.FILES.get('photo')
+
+        if not order_id or not photo_file:
+            return JsonResponse({'success': False, 'message': 'Missing order_id or photo'}, status=400)
+
+        # Verify order exists
+        try:
+            order = Order.objects.get(order_id=order_id)
+        except Order.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Order not found'}, status=404)
+
+        # Create directory if not exists
+        photo_dir = get_order_photo_path(order_id)
+        os.makedirs(photo_dir, exist_ok=True)
+
+        # Delete existing photos for this order (keep only latest)
+        try:
+            for existing_file in os.listdir(photo_dir):
+                existing_path = os.path.join(photo_dir, existing_file)
+                if os.path.isfile(existing_path):
+                    os.remove(existing_path)
+        except OSError:
+            pass
+
+        # Save new photo with timestamp in filename
+        timestamp = int(timezone.now().timestamp() * 1000)  # milliseconds
+        original_name = photo_file.name
+        name_parts = os.path.splitext(original_name)
+        new_filename = f"photo_{timestamp}{name_parts[1]}"
+        photo_path = os.path.join(photo_dir, new_filename)
+
+        # Save file
+        with open(photo_path, 'wb') as destination:
+            for chunk in photo_file.chunks():
+                destination.write(chunk)
+
+        # Generate hash
+        photo_file.seek(0)
+        photo_hash = generate_photo_hash(photo_file)
+
+        return JsonResponse({
+            'success': True,
+            'photo_url': get_order_photo_url(order_id, new_filename),
+            'photo_hash': photo_hash,
+            'photo_name': original_name
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@require_http_methods(["GET"])
+def get_order_photo(request):
+    """
+    AJAX endpoint to retrieve a photo for an order.
+    - Receives: order_id (query param)
+    - Returns: JSON with photo_url, photo_hash, and photo_name
+    - Used by: Polling mechanism (3-second intervals) to detect cross-device updates
+    - Hash comparison: Client compares hash to detect changes from other devices
+    """
+    try:
+        order_id = request.GET.get('order_id')
+
+        if not order_id:
+            return JsonResponse({'success': False, 'message': 'Missing order_id'}, status=400)
+
+        # Verify order exists
+        try:
+            order = Order.objects.get(order_id=order_id)
+        except Order.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Order not found'}, status=404)
+
+        photo_dir = get_order_photo_path(order_id)
+
+        # Check if directory exists and has photos
+        if not os.path.exists(photo_dir):
+            return JsonResponse({'success': True, 'photo_url': None, 'photo_hash': None, 'photo_name': None})
+
+        try:
+            files = os.listdir(photo_dir)
+            photo_files = [f for f in files if os.path.isfile(os.path.join(photo_dir, f))]
+
+            if not photo_files:
+                return JsonResponse({'success': True, 'photo_url': None, 'photo_hash': None, 'photo_name': None})
+
+            # Get most recently modified file
+            latest_file = max(photo_files, key=lambda f: os.path.getmtime(os.path.join(photo_dir, f)))
+            photo_path = os.path.join(photo_dir, latest_file)
+
+            # Generate hash from current file
+            with open(photo_path, 'rb') as f:
+                hasher = hashlib.md5()
+                for chunk_data in iter(lambda: f.read(8192), b''):
+                    hasher.update(chunk_data)
+                photo_hash = hasher.hexdigest()
+
+            return JsonResponse({
+                'success': True,
+                'photo_url': get_order_photo_url(order_id, latest_file),
+                'photo_hash': photo_hash,
+                'photo_name': latest_file
+            })
+        except OSError:
+            return JsonResponse({'success': True, 'photo_url': None, 'photo_hash': None, 'photo_name': None})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@login_required(login_url='login')
+@require_http_methods(["POST"])
+@csrf_protect
+def delete_order_photo(request):
+    """
+    AJAX endpoint to delete a photo for an order.
+    - Receives: order_id (JSON body)
+    - Returns: JSON with success flag
+    - Deletes: All photos in order's photo directory
+    """
+    try:
+        data = json.loads(request.body)
+        order_id = data.get('order_id')
+
+        if not order_id:
+            return JsonResponse({'success': False, 'message': 'Missing order_id'}, status=400)
+
+        # Verify order exists
+        try:
+            order = Order.objects.get(order_id=order_id)
+        except Order.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Order not found'}, status=404)
+
+        photo_dir = get_order_photo_path(order_id)
+
+        # Delete directory and all photos
+        if os.path.exists(photo_dir):
+            try:
+                for file in os.listdir(photo_dir):
+                    file_path = os.path.join(photo_dir, file)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                os.rmdir(photo_dir)
+            except OSError as e:
+                return JsonResponse({'success': False, 'message': f'Error deleting photo: {str(e)}'}, status=500)
+
+        return JsonResponse({'success': True})
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)

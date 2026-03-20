@@ -37,12 +37,16 @@ urlpatterns = [
     # Orders
     path('ajax/order/create/', views.order_create_ajax, name='order_create_ajax'),
     path('ajax/order/update-status/', views.order_update_status_ajax, name='order_update_status_ajax'),
+    path('ajax/order/update-fulfilled/', views.order_update_fulfilled_ajax, name='order_update_fulfilled_ajax'),
+    path('ajax/order/update-rider/', views.order_update_rider_ajax, name='order_update_rider_ajax'),
+    
+    # Order Photos (Real-time Image Sync)
+    path('upload-order-photo/', views.upload_order_photo, name='upload_order_photo'),
+    path('get-order-photo/', views.get_order_photo, name='get_order_photo'),
+    path('delete-order-photo/', views.delete_order_photo, name='delete_order_photo'),
     
     # Payments
     path('ajax/payment/update/', views.payment_update_ajax, name='payment_update_ajax'),
     path('ajax/payment/update-by-order/', views.payment_update_by_order_ajax, name='payment_update_by_order_ajax'),
     path('ajax/payment/get-by-order/', views.payment_get_by_order_ajax, name='payment_get_by_order_ajax'),
-
-     path('ajax/order/update-fulfilled/', views.order_update_fulfilled_ajax, name='order_update_fulfilled_ajax'),
-     path('ajax/order/update-rider/', views.order_update_rider_ajax, name='order_update_rider_ajax'),
 ]
