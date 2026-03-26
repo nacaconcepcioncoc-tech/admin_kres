@@ -1387,6 +1387,19 @@ def get_order_photo_url(order_id, filename):
     storage_path = f'{get_order_photo_prefix(order_id)}/{filename}'
     return default_storage.url(storage_path)
 
+def get_absolute_media_url(request, storage_path):
+    """
+    Convert a storage URL to an absolute URL.
+    - For S3/cloud storage: default_storage.url() already returns an absolute URL
+    - For local storage: default_storage.url() returns a relative path like '/media/...'
+      which needs to be prefixed with the request's origin to work across devices
+    """
+    url = default_storage.url(storage_path)
+    if url.startswith('/'):
+        # Local storage - convert relative URL to absolute using request origin
+        return f'{request.scheme}://{request.get_host()}{url}'
+    return url
+
 def generate_photo_hash(file_obj):
     """Generate MD5 hash of photo file"""
     hasher = hashlib.md5()
@@ -1450,7 +1463,7 @@ def upload_order_photo(request):
 
         return JsonResponse({
             'success': True,
-            'photo_url': default_storage.url(saved_path),
+            'photo_url': get_absolute_media_url(request, saved_path),
             'photo_hash': photo_hash,
             'photo_name': original_name
         })
@@ -1501,7 +1514,7 @@ def get_order_photo(request):
 
             return JsonResponse({
                 'success': True,
-                'photo_url': default_storage.url(storage_path),
+                'photo_url': get_absolute_media_url(request, storage_path),
                 'photo_hash': photo_hash,
                 'photo_name': latest_file
             })

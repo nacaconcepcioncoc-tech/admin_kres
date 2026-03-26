@@ -27,7 +27,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-9@o(6i#jha1d70doe(3h+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,192.168.1.42').split(',')
 
 
 # Application definition
@@ -136,16 +136,33 @@ import cloudinary
 import cloudinary.api
 
 # Check if Cloudinary credentials are available (free cloud storage)
-USE_CLOUDINARY = os.environ.get('CLOUDINARY_CLOUD_NAME') and os.environ.get('CLOUDINARY_API_KEY')
+USE_CLOUDINARY = os.environ.get('CLOUDINARY_CLOUD_NAME') and os.environ.get('CLOUDINARY_API_KEY') and os.environ.get('CLOUDINARY_API_SECRET')
 
-if USE_CLOUDINARY:
+# Check if AWS S3 credentials are available
+USE_AWS_S3 = os.environ.get('AWS_ACCESS_KEY_ID') and os.environ.get('AWS_SECRET_ACCESS_KEY') and os.environ.get('AWS_STORAGE_BUCKET_NAME')
+
+if USE_AWS_S3:
+    # AWS S3 Configuration for persistent cloud storage
+    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-1')
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = None
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
+
+    # Use S3 for media files
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+    MEDIA_ROOT = ''
+elif USE_CLOUDINARY:
     # Cloudinary Configuration (Free tier - 25GB storage)
     cloudinary.config(
         cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
         api_key=os.environ.get('CLOUDINARY_API_KEY'),
         api_secret=os.environ.get('CLOUDINARY_API_SECRET')
     )
-    
+
     # Use Cloudinary for media files
     DEFAULT_FILE_STORAGE = 'cloudinary.storage.MediaCloudinaryStorage'
     MEDIA_URL = 'https://res.cloudinary.com/'
