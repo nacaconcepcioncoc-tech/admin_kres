@@ -31,7 +31,6 @@
             left: 0;
             top: 0;
             box-shadow: 4px 0 20px rgba(2,24,46,0.18);
-            transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
             overflow: hidden;
             z-index: 100;
         }
@@ -1687,13 +1686,21 @@ function csrfToken() {
     return token;
 }
 
-// Sidebar collapse toggle
+// Sidebar collapse toggle with localStorage persistence
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const toggle = document.getElementById('sidebarToggle');
     const main = document.getElementById('mainContent');
-    const collapsed = sidebar.classList.toggle('collapsed');
-    if (collapsed) {
+    const isCollapsed = sidebar.classList.toggle('collapsed');
+    localStorage.setItem('sidebarCollapsed', isCollapsed);
+    updateTogglePosition();
+}
+
+function updateTogglePosition() {
+    const sidebar = document.getElementById('sidebar');
+    const toggle = document.getElementById('sidebarToggle');
+    const main = document.getElementById('mainContent');
+    if (sidebar.classList.contains('collapsed')) {
         toggle.style.left = '72px';
         main.style.marginLeft = '72px';
         main.style.width = 'calc(100% - 72px)';
@@ -1702,6 +1709,24 @@ function toggleSidebar() {
         main.style.marginLeft = '260px';
         main.style.width = 'calc(100% - 260px)';
     }
+}
+
+// Restore sidebar state on page load from localStorage
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isCollapsed) {
+        sidebar.classList.add('collapsed');
+    } else {
+        sidebar.classList.remove('collapsed');
+    }
+    updateTogglePosition();
+}, true);
+
+// Navigation without smooth transition
+function smoothNavigation(url) {
+    event.preventDefault();
+    window.location.href = url;
 }
 
 // ── Notification dropdown functionality ──
@@ -2321,23 +2346,31 @@ function sortOrdersWithOrd1First() {
     updateTomorrowDeliveryCount();
 }
 
+// ── Get Manila date string (YYYY-MM-DD) ──
+function getManilaDateString(offsetDays = 0) {
+    // Create date in Manila timezone (UTC+8)
+    const manilaOffset = 8 * 60; // minutes
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const manilaTime = new Date(utc + (manilaOffset * 60000));
+    manilaTime.setDate(manilaTime.getDate() + offsetDays);
+    return manilaTime.toISOString().split('T')[0];
+}
+
 // ── Delivery summary filter ──
 let tomorrowFilterActive = false;
 
 function filterTomorrowDeliveries() {
     tomorrowFilterActive = !tomorrowFilterActive;
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
-    
+    const tomorrowStr = getManilaDateString(1);
+
     const rows = document.querySelectorAll('.orders-table tbody tr[data-id]');
     let visibleCount = 0;
-    
+
     rows.forEach(row => {
         const sortDate = row.querySelector('.delivery-date')?.getAttribute('data-sort') || '';
         const isToday = sortDate === tomorrowStr;
-        
+
         if (tomorrowFilterActive) {
             row.style.display = isToday ? '' : 'none';
             if (isToday) visibleCount++;
@@ -2345,7 +2378,7 @@ function filterTomorrowDeliveries() {
             row.style.display = '';
         }
     });
-    
+
     const filterIndicator = document.getElementById('filterIndicator');
     if (tomorrowFilterActive) {
         filterIndicator.style.display = 'inline-block';
@@ -2357,25 +2390,22 @@ function filterTomorrowDeliveries() {
 
 // ── Update tomorrow delivery count ──
 function updateTomorrowDeliveryCount() {
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
-    
+    const tomorrowStr = getManilaDateString(1); // Get tomorrow in Manila timezone
+
     const rows = document.querySelectorAll('.orders-table tbody tr[data-id]');
     let tomorrowCount = 0;
-    
+
     rows.forEach(row => {
         const sortDate = row.querySelector('.delivery-date')?.getAttribute('data-sort') || '';
         if (sortDate === tomorrowStr) {
             tomorrowCount++;
         }
     });
-    
+
     const summaryEl = document.getElementById('deliverySummary');
     const countDisplay = document.getElementById('tomorrowCountDisplay');
     const labelDisplay = document.getElementById('deliveryLabel');
-    
+
     if (summaryEl && countDisplay) {
         if (tomorrowCount > 0) {
             countDisplay.textContent = tomorrowCount;
@@ -2406,6 +2436,9 @@ document.addEventListener('DOMContentLoaded', function () {
     titleCaseInput(document.getElementById('senderName'));
     titleCaseInput(document.getElementById('riderName'));
     titleCaseInput(document.getElementById('address'));
+    
+    // Ensure delivery notification is updated
+    setTimeout(updateTomorrowDeliveryCount, 100);
 });
 
 // Status filter dropdown - navigate to URL with status parameter
