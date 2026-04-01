@@ -1,4 +1,5 @@
 {% load static %}
+{% load manila_tz %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,6 +34,7 @@
             box-shadow: 4px 0 20px rgba(2,24,46,0.18);
             overflow: hidden;
             z-index: 100;
+            transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
         }
 
         .sidebar.collapsed {
@@ -56,6 +58,7 @@
             z-index: 200;
             transition: left 0.3s cubic-bezier(0.4,0,0.2,1), background 0.2s;
             box-shadow: 3px 0 8px rgba(2,24,46,0.2);
+            pointer-events: auto;
         }
         .sidebar-toggle:hover { background: #0a2a46; }
         .sidebar-toggle svg {
@@ -419,6 +422,22 @@
             display: flex; align-items: center; gap: 9px;
         }
         .btn-completed-orders:hover { background: linear-gradient(135deg,#FBBF24,#FDE047); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(245,158,11,0.35); }
+        .btn-draft-orders {
+            background: linear-gradient(135deg,#2c4456,#3d6680); color:white;
+            padding: 12px 24px; border: 2px solid transparent; border-radius: 14px;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 4px 14px rgba(44,68,86,0.25);
+            transition: all 0.3s ease; font-family: inherit;
+            display: flex; align-items: center; gap: 10px; position: relative;
+        }
+        .btn-draft-orders:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 24px rgba(44,68,86,0.35); 
+            background: linear-gradient(135deg,#3d6680,#4a7a8a);
+        }
+        .btn-draft-orders:active { transform: translateY(0); }
+        #draftBadge { display:none !important; }
+        #draftBadge.show { display:inline-flex !important; }
         /* Completed Orders Modal */
         .completed-shell {
             background: white; border-radius: 16px;
@@ -431,11 +450,46 @@
         .completed-top { background: linear-gradient(135deg,#F59E0B,#FBBF24); padding:22px 26px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
         .completed-title { font-family:'DM Serif Display',serif; font-size:20px; color:white; }
         .completed-body { padding:22px 26px; overflow-y:auto; flex:1; }
-        .completed-table { width:100%; border-collapse:collapse; }
-        .completed-table th { padding:14px 16px; text-align:left; font-size:12px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.5px; border-bottom:2px solid rgba(72,141,180,0.2); background:rgba(133,196,228,0.1); }
-        .completed-table td { padding:14px 16px; font-size:14px; color:#374151; border-bottom:1px solid #f3f4f6; }
+        .completed-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+        .completed-table th { padding:16px;text-align:left;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.6px;border-bottom:2px solid #e2e8f0;background:#f8fafc; }
+        .completed-table td { padding:16px;font-size:13px;color:#334155;border-bottom:1px solid #e2e8f0;word-break:break-word; }
         .completed-table tbody tr:hover { background:rgba(133,196,228,0.1); }
         .completed-table tbody tr:last-child td { border-bottom:none; }
+
+        /* ── DRAFT ORDERS STYLING ── */
+        .draft-item {
+            display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;padding:16px 20px;
+            background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;transition:all 0.2s;
+        }
+        .draft-item:hover { border-color:#2c4456;background:#f0f4f8;box-shadow:0 4px 12px rgba(44,68,86,0.1); }
+        .draft-item-info { display:flex;flex-direction:column;gap:6px; }
+        .draft-item-title { font-weight:700;color:#1f2937;font-size:15px;text-transform:uppercase; }
+        .draft-item-meta { font-size:12px;color:#6b7280; }
+        .draft-item-actions { display:flex;gap:10px;flex-shrink:0; }
+        .draft-btn {
+            padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-size:12px;font-weight:600;
+            transition:all 0.2s;font-family:inherit;display:flex;align-items:center;gap:6px;white-space:nowrap;
+        }
+        .draft-btn-open {
+            background:linear-gradient(135deg,#2c4456,#3d6680);color:white;box-shadow:0 2px 8px rgba(44,68,86,0.15);
+        }
+        .draft-btn-open:hover { transform:translateY(-1px);box-shadow:0 4px 12px rgba(44,68,86,0.25); }
+        .draft-btn-delete {
+            background:#fee2e2;color:#dc2626;border:1.5px solid #fecaca;
+        }
+        .draft-btn-delete:hover { background:#fecaca;transform:translateY(-1px); }
+
+        /* ── CONFIRMATION MODAL BUTTON STYLES ── */
+        .confirm-modal-btn {
+            transition:all 0.2s;
+            border:none;
+            cursor:pointer;
+            font-family:inherit;
+        }
+        .confirm-modal-btn:hover { transform:translateY(-1px); }
+        .confirm-modal-cancel:hover { background:#f3f4f6 !important; }
+        .confirm-modal-delete:hover { box-shadow:0 6px 16px rgba(220,38,38,0.35) !important; }
+        .confirm-modal-exit:hover { box-shadow:0 6px 16px rgba(37,99,235,0.35) !important; }
 
         /* ── MODAL OVERLAY ── */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(10,16,26,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
@@ -452,6 +506,8 @@
         }
 
         @keyframes slideUp { from { opacity:0; transform: translateY(24px) scale(0.97); } to { opacity:1; transform: translateY(0) scale(1); } }
+        @keyframes slideInRight { from { opacity:0; transform: translateX(100px); } to { opacity:1; transform: translateX(0); } }
+        @keyframes slideOutRight { from { opacity:1; transform: translateX(0); } to { opacity:0; transform: translateX(100px); } }
 
         .modal-top {
             background: linear-gradient(135deg, #2c4456 0%, #3d6680 50%, #4a7a8a 100%);
@@ -961,6 +1017,10 @@
             <h2>Orders</h2>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
+            <button class="btn btn-draft-orders" onclick="openDraftOrdersModal()" title="View saved draft orders">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2M3 7h18M16 5l-4-2M12 3l-4 2"></path></svg>
+                Draft Orders <span id="draftBadge" style="display:none;margin-left:8px;background:#ef4444;color:white;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;">0</span>
+            </button>
             <button class="btn btn-completed-orders" onclick="openCompletedOrdersModal()">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 Completed Orders
@@ -990,7 +1050,7 @@
         </div>
 
         <div id="deliverySummary" style="display:none;align-items:center;gap:8px;background:#e0f2fe;border-left:3px solid #0284c7;border-radius:6px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#0c4a6e;font-weight:500;cursor:pointer;transition:all 0.2s;" onclick="filterTomorrowDeliveries()" title="Click to show tomorrow's deliveries">
-            🚚 There are <strong id="tomorrowCountDisplay">0</strong> <span id="deliveryLabel">delivery/deliveries</span> scheduled for tomorrow
+            🚚 There are <strong id="tomorrowCountDisplay">0</strong> <span id="deliveryLabel">delivery/deliveries</span> scheduled for tomorrow 
             <span id="filterIndicator" style="margin-left:auto;padding:4px 8px;background:rgba(2,24,46,0.1);border-radius:4px;font-size:11px;display:none;">FILTERED</span>
         </div>
 
@@ -1032,6 +1092,9 @@
                         <td class="delivery-date" data-sort="{{ order.delivery_date|date:'Y-m-d'|default:'9999-12-31' }}">
                             {% if order.delivery_date %}
                                 {{ order.delivery_date|date:'M d, Y' }}
+                                {% if order.is_delivery_tomorrow %}
+                                    <span style="display:inline-block;margin-left:6px;padding:2px 6px;background:#FEF3C7;border-radius:3px;font-size:10px;font-weight:600;color:#92400E;">TOMORROW</span>
+                                {% endif %}
                                 {% if order.delivery_time %}
                                     <br><span style="font-size: 12px; color: #9ca3af;">{{ order.delivery_time|date:'g:i A' }}</span>
                                 {% endif %}
@@ -1112,34 +1175,102 @@
                 <table class="completed-table">
                     <thead>
                         <tr>
-                            <th>Date Completed</th>
-                            <th>Customer</th>
-                            <th>Items</th>
-                            <th>Amount</th>
-                            <th>Fulfilled By</th>
+                            <th style="width:14%;">Order Number</th>
+                            <th style="width:12%;">Date Delivered</th>
+                            <th style="width:18%;">Customer</th>
+                            <th style="width:25%;">Items</th>
+                            <th style="width:15%;">Amount</th>
+                            <th style="width:16%;">Fulfilled By</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for order in orders %}{% if order.status == 'completed' %}
+                        {% for order in completed_orders %}
                         <tr>
-                            <td style="font-weight:600;color:#1a1a1a;font-size:13px;">{{ order.order_number }}</td>
-                            <td style="color:#6b7280;font-size:13px;">{{ order.updated_at|date:"M d, Y" }}</td>
-                            <td style="font-weight:600;">{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
-                            <td>{% for item in order.items.all %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-                            <td style="font-weight:700;color:#059669;">₱ {{ order.total|floatformat:2 }}</td>
-                            <td>{{ order.fulfilled_by|default:"—" }}</td>
+                            <td style="font-weight:700;color:#1a1a1a;font-size:13px;">{{ order.order_number }}</td>
+                            <td style="font-size:13px;color:#6b7280;">{{ order.updated_at|date:"M d, Y" }}</td>
+                            <td style="font-weight:600;color:#1f2937;">{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
+                            <td style="color:#4b5563;font-size:13px;">{% for item in order.items.all %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                            <td style="font-weight:700;color:#059669;font-size:14px;">₱ {{ order.total|floatformat:2 }}</td>
+                            <td style="color:#4b5563;font-size:13px;">{{ order.fulfilled_by|default:"—" }}</td>
                         </tr>
-                        {% endif %}{% endfor %}
-                        {% with any_completed=orders|dictsort:"status" %}
-                        {% if not any_completed %}
+                        {% endfor %}
+                        {% if not completed_orders %}
                         <tr><td colspan="6" style="text-align:center;padding:40px;color:#9ca3af;">
                             <div style="font-size:32px;margin-bottom:8px;"></div>
                             <div style="font-weight:600;">No completed orders yet</div>
                         </td></tr>
                         {% endif %}
-                        {% endwith %}
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ DRAFT ORDERS MODAL ══ -->
+    <div id="draftOrdersModal" class="modal">
+        <div class="completed-shell">
+            <div class="completed-top" style="background: linear-gradient(135deg,#2c4456,#3d6680);">
+                <div>
+                    <div class="completed-title"> Draft Orders</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:3px;">Incomplete order forms saved as drafts</div>
+                </div>
+                <button class="close-btn" onclick="closeDraftOrdersModal()">&times;</button>
+            </div>
+            <div class="completed-body" style="padding:0;background:#ffffff;">
+                <div id="draftOrdersContainer" style="display:flex;flex-direction:column;gap:14px;padding:28px;">
+                    <!-- Draft items will be rendered here by JavaScript -->
+                </div>
+                <div id="noDraftsPlaceholder" style="text-align:center;padding:80px 28px;color:#9ca3af;">
+                    <div style="font-size:64px;margin-bottom:16px;opacity:0.6;">📋</div>
+                    <div style="font-size:17px;font-weight:700;margin-bottom:8px;color:#475569;">No Draft Orders Yet</div>
+                    <div style="font-size:14px;color:#6b7280;line-height:1.5;">Start filling out an order form to create and save a draft</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ DELETE DRAFT CONFIRMATION MODAL ══ -->
+    <div id="deleteDraftConfirmModal" class="modal">
+        <div style="background:white;border-radius:16px;width:96%;max-width:420px;padding:28px;box-shadow:0 24px 60px rgba(0,0,0,0.3);overflow:hidden;animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);">
+            <div id="deleteDraftMessage" style="font-size:14px;color:#4b5563;line-height:1.6;margin-bottom:24px;">
+                Are you sure you want to delete this draft? All unsaved changes will be permanently lost.
+            </div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;">
+                <button onclick="closeDeletDraftModal()" class="confirm-modal-btn confirm-modal-cancel" style="padding:10px 22px;border-radius:10px;border:1.5px solid #e5e7eb;background:white;color:#1f2937;font-size:13px;font-weight:600;">
+                    Cancel
+                </button>
+                <button id="confirmDeleteDraftBtn" onclick="confirmDeleteDraft()" class="confirm-modal-btn confirm-modal-delete" style="padding:10px 22px;border-radius:10px;border:none;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(220,38,38,0.25);">
+                    Delete Draft
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ EXIT WARNING MODAL ══ -->
+    <div id="exitWarningModal" class="modal">
+        <div style="background:white;border-radius:16px;width:96%;max-width:480px;padding:0;box-shadow:0 24px 60px rgba(0,0,0,0.3);overflow:hidden;animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);">
+            <div style="background:linear-gradient(135deg,#f59e0b,#fbbf24);padding:26px 28px;display:flex;align-items:center;gap:16px;">
+                <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:28px;">⚠️</div>
+                <div>
+                    <div style="font-size:18px;font-weight:700;color:white;">Wait! Your Form Has Changes</div>
+                    <div style="font-size:13px;color:rgba(255,255,255,0.8);margin-top:2px;">Don't lose your progress</div>
+                </div>
+            </div>
+            <div style="padding:24px 28px;background:#fafaf9;">
+                <div style="font-size:14px;color:#4b5563;line-height:1.6;margin-bottom:24px;">
+                    <div style="margin-bottom:12px;">You have unsaved changes in the order form. Your progress has been automatically saved as a draft.</div>
+                    <div style="padding:12px 14px;background:#fef3c7;border-left:4px solid #f59e0b;border-radius:6px;font-size:13px;color:#92400e;font-weight:500;">
+                        💾 Your draft will be available in the "Draft Orders" section
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;justify-content:flex-end;">
+                    <button id="stayOnPageBtn" onclick="closeExitWarning()" class="confirm-modal-btn confirm-modal-cancel" style="padding:11px 24px;border-radius:10px;border:1.5px solid #e5e7eb;background:white;color:#1f2937;font-size:13px;font-weight:600;">
+                        Keep Editing
+                    </button>
+                    <button id="confirmExitBtn" onclick="proceedExit()" class="confirm-modal-btn confirm-modal-exit" style="padding:11px 24px;border-radius:10px;border:none;background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(37,99,235,0.25);">
+                        Exit Form
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1367,8 +1498,8 @@
                             <div class="nf-field">
                                 <label>Payment Status <span class="req">*</span></label>
                                 <div class="chip-group" id="paymentStatusChips">
-                                    <div class="chip selected" data-value="pending" onclick="selectChip(this)">💰 Down Payment</div>
-                                    <div class="chip" data-value="completed" onclick="selectChip(this)">✅ Fully Paid</div>
+                                    <div class="chip selected" data-value="pending" onclick="selectChip(this)"> Down Payment</div>
+                                    <div class="chip" data-value="completed" onclick="selectChip(this)"> Fully Paid</div>
                                 </div>
                                 <input type="hidden" id="paymentStatus" name="paymentStatus" value="pending">
                             </div>
@@ -1693,13 +1824,16 @@ function toggleSidebar() {
     const main = document.getElementById('mainContent');
     const isCollapsed = sidebar.classList.toggle('collapsed');
     localStorage.setItem('sidebarCollapsed', isCollapsed);
-    updateTogglePosition();
+    updateSidebarLayout();
 }
 
-function updateTogglePosition() {
+function updateSidebarLayout() {
     const sidebar = document.getElementById('sidebar');
     const toggle = document.getElementById('sidebarToggle');
     const main = document.getElementById('mainContent');
+    
+    if (!main) return;
+    
     if (sidebar.classList.contains('collapsed')) {
         toggle.style.left = '72px';
         main.style.marginLeft = '72px';
@@ -1714,14 +1848,21 @@ function updateTogglePosition() {
 // Restore sidebar state on page load from localStorage
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
-    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-    if (isCollapsed) {
-        sidebar.classList.add('collapsed');
-    } else {
-        sidebar.classList.remove('collapsed');
-    }
-    updateTogglePosition();
-}, true);
+    const main = document.getElementById('mainContent');
+    
+    if (!sidebar || !main) return;
+    
+    // Restore saved state after sufficient delay to ensure DOM and all other scripts are ready
+    setTimeout(() => {
+        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        if (isCollapsed) {
+            sidebar.classList.add('collapsed');
+        } else {
+            sidebar.classList.remove('collapsed');
+        }
+        updateSidebarLayout();
+    }, 50);
+});
 
 // Navigation without smooth transition
 function smoothNavigation(url) {
@@ -1786,6 +1927,10 @@ function onDeliveryTypeChange() {
 function openAddOrderModal() {
     document.getElementById('addOrderModal').classList.add('show');
     clearFormError();
+    // Attach form listeners for auto-save
+    setTimeout(() => {
+        attachFormListeners();
+    }, 100);
 }
 function closeAddOrderModal() {
     document.getElementById('addOrderModal').classList.remove('show');
@@ -1824,6 +1969,10 @@ function closeAddOrderModal() {
     const ppArea = document.getElementById('photoUploadArea');
     if (ppArea) { ppArea.style.borderColor = '#d1d5db'; ppArea.style.background = '#f8fafc'; }
     clearFormError();
+    // Clear form change tracking and auto-save timer
+    window._formChanged = false;
+    clearTimeout(window._autoSaveTimer);
+    window._currentDraftId = null;
 }
 function closeOrderDetailsModal() {
     stopImageSyncPolling();
@@ -1835,6 +1984,310 @@ function openCompletedOrdersModal() {
 }
 function closeCompletedOrdersModal() {
     document.getElementById('completedOrdersModal').classList.remove('show');
+}
+
+// ── DRAFT ORDERS MANAGEMENT ──
+function openDraftOrdersModal() {
+    document.getElementById('draftOrdersModal').classList.add('show');
+    loadDraftOrders();
+}
+
+function closeDraftOrdersModal() {
+    document.getElementById('draftOrdersModal').classList.remove('show');
+}
+
+function saveDraftOrder() {
+    // Only save if the modal is open (user is actively editing)
+    const addOrderModal = document.getElementById('addOrderModal');
+    if (!addOrderModal || !addOrderModal.classList.contains('show')) {
+        return;
+    }
+
+    const formData = {
+        customerName: document.getElementById('customerName').value.trim(),
+        contactNumber: document.getElementById('contactNumber').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        deliveryDate: document.getElementById('deliveryDate').value.trim(),
+        deliveryTime: document.getElementById('deliveryTime').value.trim(),
+        orderProduct: document.getElementById('orderProduct').value.trim(),
+        orderAmount: document.getElementById('orderAmount').value.trim(),
+        specialRequests: document.getElementById('specialRequests').value.trim(),
+        paymentMethod: document.getElementById('paymentMethod').value,
+        paymentStatus: document.getElementById('paymentStatus').value,
+        downPaymentAmount: document.getElementById('downPaymentAmount').value.trim(),
+        fulfilledBy: document.getElementById('fulfilledBy').value.trim(),
+        deliveryType: document.getElementById('deliveryType').value || 'dropoff',
+        senderName: document.getElementById('senderName').value.trim(),
+        senderPhone: document.getElementById('senderPhone').value.trim(),
+        riderName: document.getElementById('riderName').value.trim(),
+        riderPhone: document.getElementById('riderPhone').value.trim(),
+        riderVehicle: document.getElementById('riderVehicle').value.trim(),
+        savedAt: new Date().toISOString()
+    };
+    
+    // Check if form has ANY meaningful data (at least one field filled)
+    const hasAnyData = Object.entries(formData).some(([key, val]) => {
+        if (key === 'savedAt') return false;
+        return val && val !== '' && val !== 'dropoff' && val !== 'pending';
+    });
+    
+    if (!hasAnyData) return; // Don't save completely empty forms
+    
+    // Use existing draft ID if reopening a draft, otherwise create new one
+    let draftId = window._currentDraftId;
+    if (!draftId) {
+        draftId = 'draft_' + Date.now();
+        window._currentDraftId = draftId;
+    }
+    
+    const drafts = JSON.parse(localStorage.getItem('orderDrafts') || '{}');
+    drafts[draftId] = formData;
+    
+    localStorage.setItem('orderDrafts', JSON.stringify(drafts));
+    updateDraftBadge();
+    console.log('Draft saved:', draftId);
+}
+
+function loadDraftOrders() {
+    const drafts = JSON.parse(localStorage.getItem('orderDrafts') || '{}');
+    const container = document.getElementById('draftOrdersContainer');
+    const placeholder = document.getElementById('noDraftsPlaceholder');
+    
+    container.innerHTML = '';
+    
+    if (Object.keys(drafts).length === 0) {
+        container.style.display = 'none';
+        placeholder.style.display = 'block';
+        return;
+    }
+    
+    placeholder.style.display = 'none';
+    container.style.display = 'flex';
+    
+    Object.entries(drafts).forEach(([draftId, data]) => {
+        const savedDate = new Date(data.savedAt);
+        const dateStr = savedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        
+        const div = document.createElement('div');
+        div.className = 'draft-item';
+        div.innerHTML = `
+            <div class="draft-item-info">
+                <div class="draft-item-title">
+                    ${data.customerName || 'Unnamed Order'} - ${data.orderProduct || 'No product'}
+                </div>
+                <div class="draft-item-meta">
+                    Saved: ${dateStr} | Amount: ₱ ${parseFloat(data.orderAmount || 0).toFixed(2)}
+                </div>
+            </div>
+            <div class="draft-item-actions">
+                <button class="draft-btn draft-btn-open" onclick="openDraftForEditing('${draftId}')">
+                    Continue Editing
+                </button>
+                <button class="draft-btn draft-btn-delete" onclick="deleteDraft('${draftId}')">
+                    Delete
+                </button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function openDraftForEditing(draftId) {
+    const drafts = JSON.parse(localStorage.getItem('orderDrafts') || '{}');
+    const data = drafts[draftId];
+    
+    if (!data) {
+        alert('Draft not found.');
+        return;
+    }
+    
+    // Load data into form
+    document.getElementById('customerName').value = data.customerName || '';
+    document.getElementById('contactNumber').value = data.contactNumber || '';
+    document.getElementById('address').value = data.address || '';
+    document.getElementById('deliveryDate').value = data.deliveryDate || '';
+    document.getElementById('deliveryTime').value = data.deliveryTime || '';
+    document.getElementById('orderProduct').value = data.orderProduct || '';
+    document.getElementById('orderAmount').value = data.orderAmount || '';
+    document.getElementById('specialRequests').value = data.specialRequests || '';
+    document.getElementById('paymentMethod').value = data.paymentMethod || '';
+    document.getElementById('paymentStatus').value = data.paymentStatus || 'pending';
+    document.getElementById('downPaymentAmount').value = data.downPaymentAmount || '';
+    document.getElementById('fulfilledBy').value = data.fulfilledBy || '';
+    document.getElementById('senderName').value = data.senderName || '';
+    document.getElementById('senderPhone').value = data.senderPhone || '';
+    document.getElementById('riderName').value = data.riderName || '';
+    document.getElementById('riderPhone').value = data.riderPhone || '';
+    document.getElementById('riderVehicle').value = data.riderVehicle || '';
+    
+    // Update delivery type UI
+    const deliveryType = data.deliveryType || 'dropoff';
+    document.getElementById('deliveryType').value = deliveryType;
+    document.querySelector(`input[name="deliveryType"][value="${deliveryType}"]`).checked = true;
+    onDeliveryTypeChange();
+    
+    // Update payment status chips
+    const selectedChip = document.querySelector(`.chip[data-value="${data.paymentStatus || 'pending'}"]`);
+    if (selectedChip) {
+        selectChip(selectedChip);
+    }
+    
+    // Store the draft ID for deletion after submission
+    window._currentDraftId = draftId;
+    
+    closeDraftOrdersModal();
+    openAddOrderModal();
+}
+
+function deleteDraft(draftId) {
+    window._draftToDelete = draftId;
+    document.getElementById('deleteDraftConfirmModal').classList.add('show');
+}
+
+function closeDeletDraftModal() {
+    document.getElementById('deleteDraftConfirmModal').classList.remove('show');
+    window._draftToDelete = null;
+}
+
+function confirmDeleteDraft() {
+    const draftId = window._draftToDelete;
+    if (!draftId) return;
+    
+    const btn = document.getElementById('confirmDeleteDraftBtn');
+    const origText = btn.textContent;
+    btn.textContent = 'Deleting...';
+    btn.disabled = true;
+    
+    setTimeout(() => {
+        const drafts = JSON.parse(localStorage.getItem('orderDrafts') || '{}');
+        delete drafts[draftId];
+        localStorage.setItem('orderDrafts', JSON.stringify(drafts));
+        
+        updateDraftBadge();
+        loadDraftOrders(); // Refresh the modal
+        closeDeletDraftModal();
+        
+        // Show success message
+        showDeleteSuccessNotification();
+        
+        btn.textContent = origText;
+        btn.disabled = false;
+    }, 600);
+}
+
+function updateDraftBadge() {
+    const drafts = JSON.parse(localStorage.getItem('orderDrafts') || '{}');
+    const count = Object.keys(drafts).length;
+    const badge = document.getElementById('draftBadge');
+    
+    if (count > 0) {
+        badge.textContent = count;
+        badge.classList.add('show');
+    } else {
+        badge.classList.remove('show');
+    }
+}
+
+// Store form state for auto-save when user is typing
+window._formChanged = false;
+window._autoSaveTimer = null;
+window._currentDraftId = null;
+
+// Enhanced auto-save with form input tracking
+function attachFormListeners() {
+    const formInputs = document.querySelectorAll('#addOrderForm input, #addOrderForm select, #addOrderForm textarea');
+    
+    formInputs.forEach(input => {
+        // Remove old listeners to prevent duplicates
+        input.removeEventListener('input', handleFormChange);
+        input.removeEventListener('change', handleFormChange);
+        
+        // Attach new listeners
+        input.addEventListener('input', handleFormChange);
+        input.addEventListener('change', handleFormChange);
+    });
+}
+
+function handleFormChange() {
+    window._formChanged = true;
+    
+    // Debounce: save after 1.5 seconds of inactivity
+    clearTimeout(window._autoSaveTimer);
+    window._autoSaveTimer = setTimeout(() => {
+        saveDraftOrder();
+    }, 1500);
+}
+
+// Attach listeners when modal opens
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize draft badge on page load
+    updateDraftBadge();
+    
+    // Attach listeners to initial form if modal happens to be open
+    setTimeout(() => {
+        attachFormListeners();
+    }, 500);
+});
+
+// Show exit warning when user tries to leave with unsaved changes
+window._allowExit = false;
+
+window.addEventListener('beforeunload', function(e) {
+    const addOrderModal = document.getElementById('addOrderModal');
+    const isModalOpen = addOrderModal && addOrderModal.classList.contains('show');
+    
+    if (isModalOpen && window._formChanged && !window._allowExit) {
+        // Show our custom modal instead of browser default
+        e.preventDefault();
+        e.returnValue = '';
+        
+        // Show custom warning modal
+        setTimeout(() => {
+            document.getElementById('exitWarningModal').classList.add('show');
+        }, 100);
+        
+        return undefined;
+    }
+});
+
+// Modal control functions
+function closeExitWarning() {
+    document.getElementById('exitWarningModal').classList.remove('show');
+}
+
+function proceedExit() {
+    window._allowExit = true;
+    document.getElementById('exitWarningModal').classList.remove('show');
+    window.history.back();
+}
+
+function showDeleteSuccessNotification() {
+    // Create a temporary success notification
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 16px 20px;
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 5000;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    notification.innerHTML = '✓ Draft deleted successfully';
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 
 // ── Payment chip selector ──
@@ -1951,6 +2404,19 @@ function submitAddOrder(event) {
             }
             btn.innerHTML        = '✓ Created!';
             btn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
+            
+            // Clear draft after successful submission
+            if (window._currentDraftId) {
+                const drafts = JSON.parse(localStorage.getItem('orderDrafts') || '{}');
+                delete drafts[window._currentDraftId];
+                localStorage.setItem('orderDrafts', JSON.stringify(drafts));
+                window._currentDraftId = null;
+            }
+            
+            // Reset form state
+            window._formChanged = false;
+            clearTimeout(window._autoSaveTimer);
+            
             setTimeout(() => location.reload(), 1200);
         } else {
             showFormError(data.message || 'Failed to create order.');
@@ -2473,6 +2939,9 @@ window.addEventListener('click', function (e) {
     if (e.target === document.getElementById('addOrderModal'))        closeAddOrderModal();
     if (e.target === document.getElementById('orderDetailsModal'))    closeOrderDetailsModal();
     if (e.target === document.getElementById('completedOrdersModal')) closeCompletedOrdersModal();
+    if (e.target === document.getElementById('draftOrdersModal'))     closeDraftOrdersModal();
+    if (e.target === document.getElementById('deleteDraftConfirmModal')) closeDeletDraftModal();
+    if (e.target === document.getElementById('exitWarningModal'))     closeExitWarning();
 });
 
 // ── Export Orders to XLSX ──

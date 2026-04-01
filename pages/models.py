@@ -173,6 +173,29 @@ class Order(models.Model):
     def get_total_items(self):
         """Get total number of items in order"""
         return sum(item.quantity for item in self.items.all())
+    
+    @property
+    def is_delivery_tomorrow(self):
+        """Check if delivery date is tomorrow in Manila timezone"""
+        if not self.delivery_date:
+            return False
+        # Import here to avoid circular imports
+        from .manila_tz_utils import is_delivery_tomorrow
+        return is_delivery_tomorrow(self.delivery_date)
+    
+    @property
+    def is_delivery_today(self):
+        """Check if delivery date is today in Manila timezone"""
+        if not self.delivery_date:
+            return False
+        # Import here to avoid circular imports
+        from .manila_tz_utils import is_delivery_today
+        return is_delivery_today(self.delivery_date)
+    
+    def get_delivery_date_note(self):
+        """Get a human-readable note about delivery date (Today/Tomorrow/Date)"""
+        from .manila_tz_utils import get_delivery_date_note
+        return get_delivery_date_note(self.delivery_date)
 
 
 
@@ -180,7 +203,7 @@ class Order(models.Model):
 class OrderItem(models.Model):
     """Order Item model - stores individual items in an order"""
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='order_items')
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, related_name='order_items')
     quantity = models.IntegerField(validators=[MinValueValidator(1)])
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
    

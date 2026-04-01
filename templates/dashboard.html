@@ -40,6 +40,7 @@
             box-shadow: 4px 0 20px rgba(2,24,46,0.18);
             overflow: hidden;
             z-index: 100;
+            transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
         }
 
         .sidebar.collapsed {
@@ -62,6 +63,7 @@
             cursor: pointer;
             z-index: 200;
             box-shadow: 3px 0 8px rgba(2,24,46,0.2);
+            pointer-events: auto;
         }
         .sidebar-toggle:hover { background: #0a2a46; }
         .sidebar-toggle svg {
@@ -900,14 +902,24 @@
             return manilaTime.toISOString().split('T')[0];
         }
 
-        // Sidebar collapse toggle with sessionStorage persistence
+        // Sidebar collapse toggle with localStorage persistence
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const toggle = document.getElementById('sidebarToggle');
             const main = document.getElementById('mainContent');
-            const collapsed = sidebar.classList.toggle('collapsed');
-            sessionStorage.setItem('sidebarCollapsed', collapsed);
-            if (collapsed) {
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+            updateSidebarLayout();
+        }
+        
+        function updateSidebarLayout() {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            const main = document.getElementById('mainContent');
+            
+            if (!main) return;
+            
+            if (sidebar.classList.contains('collapsed')) {
                 toggle.style.left = '72px';
                 main.style.marginLeft = '72px';
                 main.style.width = 'calc(100% - 72px)';
@@ -915,20 +927,6 @@
                 toggle.style.left = '260px';
                 main.style.marginLeft = '260px';
                 main.style.width = 'calc(100% - 260px)';
-            }
-        }
-        
-        // Restore sidebar state on page load from sessionStorage
-        function restoreSidebarState() {
-            const sidebar = document.getElementById('sidebar');
-            const toggle = document.getElementById('sidebarToggle');
-            const main = document.getElementById('mainContent');
-            const isCollapsed = sessionStorage.getItem('sidebarCollapsed') === 'true';
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
-                toggle.style.left = '72px';
-                main.style.marginLeft = '72px';
-                main.style.width = 'calc(100% - 72px)';
             }
         }
         
@@ -1007,6 +1005,18 @@
 
         // Dashboard Functionality
         document.addEventListener('DOMContentLoaded', function() {
+            // Restore sidebar state from localStorage after sufficient delay
+            setTimeout(() => {
+                const sidebar = document.getElementById('sidebar');
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    sidebar.classList.add('collapsed');
+                } else {
+                    sidebar.classList.remove('collapsed');
+                }
+                updateSidebarLayout();
+            }, 50);
+            
             formatRevenue();
             updateDeliveryNotification();
             // Navigation functionality

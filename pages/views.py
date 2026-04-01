@@ -13,6 +13,7 @@ from datetime import timedelta, datetime, date
 from decimal import Decimal
 import json
 from .models import Customer, Product, Order, OrderItem, Payment, StockAlert, MonthlySalesArchive, YearlySalesSnapshot
+from .manila_tz_utils import get_manila_timezone, get_manila_today, get_manila_now, is_delivery_tomorrow
 from .auto_delete_utils import (
     check_and_delete_completed_orders,
     check_and_delete_yearly_sales_data,
@@ -22,6 +23,7 @@ from .auto_delete_utils import (
     get_next_month_deletion_date,
     get_next_year_deletion_date
 )
+import pytz
 
 
 
@@ -531,6 +533,7 @@ def product_delete_ajax(request):
         return JsonResponse({'success': False, 'message': 'Product not found'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error deleting product: {str(e)}'}, status=400)
+
 @login_required(login_url='login')
 def orders(request):
     """List all orders from database"""
@@ -557,6 +560,9 @@ def orders(request):
    
     orders_list = orders_list.order_by('-created_at')
    
+    # Get all completed orders (for completed orders modal, separate from status filter)
+    completed_orders = Order.objects.filter(status='completed').select_related('customer').prefetch_related('items__product').order_by('-updated_at')
+   
     # Get all products for order creation
     products = Product.objects.filter(is_active=True).order_by('name')
    
@@ -570,9 +576,22 @@ def orders(request):
     
     # Get next month's deletion date for warning message
     next_deletion_date = get_next_month_deletion_date()
+    
+    # Get Manila timezone info for delivery date filtering
+    manila_today = get_manila_today()
+    manila_tomorrow = manila_today + timedelta(days=1)
+    
+    # Add Manila timezone delivery info to context
+    orders_with_delivery_info = []
+    tomorrow_count = 0
+    for order in orders_list:
+        if order.delivery_date == manila_tomorrow:
+            tomorrow_count += 1
+        orders_with_delivery_info.append(order)
    
     context = {
         'orders': orders_list,
+        'completed_orders': completed_orders,
         'products': products,
         'search_query': search_query,
         'status_filter': status_filter,
@@ -580,6 +599,9 @@ def orders(request):
         'low_stock_count': low_stock_count,
         'pending_payments': pending_payments,
         'next_deletion_date': next_deletion_date,
+        'manila_today': manila_today,
+        'manila_tomorrow': manila_tomorrow,
+        'tomorrow_deliveries_count': tomorrow_count,
     }
    
     return render(request, 'orders.html', context)

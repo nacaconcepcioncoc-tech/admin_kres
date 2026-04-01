@@ -31,9 +31,9 @@
             left: 0;
             top: 0;
             box-shadow: 4px 0 20px rgba(2,24,46,0.18);
-            transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
             overflow: hidden;
             z-index: 100;
+            transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
         }
 
         .sidebar.collapsed {
@@ -57,6 +57,7 @@
             z-index: 200;
             transition: left 0.3s cubic-bezier(0.4,0,0.2,1), background 0.2s;
             box-shadow: 3px 0 8px rgba(2,24,46,0.2);
+            pointer-events: auto;
         }
         .sidebar-toggle:hover { background: #0a2a46; }
         .sidebar-toggle svg {
@@ -848,13 +849,24 @@ function closeProductModal() {
     document.getElementById('productModal').classList.remove('show');
 }
 
-// Sidebar collapse toggle
+// Sidebar collapse toggle with sessionStorage persistence
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const toggle = document.getElementById('sidebarToggle');
     const main = document.getElementById('mainContent');
-    const collapsed = sidebar.classList.toggle('collapsed');
-    if (collapsed) {
+    const isCollapsed = sidebar.classList.toggle('collapsed');
+    localStorage.setItem('sidebarCollapsed', isCollapsed);
+    updateSidebarLayout();
+}
+
+function updateSidebarLayout() {
+    const sidebar = document.getElementById('sidebar');
+    const toggle = document.getElementById('sidebarToggle');
+    const main = document.getElementById('mainContent');
+    
+    if (!main) return;
+    
+    if (sidebar.classList.contains('collapsed')) {
         toggle.style.left = '72px';
         main.style.marginLeft = '72px';
         main.style.width = 'calc(100% - 72px)';
@@ -863,6 +875,29 @@ function toggleSidebar() {
         main.style.marginLeft = '260px';
         main.style.width = 'calc(100% - 260px)';
     }
+}
+
+// Restore sidebar state on page load from localStorage
+function restoreSidebarState() {
+    const sidebar = document.getElementById('sidebar');
+    const main = document.getElementById('mainContent');
+    
+    if (!sidebar || !main) return;
+    
+    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isCollapsed) {
+        sidebar.classList.add('collapsed');
+    } else {
+        sidebar.classList.remove('collapsed');
+    }
+    updateSidebarLayout();
+}
+
+// Smooth transition for navigation links
+function smoothNavigation(url) {
+    event.preventDefault();
+    document.body.classList.add('page-transition');
+    setTimeout(() => { window.location.href = url; }, 300);
 }
 
 // ── Add Product Row to Table ──
@@ -1126,6 +1161,11 @@ window.addEventListener('click', function(e) {
 
 // Apply filter from sessionStorage (from dashboard low stock link) + initial sort
 document.addEventListener('DOMContentLoaded', function() {
+    // Restore sidebar state after sufficient delay to ensure DOM and all other scripts are ready
+    setTimeout(() => {
+        restoreSidebarState();
+    }, 50);
+    
     const filter = sessionStorage.getItem('inventoryFilter');
     if (filter === 'lowstock') {
         setStockFilter('low');

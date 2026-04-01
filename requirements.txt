@@ -6,3 +6,4 @@ psycopg2-binary==2.9.10
 boto3==1.28.85
 django-storages==1.14.2
 cloudinary==1.41.0
+pytz==2024.1
