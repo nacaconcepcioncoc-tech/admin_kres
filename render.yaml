@@ -21,9 +21,9 @@ services:
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: ".onrender.com"
+        value: ".onrender.com,krescoadmin.xyz,www.krescoadmin.xyz"
       - key: CSRF_TRUSTED_ORIGINS
-        value: "https://*.onrender.com"
+        value: "https://*.onrender.com,https://krescoadmin.xyz,https://www.krescoadmin.xyz"
       - key: PYTHON_VERSION
         value: "3.14.0"
       # AWS S3 Configuration (add these in Render dashboard)
