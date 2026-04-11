@@ -414,14 +414,14 @@
         }
         .btn-add-order:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(44,68,86,0.4); }
         .btn-completed-orders {
-            background: linear-gradient(135deg,#F59E0B,#FBBF24); color:white;
+            background: linear-gradient(135deg,#c2410c,#ea580c); color:white;
             padding: 12px 22px; border: 2px solid transparent; border-radius: 12px;
             font-size: 14px; font-weight: 600; cursor: pointer;
-            box-shadow: 0 4px 14px rgba(245,158,11,0.25);
+            box-shadow: 0 4px 14px rgba(194,65,12,0.35);
             transition: all 0.3s; font-family: inherit;
             display: flex; align-items: center; gap: 9px;
         }
-        .btn-completed-orders:hover { background: linear-gradient(135deg,#FBBF24,#FDE047); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(245,158,11,0.35); }
+        .btn-completed-orders:hover { background: linear-gradient(135deg,#ea580c,#f97316); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(194,65,12,0.45); }
         .btn-draft-orders {
             background: linear-gradient(135deg,#2c4456,#3d6680); color:white;
             padding: 12px 24px; border: 2px solid transparent; border-radius: 14px;
@@ -447,14 +447,23 @@
             animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
             max-height: 85vh; display: flex; flex-direction: column;
         }
-        .completed-top { background: linear-gradient(135deg,#F59E0B,#FBBF24); padding:22px 26px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
-        .completed-title { font-family:'DM Serif Display',serif; font-size:20px; color:white; }
+        .completed-top { background: linear-gradient(135deg,#9a3412,#c2410c); padding:22px 26px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+        .completed-title { font-family:'DM Serif Display',serif; font-size:20px; font-weight:700; color:white; }
+        .completed-subtitle { font-size:12px; color:rgba(255,255,255,.75); margin-top:3px; font-weight:700; }
         .completed-body { padding:22px 26px; overflow-y:auto; flex:1; }
         .completed-table { width:100%; border-collapse:collapse; table-layout:fixed; }
         .completed-table th { padding:16px;text-align:left;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.6px;border-bottom:2px solid #e2e8f0;background:#f8fafc; }
         .completed-table td { padding:16px;font-size:13px;color:#334155;border-bottom:1px solid #e2e8f0;word-break:break-word; }
         .completed-table tbody tr:hover { background:rgba(133,196,228,0.1); }
         .completed-table tbody tr:last-child td { border-bottom:none; }
+        .completed-order-number { font-size:13px; }
+        .completed-order-id { font-weight:700; color:#111827; }
+        .completed-order-divider { color:#94a3b8; margin:0 4px; font-weight:600; }
+        .completed-order-date-part { font-size:11px; color:#94a3b8; font-weight:500; }
+        .completed-delivered-date { font-size:12px; color:#6b7280; font-weight:400; }
+        .completed-customer,
+        .completed-items { font-weight:400; color:#1f2937; }
+        .completed-amount { font-weight:700; color:#dc2626; font-size:14px; }
 
         /* ── DRAFT ORDERS STYLING ── */
         .draft-item {
@@ -1167,7 +1176,7 @@
             <div class="completed-top">
                 <div>
                     <div class="completed-title"> Completed Orders</div>
-                    <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:3px;">All fully paid & fulfilled orders</div>
+                    <div class="completed-subtitle">All fully paid & fulfilled orders</div>
                 </div>
                 <button class="close-btn" onclick="closeCompletedOrdersModal()">&times;</button>
             </div>
@@ -1175,27 +1184,27 @@
                 <table class="completed-table">
                     <thead>
                         <tr>
-                            <th style="width:14%;">Order Number</th>
-                            <th style="width:12%;">Date Delivered</th>
-                            <th style="width:18%;">Customer</th>
-                            <th style="width:25%;">Items</th>
+                            <th style="width:22%;">Order Number</th>
+                            <th style="width:14%;">Date Delivered</th>
+                            <th style="width:20%;">Customer</th>
+                            <th style="width:29%;">Items</th>
                             <th style="width:15%;">Amount</th>
-                            <th style="width:16%;">Fulfilled By</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for order in completed_orders %}
                         <tr>
-                            <td style="font-weight:700;color:#1a1a1a;font-size:13px;">{{ order.order_number }}</td>
-                            <td style="font-size:13px;color:#6b7280;">{{ order.updated_at|date:"M d, Y" }}</td>
-                            <td style="font-weight:600;color:#1f2937;">{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
-                            <td style="color:#4b5563;font-size:13px;">{% for item in order.items.all %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-                            <td style="font-weight:700;color:#059669;font-size:14px;">₱ {{ order.total|floatformat:2 }}</td>
-                            <td style="color:#4b5563;font-size:13px;">{{ order.fulfilled_by|default:"—" }}</td>
+                            <td class="completed-order-number">
+                                <span class="completed-order-id">ORD-{{ order.order_id|stringformat:"04d" }}</span><span class="completed-order-divider">|</span><span class="completed-order-date-part">{{ order.created_at|date:"Y-m-d" }}</span>
+                            </td>
+                            <td class="completed-delivered-date">{{ order.updated_at|date:"M d / Y" }}</td>
+                            <td class="completed-customer">{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
+                            <td class="completed-items">{% for item in order.items.all %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                            <td class="completed-amount">₱ {{ order.total|floatformat:2 }}</td>
                         </tr>
                         {% endfor %}
                         {% if not completed_orders %}
-                        <tr><td colspan="6" style="text-align:center;padding:40px;color:#9ca3af;">
+                        <tr><td colspan="5" style="text-align:center;padding:40px;color:#9ca3af;">
                             <div style="font-size:32px;margin-bottom:8px;"></div>
                             <div style="font-weight:600;">No completed orders yet</div>
                         </td></tr>
@@ -2946,36 +2955,37 @@ window.addEventListener('click', function (e) {
 
 // ── Export Orders to XLSX ──
 function exportOrdersToCSV() {
-    const table = document.querySelector('.orders-table');
-    if (!table) return;
-
     const today = new Date();
     const dateStr = today.getFullYear() + '-' +
                     String(today.getMonth() + 1).padStart(2, '0') + '-' +
                     String(today.getDate()).padStart(2, '0');
 
-    // Collect data rows
-    const rows = table.querySelectorAll('tr');
-    const data = [];
+    const visibleRows = Array.from(document.querySelectorAll('.orders-table tbody tr[data-id]'))
+        .filter(row => window.getComputedStyle(row).display !== 'none');
 
-    rows.forEach((row, rowIndex) => {
-        const cells = row.querySelectorAll('td, th');
-        const rowData = [];
-        cells.forEach((cell, colIndex) => {
-            if (colIndex === cells.length - 1) return; // skip Actions
-            let txt = cell.textContent.trim();
-            // Clean status emojis
-            if (rowIndex > 0 && colIndex === 4) txt = txt.replace(/^\S+\s+/, '').trim();
-            // Clean amount — strip currency symbols, keep number
-            if (rowIndex > 0 && colIndex === 3) {
-                txt = txt.replace(/[₱â,±\s]/g, '').trim();
-                const num = parseFloat(txt);
-                rowData.push(isNaN(num) ? txt : num);
-                return;
-            }
-            rowData.push(txt);
-        });
-        if (rowData.length) data.push(rowData);
+    if (visibleRows.length === 0) {
+        alert('No visible orders to export.');
+        return;
+    }
+
+    const data = [['Delivery Date', 'Customer', 'Items', 'Amount', 'Status']];
+    visibleRows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const normalizeText = (text) => text.replace(/\s+/g, ' ').trim();
+
+        const deliveryDate = normalizeText(cells[0]?.textContent || '—');
+        const customer = normalizeText(cells[1]?.textContent || '');
+        const items = normalizeText(cells[2]?.textContent || '');
+        const amount = normalizeText(cells[3]?.textContent || '');
+        const status = normalizeText(cells[4]?.textContent || '');
+
+        data.push([
+            deliveryDate,
+            customer,
+            items,
+            amount,
+            status,
+        ]);
     });
 
     // Load xlsx-style (supports cell styling) dynamically if not already loaded
@@ -2985,30 +2995,28 @@ function exportOrdersToCSV() {
         const numCols = data[0] ? data[0].length : 5;
         const numRows = data.length;
 
-        // Auto-fit column widths based on content
         const colWidths = Array.from({ length: numCols }, (_, c) => {
-            let max = 10;
+            let max = 12;
             data.forEach(row => {
                 const val = row[c] !== undefined ? String(row[c]) : '';
                 if (val.length > max) max = val.length;
             });
-            return { wch: Math.min(max + 4, 50) };
+            return { wch: Math.min(max + 4, 60) };
         });
         ws['!cols'] = colWidths;
 
-        // Center all cells; header row also bold
+        // Center all cells; header row bold
         for (let r = 0; r < numRows; r++) {
             for (let c = 0; c < numCols; c++) {
                 const cellAddr = XLSX.utils.encode_cell({ r, c });
                 if (!ws[cellAddr]) ws[cellAddr] = { v: '', t: 's' };
                 ws[cellAddr].s = {
-                    alignment: { horizontal: 'center', vertical: 'center', wrapText: false },
+                    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
                     font: r === 0 ? { bold: true } : {}
                 };
             }
         }
 
-        // Row height for all rows
         ws['!rows'] = Array.from({ length: numRows }, () => ({ hpt: 20 }));
 
         const wb = XLSX.utils.book_new();
@@ -3023,7 +3031,6 @@ function exportOrdersToCSV() {
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx-style/0.8.13/xlsx.full.min.js';
         script.onload = function () { window.XLSXStyle = window.XLSX; buildAndDownload(); };
         script.onerror = function () {
-            // fallback to plain xlsx without styling
             const s2 = document.createElement('script');
             s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
             s2.onload = buildAndDownload;

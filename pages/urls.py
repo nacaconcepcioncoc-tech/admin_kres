@@ -16,7 +16,6 @@ urlpatterns = [
     path('orders/', views.orders, name='orders'),
     path('payments/', views.payments, name='payments'),
     path('reports/', views.reports, name='reports'),
-    path('chatbox/', views.chatbox, name='chatbox'),
     path('features/', views.features, name='features'),
     
     # ========== ADMIN UTILITIES ==========
@@ -39,6 +38,7 @@ urlpatterns = [
     path('ajax/order/update-status/', views.order_update_status_ajax, name='order_update_status_ajax'),
     path('ajax/order/update-fulfilled/', views.order_update_fulfilled_ajax, name='order_update_fulfilled_ajax'),
     path('ajax/order/update-rider/', views.order_update_rider_ajax, name='order_update_rider_ajax'),
+    path('ajax/orders/export/', views.orders_export_data_ajax, name='orders_export_data_ajax'),
     
     # Order Photos (Real-time Image Sync)
     path('upload-order-photo/', views.upload_order_photo, name='upload_order_photo'),

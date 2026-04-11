@@ -722,7 +722,7 @@
                     <label for="email">Email or Username</label>
                     <div class="input-wrap">
                         <span class="input-icon">✉</span>
-                        <input type="text" id="email" name="email" placeholder="kres_admin" required autofocus>
+                        <input type="text" id="email" name="email" placeholder="kresco_admin" required autofocus>
                     </div>
                 </div>
                 <div class="form-group">
@@ -778,7 +778,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('remember', rememberMe ? 'on' : 'off');
                 formData.append('csrfmiddlewaretoken', csrfToken);
                 
-                const response = await fetch('/login/', {
+                const loginUrl = window.location.pathname + window.location.search;
+                const response = await fetch(loginUrl, {
                     method: 'POST',
                     body: formData,
                     redirect: 'follow'

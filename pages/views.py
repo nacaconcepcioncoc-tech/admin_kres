@@ -1,17 +1,19 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, Count, Q, F, Avg, DecimalField
+from django.db.models import Sum, Count, Q, F, DecimalField, OuterRef, Subquery
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.views.decorators.csrf import csrf_protect
 from django.core.files.storage import default_storage
 from django.conf import settings
-from datetime import timedelta, datetime, date
+from datetime import timedelta, datetime
 from decimal import Decimal
 import json
+import logging
 from .models import Customer, Product, Order, OrderItem, Payment, StockAlert, MonthlySalesArchive, YearlySalesSnapshot
 from .manila_tz_utils import get_manila_timezone, get_manila_today, get_manila_now, is_delivery_tomorrow
 from .auto_delete_utils import (
@@ -23,7 +25,6 @@ from .auto_delete_utils import (
     get_next_month_deletion_date,
     get_next_year_deletion_date
 )
-import pytz
 
 
 
@@ -32,6 +33,8 @@ import pytz
 # ADMIN HELPER: CLEAR ALL TEST DATA
 # ============================================================================
 @login_required(login_url='login')
+@require_http_methods(["POST"])
+@csrf_protect
 def clear_all_data(request):
     """Clear all customers, products, orders, payments for testing"""
     # Only allow this in development or for superusers
@@ -57,6 +60,7 @@ def clear_all_data(request):
 # ============================================================================
 def login_view(request):
     """Admin login view"""
+    logger = logging.getLogger(__name__)
     if request.method == 'POST':
         username_or_email = request.POST.get('email')
         password = request.POST.get('password')
@@ -72,12 +76,25 @@ def login_view(request):
                 user_obj = User.objects.get(email=username_or_email)
                 user = authenticate(request, username=user_obj.username, password=password)
             except User.DoesNotExist:
-                pass
+                logger.warning(f"User not found with email: {username_or_email}")
+            except Exception as e:
+                logger.error(f"Database error during login: {str(e)}", exc_info=True)
        
         if user is not None:
             login(request, user)
+            remember_me = request.POST.get('remember') in {'on', 'true', '1', 'yes'}
+            if remember_me:
+                request.session.set_expiry(settings.SESSION_COOKIE_AGE)
+            else:
+                # Expire at browser close when "Remember Me" is not selected.
+                request.session.set_expiry(0)
+
             next_page = request.GET.get('next', '')
-            if next_page:
+            if next_page and url_has_allowed_host_and_scheme(
+                url=next_page,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
                 return redirect(next_page)
             return redirect('pages:dashboard')
         else:
@@ -91,6 +108,8 @@ def login_view(request):
 # ============================================================================
 # LOGOUT VIEW
 # ============================================================================
+@require_http_methods(["POST"])
+@csrf_protect
 def logout_view(request):
     """Admin logout view"""
     logout(request)
@@ -196,6 +215,13 @@ def customers(request):
     search_query = request.GET.get('search', '')
     status_filter = request.GET.get('status', '')
     customers_list = Customer.objects.all()
+
+    latest_order_status_subquery = Order.objects.filter(
+        customer=OuterRef('pk')
+    ).order_by('-created_at', '-order_id').values('status')[:1]
+    customers_list = customers_list.annotate(
+        latest_order_status=Subquery(latest_order_status_subquery)
+    )
    
     if search_query:
         customers_list = customers_list.filter(
@@ -207,19 +233,9 @@ def customers(request):
    
     # Filter by order status if specified
     if status_filter == 'pending':
-        # Show customers whose LATEST order is pending
-        from django.db.models import Q as DjangoQ
-        customers_list = customers_list.filter(
-            orders__status='pending'
-        ).distinct()
+        customers_list = customers_list.filter(latest_order_status='pending')
     elif status_filter == 'completed':
-        # Show customers whose LATEST order is completed
-        from django.db.models import Q as DjangoQ
-        customers_list = customers_list.filter(
-            orders__status='completed'
-        ).exclude(
-            orders__status='pending'
-        ).distinct()
+        customers_list = customers_list.filter(latest_order_status='completed')
    
     # Annotate with order count
     customers_list = customers_list.annotate(
@@ -621,22 +637,8 @@ def order_create_ajax(request):
     4. Calculate Totals
     5. Auto-Create Payment
     """
-    import sys
-    print('DEBUG: order_create_ajax called', file=sys.stderr)
-   
-    # Check if user is authenticated
-    if not request.user.is_authenticated:
-        print('DEBUG: User not authenticated', file=sys.stderr)
-        return JsonResponse({
-            'success': False,
-            'message': 'Authentication required. Please log in.'
-        }, status=401)
-   
-    print(f'DEBUG: Authenticated user: {request.user}', file=sys.stderr)
-   
     try:
         data = json.loads(request.body)
-        print(f'DEBUG: Request data: {data}', file=sys.stderr)
        
         # Validate required fields (address not required for pickup)
         delivery_type = data.get('notes', '').startswith('[PICK UP]')
@@ -646,16 +648,13 @@ def order_create_ajax(request):
         
         for field in required_fields:
             if not data.get(field):
-                print(f'DEBUG: Missing field: {field}', file=sys.stderr)
                 return JsonResponse({
                     'success': False,
                     'message': f'Missing required field: {field}'
                 }, status=400)
        
         # ======== STEP 1: CREATE OR GET CUSTOMER ========
-        import sys
         customer_email = data.get('customer_email')
-        print(f'DEBUG: Creating/Getting customer with email: {customer_email}', file=sys.stderr)
        
         # Check if customer exists in database
         customer, created = Customer.objects.get_or_create(
@@ -668,19 +667,15 @@ def order_create_ajax(request):
             }
         )
        
-        print(f'DEBUG: Customer created={created}, email={customer.email}', file=sys.stderr)
         customer_created = created
        
         # ======== STEP 2: CREATE ORDER IN DATABASE ========
-        print('DEBUG: Creating order', file=sys.stderr)
-
 
         # Parse delivery date
         delivery_date_val = None
         raw_delivery_date = data.get('delivery_date', '')
         if raw_delivery_date:
             try:
-                from datetime import date
                 delivery_date_val = datetime.strptime(raw_delivery_date, '%Y-%m-%d').date()
             except ValueError:
                 pass
@@ -712,8 +707,6 @@ def order_create_ajax(request):
             rider_phone=data.get('rider_phone', ''),
             rider_vehicle=data.get('rider_vehicle', ''),
         )
-        print(f'DEBUG: Order created: {order.order_number}', file=sys.stderr)
-       
         # ======== STEP 3: ADD ORDER ITEMS TO DATABASE ========
         items_data = data.get('items', [])
        
@@ -780,7 +773,6 @@ def order_create_ajax(request):
         )
        
         # Prepare response with all created data
-        import sys
         response_data = {
             'success': True,
             'message': f'Order {order.order_number} created successfully! Payment {payment.payment_number} generated.',
@@ -803,21 +795,15 @@ def order_create_ajax(request):
             }
         }
        
-        print(f'DEBUG: Returning success response: {response_data}', file=sys.stderr)
         return JsonResponse(response_data)
        
-    except Product.DoesNotExist as e:
-        import sys
-        print(f'DEBUG: Product not found error: {str(e)}', file=sys.stderr)
+    except Product.DoesNotExist:
         return JsonResponse({
             'success': False,
             'message': 'Product not found in database'
         }, status=404)
     except Exception as e:
-        import sys
-        import traceback
-        print(f'DEBUG: Generic exception error: {str(e)}', file=sys.stderr)
-        print(f'DEBUG: Traceback: {traceback.format_exc()}', file=sys.stderr)
+        logging.getLogger(__name__).exception('Order creation failed')
         return JsonResponse({
             'success': False,
             'message': f'Error creating order: {str(e)}'
@@ -978,6 +964,7 @@ def payment_update_by_order_ajax(request):
 
 
 @require_http_methods(["GET"])
+@login_required(login_url='login')
 def payment_get_by_order_ajax(request):
     """AJAX endpoint to get payment information by order ID"""
     try:
@@ -1031,9 +1018,9 @@ def reports(request):
         status='completed'
     ).aggregate(total=Sum('total'))['total'] or Decimal('0.00')
    
-    # Daily sales from total_amount (Order.total)
+    # Daily sales from completed orders delivered today
     daily_sales = Order.objects.filter(
-        created_at__date=today,
+        delivery_date=today,
         status='completed'
     ).aggregate(
         total_orders=Count('order_id'),
@@ -1042,9 +1029,10 @@ def reports(request):
     daily_sales['total_orders'] = daily_sales['total_orders'] or 0
     daily_sales['total_revenue'] = daily_sales['total_revenue'] or Decimal('0.00')
    
-    # Weekly sales from Order.total
+    # Weekly sales from completed orders delivered in the last 7 days
     weekly_sales = Order.objects.filter(
-        created_at__date__gte=week_ago,
+        delivery_date__gte=week_ago,
+        delivery_date__lte=today,
         status='completed'
     ).aggregate(
         total_orders=Count('order_id'),
@@ -1053,7 +1041,7 @@ def reports(request):
     weekly_sales['total_orders'] = weekly_sales['total_orders'] or 0
     weekly_sales['total_revenue'] = weekly_sales['total_revenue'] or Decimal('0.00')
    
-    # Monthly sales from Order.total - CURRENT MONTH ONLY
+    # Monthly sales from completed orders delivered in current month
     current_month_start = today.replace(day=1)
     if today.month == 12:
         current_month_end = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
@@ -1061,8 +1049,8 @@ def reports(request):
         current_month_end = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
     
     monthly_sales = Order.objects.filter(
-        created_at__date__gte=current_month_start,
-        created_at__date__lte=current_month_end,
+        delivery_date__gte=current_month_start,
+        delivery_date__lte=current_month_end,
         status='completed'
     ).aggregate(
         total_orders=Count('order_id'),
@@ -1072,7 +1060,6 @@ def reports(request):
     monthly_sales['total_revenue'] = monthly_sales['total_revenue'] or Decimal('0.00')
    
     # ======== COLLECT MONTHLY SALES DATA BY DAY FOR CALENDAR ========
-    import json as json_module
     from datetime import date as date_class
     
     monthly_sales_by_day = {}
@@ -1086,23 +1073,24 @@ def reports(request):
         daily_totals = {}
         daily_orders_list = {}
        
-        # Get all COMPLETED orders for this specific month and year
-        # Filter by date range to ensure exact matching
+        # Get completed orders grouped by ACTUAL delivery date
         month_start = date_class(current_year, month_num, 1)
         if month_num == 12:
             month_end = date_class(current_year + 1, 1, 1) - timedelta(days=1)
         else:
             month_end = date_class(current_year, month_num + 1, 1) - timedelta(days=1)
-       
+        
         orders_in_month = Order.objects.filter(
-            created_at__date__gte=month_start,
-            created_at__date__lte=month_end + timedelta(days=1),
+            delivery_date__gte=month_start,
+            delivery_date__lte=month_end,
             status='completed'
-        ).select_related('customer').order_by('created_at')
-       
-        # Group orders by their exact date (use localtime to respect PH timezone)
+        ).select_related('customer').order_by('delivery_date', 'updated_at')
+        
+        # Group orders by delivery date
         for order in orders_in_month:
-            order_date = timezone.localtime(order.created_at).date() if hasattr(order.created_at, 'date') else order.created_at
+            order_date = order.delivery_date
+            if not order_date:
+                continue
             day = order_date.day
             day_str = str(day)
            
@@ -1118,14 +1106,6 @@ def reports(request):
                 'order_id': order.order_id,
                 'order_date': order_date.isoformat()
             })
-            
-            # Skip orders that fall outside this month after local conversion
-            if order_date < month_start or order_date > month_end:
-                daily_totals[day_str] -= float(order.total or 0)
-                daily_orders_list[day_str].pop()
-                if not daily_orders_list[day_str]:
-                    del daily_orders_list[day_str]
-                    del daily_totals[day_str]
         
         # MERGE with archived sales data from previous years
         # If this is the current year/month, don't merge archived data (we have live data)
@@ -1150,9 +1130,6 @@ def reports(request):
        
         monthly_sales_by_day[month_name] = daily_totals
         monthly_orders_by_day[month_name] = daily_orders_list
-   
-    monthly_sales_json = json_module.dumps(monthly_sales_by_day)
-    monthly_orders_json = json_module.dumps(monthly_orders_by_day)
    
     # ======== SALES BREAKDOWN - PAYMENT METHOD DISTRIBUTION (FROM PAYMENT MODEL) ========
     payment_methods = Payment.objects.filter(
@@ -1225,8 +1202,8 @@ def reports(request):
         'daily_sales': daily_sales,
         'weekly_sales': weekly_sales,
         'monthly_sales': monthly_sales,
-        'monthly_sales_by_day_json': monthly_sales_json,
-        'monthly_orders_by_day_json': monthly_orders_json,
+        'monthly_sales_by_day': monthly_sales_by_day,
+        'monthly_orders_by_day': monthly_orders_by_day,
         
         # Sales Breakdown
         'payment_methods': payment_methods,
@@ -1258,6 +1235,50 @@ def reports(request):
 # API ENDPOINTS FOR GETTING DATA
 # ============================================================================
 @require_http_methods(["GET"])
+@login_required(login_url='login')
+def orders_export_data_ajax(request):
+    """Get all orders (unfiltered) for Excel export."""
+    orders = (
+        Order.objects.select_related('customer')
+        .prefetch_related('items', 'payments')
+        .order_by('-created_at')
+    )
+
+    export_rows = []
+    for order in orders:
+        items_text = ', '.join(item.product_name for item in order.items.all()) or '—'
+
+        if order.status == 'completed':
+            status_text = 'Completed'
+        else:
+            payment = order.payments.first()
+            if payment and payment.payment_status == 'completed':
+                status_text = 'Fully Paid'
+            else:
+                status_text = 'Down Payment'
+
+        if order.delivery_date:
+            delivery_text = order.delivery_date.strftime('%b %d, %Y')
+            if order.delivery_time:
+                delivery_text = f"{delivery_text} {order.delivery_time.strftime('%I:%M %p').lstrip('0')}"
+        else:
+            delivery_text = '—'
+
+        export_rows.append(
+            {
+                'delivery_date': delivery_text,
+                'customer': f"{order.customer.first_name} {order.customer.last_name}".strip(),
+                'items': items_text,
+                'amount': float(order.total or 0),
+                'status': status_text,
+            }
+        )
+
+    return JsonResponse({'success': True, 'orders': export_rows})
+
+
+@require_http_methods(["GET"])
+@login_required(login_url='login')
 def get_products_ajax(request):
     """Get all products as JSON"""
     products = Product.objects.filter(is_active=True).values(
@@ -1269,6 +1290,7 @@ def get_products_ajax(request):
 
 
 @require_http_methods(["GET"])
+@login_required(login_url='login')
 def get_customers_ajax(request):
     """Get all customers as JSON"""
     customers = Customer.objects.all().values(
@@ -1282,13 +1304,6 @@ def get_customers_ajax(request):
 # ============================================================================
 # OTHER VIEWS
 # ============================================================================
-def chatbox(request):
-    """Chatbox interface"""
-    return render(request, 'chatbox.html')
-
-
-
-
 def features(request):
     """Features page"""
     return render(request, 'features.html')
@@ -1321,7 +1336,7 @@ def order_update_status_ajax(request):
         if not order_id or not new_status:
             return JsonResponse({'success': False, 'message': 'Missing order_id or status'}, status=400)
 
-        valid_statuses = ['pending', 'processing', 'completed']
+        valid_statuses = ['pending', 'processing', 'completed', 'cancelled']
         if new_status not in valid_statuses:
             return JsonResponse({'success': False, 'message': f'Invalid status. Must be one of: {", ".join(valid_statuses)}'}, status=400)
 
@@ -1494,6 +1509,7 @@ def upload_order_photo(request):
 
 
 @require_http_methods(["GET"])
+@login_required(login_url='login')
 def get_order_photo(request):
     """
     AJAX endpoint to retrieve a photo for an order.

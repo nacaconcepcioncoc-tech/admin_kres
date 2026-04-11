@@ -1682,6 +1682,9 @@
         </div>
     </div>
 
+    {{ monthly_sales_by_day|json_script:"monthly-sales-data" }}
+    {{ monthly_orders_by_day|json_script:"monthly-orders-data" }}
+
     <script>
         // Sidebar collapse toggle with localStorage persistence
         function toggleSidebar() {
@@ -1739,8 +1742,8 @@
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
 
         // Load monthly sales data from backend
-        const monthlySalesData = {{ monthly_sales_by_day_json|safe }};
-        const monthlyOrdersData = {{ monthly_orders_by_day_json|safe }};
+        const monthlySalesData = JSON.parse(document.getElementById('monthly-sales-data').textContent);
+        const monthlyOrdersData = JSON.parse(document.getElementById('monthly-orders-data').textContent);
 
         let selectedMonth = null;
 

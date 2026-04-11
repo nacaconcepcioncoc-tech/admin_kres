@@ -220,11 +220,14 @@ class OrderItem(models.Model):
    
     def save(self, *args, **kwargs):
         """Store product details when saving"""
+        if self.product is None and (not self.product_name or not self.product_sku or self.unit_price is None):
+            raise ValueError("OrderItem requires product details when product is not set.")
+
         if not self.product_name:
             self.product_name = self.product.name
         if not self.product_sku:
             self.product_sku = self.product.sku
-        if not self.unit_price:
+        if self.unit_price is None:
             self.unit_price = self.product.price
         super().save(*args, **kwargs)
    
