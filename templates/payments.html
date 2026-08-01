@@ -360,116 +360,11 @@
         .m-bank { background:#f3e8ff; color:#7c3aed; }
         .empty-msg { text-align:center; padding:50px; color:#9ca3af; }
     </style>
+    <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
 </head>
 <body>
-<div class="sidebar" id="sidebar">
-    <div class="logo-section">
-        <div class="logo">
-            <img src="{% static 'images/logo.png' %}" alt="KRES Logo" style="width: 70px; height: 70px; object-fit: contain;">
-        </div>
-        <div class="logo-text">
-            <h1>KRES Co. Admin</h1>
-            <p>Management Panel</p>
-        </div>
-    </div>
+{% include 'includes/sidebar.html' with active_page='payments' %}
 
-    <div class="nav-section-label">Main Menu</div>
-
-    <nav class="nav-menu">
-        <a href="{% url 'pages:dashboard' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor"/>
-                    <rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/>
-                    <rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
-                    <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
-                </svg>
-            </div>
-            <span class="nav-label">Dashboard</span>
-            <span class="nav-tooltip">Dashboard</span>
-        </a>
-        <a href="{% url 'pages:inventory' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 7H4C2.9 7 2 7.9 2 9V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V9C22 7.9 21.1 7 20 7Z" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M12 7V3M8 7V5M16 7V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <span class="nav-label">Inventory</span>
-            <span class="nav-tooltip">Inventory</span>
-        </a>
-        <a href="{% url 'pages:orders' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                    <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
-                    <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <span class="nav-label">Orders</span>
-            <span class="nav-tooltip">Orders</span>
-        </a>
-        <a href="{% url 'pages:customers' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <circle cx="17" cy="10" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M2 20C2 16.5 5 14 9 14C13 14 16 16.5 16 20" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M13 20C13 17.5 15 16 17 16C19 16 22 17.5 22 20" stroke="currentColor" stroke-width="2" fill="none"/>
-                </svg>
-            </div>
-            <span class="nav-label">Customers</span>
-            <span class="nav-tooltip">Customers</span>
-        </a>
-        <a href="{% url 'pages:payments' %}" class="nav-item active">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M2 10H22M6 14H10M6 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <span class="nav-label">Payments</span>
-            <span class="nav-tooltip">Payments</span>
-        </a>
-        <a href="{% url 'pages:reports' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M8 2V6M16 2V6M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    <circle cx="8" cy="14" r="1" fill="currentColor"/>
-                    <circle cx="12" cy="14" r="1" fill="currentColor"/>
-                    <circle cx="16" cy="14" r="1" fill="currentColor"/>
-                    <circle cx="8" cy="18" r="1" fill="currentColor"/>
-                    <circle cx="12" cy="18" r="1" fill="currentColor"/>
-                </svg>
-            </div>
-            <span class="nav-label">Reports</span>
-            <span class="nav-tooltip">Reports</span>
-        </a>
-    </nav>
-
-    <div class="user-profile">
-        <div class="avatar">A</div>
-        <div class="user-info">
-            <div class="user-name">Admin User</div>
-            <div class="user-email">Administrator</div>
-        </div>
-        <a href="#" onclick="openLogoutModal(); return false;" style="text-decoration:none;display:inline-flex;align-items:center;">
-            <svg class="logout-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </a>
-    </div>
-</div>
-
-<!-- Sidebar Toggle Button -->
-<div class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="15 18 9 12 15 6"/>
-    </svg>
-</div>
-
-<!-- Main Content -->
 <div class="main-content" id="mainContent">
     <header class="header">
         <div class="header-left">
@@ -478,13 +373,12 @@
         </div>
         <div class="notification-icon" onclick="toggleNotificationDropdown(event)">
             <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="width: 28px; height: 28px;"><path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.89 22 12 22ZM18 16V11C18 7.93 16.36 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.64 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z"/></svg>
-            {% with total=low_stock_count|add:pending_payments_count|add:new_customers_count %}{% if total > 0 %}<span class="notification-badge">{{ total }}</span>{% endif %}{% endwith %}
+            {% with total=pending_payments_count|add:new_customers_count %}{% if total > 0 %}<span class="notification-badge">{{ total }}</span>{% endif %}{% endwith %}
             <div id="notificationDropdown" class="notification-dropdown">
                 <div class="notification-header">Notifications</div>
                 {% if new_customers_count > 0 %}<a href="{% url 'pages:customers' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">👥 New Customers</div><div class="notification-item-text">{{ new_customers_count }} new customer(s) today</div></div></a>{% endif %}
-                {% if low_stock_count > 0 %}<a href="{% url 'pages:inventory' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">⚠️ Low Stock Alert</div><div class="notification-item-text">{{ low_stock_count }} product(s) running low</div></div></a>{% endif %}
                 {% if pending_payments_count > 0 %}<a href="{% url 'pages:payments' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">💳 Pending Payments</div><div class="notification-item-text">{{ pending_payments_count }} payment(s) waiting</div></div></a>{% endif %}
-                {% with total=low_stock_count|add:pending_payments_count|add:new_customers_count %}
+                {% with total=pending_payments_count|add:new_customers_count %}
                     <div class="notification-footer">{% if total == 0 %}No new notifications{% else %}All notifications{% endif %}</div>
                 {% endwith %}
             </div>
@@ -492,18 +386,6 @@
     </header>
 
     <div class="page-content">
-        <!-- Summary Cards -->
-        <div class="summary-grid">
-            <a href="{% url 'pages:customers' %}" class="summary-card">
-                <h4>Customers Transacted</h4>
-                <div class="val">{{ customers_transacted }}</div>
-            </a>
-            <a href="{% url 'pages:orders' %}" class="summary-card">
-                <h4>Orders Completed</h4>
-                <div class="val">{{ orders_completed }}</div>
-            </a>
-        </div>
-
         <!-- Transactions Table with Status Filter -->
         <div class="content-card" id="transactions-table">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
@@ -525,38 +407,45 @@
                 <thead>
                     <tr>
                         <th>Customer Name</th>
-                        <th>Order ID</th>
                         <th>Amount</th>
                         <th>Payment Method</th>
                         <th>Status</th>
-                        <th>Date</th>
+                        <th>Remaining Balance</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for payment in payments %}
                     <tr data-payment-status="{{ payment.payment_status }}">
-                        <td style="font-weight:600;color:#1a1a1a;">{{ payment.order.customer.first_name }} {{ payment.order.customer.last_name }}</td>
-                        <td style="font-family:monospace;font-size:13px;">{{ payment.order.order_number|slice:":8" }}-{{ payment.order.created_at|date:'m/d/y' }}</td>
+                        <td style="font-weight:600;color:#1a1a1a;">{{ payment.order.customer_name }}</td>
                         <td style="font-weight:700;">₱ {{ payment.amount|floatformat:2 }}</td>
                         <td>
-                            {% if payment.payment_method == 'gcash' %}<span class="method-badge m-gcash"> GCash</span>
-                            {% elif payment.payment_method == 'cash' %}<span class="method-badge m-cash"> Cash</span>
-                            {% elif payment.payment_method == 'bank_transfer' %}<span class="method-badge m-bank"> Bank Transfer</span>
-                            {% else %}<span class="method-badge m-cash">{{ payment.payment_method }}</span>{% endif %}
+                            {% if payment.payment_method == 'cash' %}
+                                <span class="method-badge m-cash">Cash</span>
+                            {% elif payment.payment_method == 'gcash_james' %}
+                                <span class="method-badge m-gcash">GCash James</span>
+                            {% elif payment.payment_method == 'gcash_banban' %}
+                                <span class="method-badge m-gcash">GCash Banban</span>
+                            {% elif payment.payment_method == 'gcash_kysan' %}
+                                <span class="method-badge m-gcash">GCash Kysan</span>
+                            {% elif payment.payment_method == 'rcbc' %}
+                                <span class="method-badge m-bank">RCBC</span>
+                            {% else %}
+                                <span class="method-badge m-cash">{{ payment.payment_method }}</span>
+                            {% endif %}
                         </td>
                         <td>
                             {% if payment.order.status == 'completed' %}
                                 <span class="status-badge st-completed">✅ Completed</span>
                             {% elif payment.payment_status == 'completed' %}
-                                <span class="status-badge st-paid">💳 Fully Paid</span>
+                                <span class="status-badge st-paid"> Fully Paid</span>
                             {% else %}
-                                <span class="status-badge st-pending">💰 Down Payment</span>
+                                <span class="status-badge st-pending"> Down Payment</span>
                             {% endif %}
                         </td>
-                        <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                        <td style="font-weight:700;">₱ {{ payment.order.balance_payment|floatformat:2 }}</td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="6" class="empty-msg">
+                    <tr><td colspan="5" class="empty-msg">
                         <div style="font-size:36px;margin-bottom:8px;">💳</div>
                         <div style="font-size:15px;font-weight:600;color:#6b7280;">No transactions yet</div>
                         <div style="font-size:13px;margin-top:4px;">Payments will appear here when orders are created.</div>
@@ -569,51 +458,12 @@
 
 <script>
 // Sidebar collapse toggle with localStorage persistence
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const toggle = document.getElementById('sidebarToggle');
-    const main = document.getElementById('mainContent');
-    const isCollapsed = sidebar.classList.toggle('collapsed');
-    localStorage.setItem('sidebarCollapsed', isCollapsed);
-    updateSidebarLayout();
-}
 
-function updateSidebarLayout() {
-    const sidebar = document.getElementById('sidebar');
-    const toggle = document.getElementById('sidebarToggle');
-    const main = document.getElementById('mainContent');
-    
-    if (!main) return;
-    
-    if (sidebar.classList.contains('collapsed')) {
-        toggle.style.left = '72px';
-        main.style.marginLeft = '72px';
-        main.style.width = 'calc(100% - 72px)';
-    } else {
-        toggle.style.left = '260px';
-        main.style.marginLeft = '260px';
-        main.style.width = 'calc(100% - 260px)';
-    }
-}
+
+
 
 // Restore sidebar state on page load from localStorage
-document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('sidebar');
-    const main = document.getElementById('mainContent');
-    
-    if (!sidebar || !main) return;
-    
-    // Restore saved state after sufficient delay to ensure DOM and all other scripts are ready
-    setTimeout(() => {
-        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-        if (isCollapsed) {
-            sidebar.classList.add('collapsed');
-        } else {
-            sidebar.classList.remove('collapsed');
-        }
-        updateSidebarLayout();
-    }, 50);
-});
+
 
 // Navigation without smooth transition
 function smoothNavigation(url) {
@@ -642,18 +492,53 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// Payment status filter - navigate with URL parameter
-const paymentStatusFilter = document.getElementById('paymentStatusFilter');
-if (paymentStatusFilter) {
-    paymentStatusFilter.addEventListener('change', function() {
-        const value = this.value;
-        if (value === 'all') {
-            window.location.href = '/payments/';
-        } else {
-            window.location.href = '/payments/?status=' + value;
+// Payment status filter - preserve selection while navigating between pages
+(function() {
+    const storageKey = 'paymentsStatusFilter';
+    const paymentStatusFilter = document.getElementById('paymentStatusFilter');
+    if (!paymentStatusFilter) return;
+
+    const navigationEntry = performance.getEntriesByType('navigation')[0];
+    const isPageRefresh = navigationEntry && navigationEntry.type === 'reload';
+
+    if (isPageRefresh) {
+        sessionStorage.removeItem(storageKey);
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const urlStatus = params.get('status');
+    const validStatuses = ['all', 'pending', 'completed'];
+
+    if (urlStatus && validStatuses.includes(urlStatus)) {
+        paymentStatusFilter.value = urlStatus;
+        sessionStorage.setItem(storageKey, urlStatus);
+    } else {
+        const savedStatus = sessionStorage.getItem(storageKey);
+
+        if (!isPageRefresh && savedStatus && validStatuses.includes(savedStatus) && savedStatus !== 'all') {
+            params.set('status', savedStatus);
+            window.location.replace(window.location.pathname + '?' + params.toString());
+            return;
         }
+
+        paymentStatusFilter.value = 'all';
+    }
+
+    paymentStatusFilter.addEventListener('change', function() {
+        const value = validStatuses.includes(this.value) ? this.value : 'all';
+        sessionStorage.setItem(storageKey, value);
+
+        const nextParams = new URLSearchParams(window.location.search);
+        if (value === 'all') {
+            nextParams.delete('status');
+        } else {
+            nextParams.set('status', value);
+        }
+
+        const query = nextParams.toString();
+        window.location.href = window.location.pathname + (query ? '?' + query : '');
     });
-}
+})();
 </script>
 
 <script>
@@ -671,5 +556,7 @@ if (paymentStatusFilter) {
 </script>
 
  {% include 'logout_modal.html' %}
+
+<script src="{% static 'js/sidebar.js' %}"></script>
 </body>
 </html>

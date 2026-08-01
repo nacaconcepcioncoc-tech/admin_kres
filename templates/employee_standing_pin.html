@@ -1,0 +1,270 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Admin PIN</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            min-height: 100vh;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: #0f2942;
+            background: #eaf1f6;
+        }
+        .standing-shell {
+            position: fixed;
+            inset: 0;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            background: linear-gradient(135deg, #edf4f8 0%, #dfeaf2 100%);
+            filter: blur(5px);
+            transform: scale(1.015);
+            pointer-events: none;
+            user-select: none;
+        }
+        .shell-sidebar {
+            padding: 24px 18px;
+            background: linear-gradient(180deg, #082f4f, #06243d);
+            color: #fff;
+        }
+        .shell-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 34px; }
+        .shell-logo { width: 48px; height: 48px; border-radius: 14px; object-fit: contain; background: #fff; }
+        .shell-brand-copy strong { display: block; font-size: 18px; }
+        .shell-brand-copy span { font-size: 11px; color: #91b8cf; }
+        .shell-nav { display: grid; gap: 10px; }
+        .shell-nav-row { height: 42px; border-radius: 10px; background: rgba(255,255,255,.08); }
+        .shell-nav-row.active { background: rgba(68, 174, 230, .28); }
+        .shell-workspace { min-width: 0; }
+        .shell-header {
+            height: 82px;
+            display: flex;
+            align-items: center;
+            padding: 0 34px;
+            background: rgba(255,255,255,.92);
+            border-bottom: 1px solid #d9e5ed;
+        }
+        .shell-header h1 { font-size: 28px; color: #06345a; }
+        .shell-content { padding: 32px; }
+        .shell-content h2 { font-size: 20px; margin-bottom: 8px; }
+        .shell-subtitle { width: 58%; height: 12px; border-radius: 99px; background: #c6d6e2; margin-bottom: 26px; }
+        .shell-cards { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: 20px; }
+        .shell-card {
+            height: 150px;
+            padding: 20px;
+            border: 1px solid rgba(188, 208, 221, .8);
+            border-radius: 18px;
+            background: rgba(255,255,255,.9);
+            box-shadow: 0 8px 24px rgba(26, 76, 108, .08);
+        }
+        .shell-card-top { display: flex; align-items: center; gap: 13px; }
+        .shell-avatar { width: 54px; height: 54px; border-radius: 14px; background: #d5e3ec; }
+        .shell-lines { flex: 1; display: grid; gap: 9px; }
+        .shell-line { height: 10px; border-radius: 99px; background: #d5e3ec; }
+        .shell-line.short { width: 62%; }
+        .shell-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+        .shell-metric { height: 32px; border-radius: 9px; background: #edf3f7; }
+
+        .security-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            display: grid;
+            place-items: center;
+            padding: 22px;
+            background: rgba(2, 24, 42, .48);
+            backdrop-filter: blur(9px);
+            -webkit-backdrop-filter: blur(9px);
+        }
+        .pin-modal {
+            width: min(100%, 480px);
+            padding: 34px 32px 30px;
+            border: 1px solid rgba(255,255,255,.45);
+            border-radius: 24px;
+            background: linear-gradient(145deg, rgba(255,255,255,.88), rgba(239,247,252,.74));
+            box-shadow: 0 30px 80px rgba(0, 20, 38, .3), inset 0 1px 0 rgba(255,255,255,.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            text-align: center;
+        }
+        .pin-modal h1 { font-size: 26px; line-height: 1.2; color: #052f52; margin-bottom: 26px; }
+        .error {
+            margin-bottom: 18px;
+            padding: 11px 13px;
+            border: 1px solid rgba(248, 113, 113, .45);
+            border-radius: 11px;
+            background: rgba(254, 226, 226, .8);
+            color: #991b1b;
+            font-size: 13px;
+            text-align: left;
+        }
+        .otp-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 24px; }
+        .otp-input {
+            width: 52px;
+            height: 60px;
+            border: 1px solid rgba(74, 115, 143, .32);
+            border-radius: 13px;
+            background: rgba(255,255,255,.76);
+            color: #062f50;
+            font: inherit;
+            font-size: 26px;
+            font-weight: 700;
+            text-align: center;
+            caret-color: #0b6fa4;
+            box-shadow: inset 0 1px 2px rgba(15, 54, 80, .04);
+            transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+        }
+        .otp-input:focus {
+            outline: none;
+            border-color: #1685bc;
+            box-shadow: 0 0 0 4px rgba(22,133,188,.14);
+            transform: translateY(-1px);
+        }
+        .otp-input:disabled { opacity: .5; cursor: not-allowed; }
+        .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .action-button {
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+        .verify-button { border: 0; background: #073d65; color: #fff; box-shadow: 0 10px 22px rgba(7,61,101,.2); }
+        .verify-button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 13px 26px rgba(7,61,101,.25); }
+        .verify-button:disabled { opacity: .55; cursor: not-allowed; }
+        .cancel-button { border: 1px solid rgba(74,115,143,.3); background: rgba(255,255,255,.58); color: #38566d; }
+        .cancel-button:hover { background: rgba(255,255,255,.9); transform: translateY(-1px); }
+
+        @media (max-width: 700px) {
+            .standing-shell { grid-template-columns: 72px 1fr; }
+            .shell-sidebar { padding: 20px 10px; }
+            .shell-brand-copy { display: none; }
+            .shell-brand { justify-content: center; }
+            .shell-cards { grid-template-columns: 1fr; }
+            .shell-card:nth-child(n+2) { display: none; }
+            .shell-content { padding: 22px 18px; }
+            .shell-header { padding: 0 20px; }
+            .pin-modal { padding: 30px 18px 22px; border-radius: 20px; }
+            .otp-group { gap: 6px; }
+            .otp-input { width: clamp(40px, 12vw, 48px); height: 56px; border-radius: 11px; font-size: 23px; }
+        }
+        @media (max-width: 390px) {
+            .security-overlay { padding: 12px; }
+            .pin-modal { padding-inline: 13px; }
+            .otp-group { gap: 4px; }
+            .otp-input { width: 39px; height: 52px; }
+            .modal-actions { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="standing-shell" aria-hidden="true">
+        <aside class="shell-sidebar">
+            <div class="shell-brand">
+                <img class="shell-logo" src="{% static 'images/admin-logo.png' %}" alt="">
+                <div class="shell-brand-copy"><strong>KRES Co.</strong><span>Admin Portal</span></div>
+            </div>
+            <div class="shell-nav">
+                <div class="shell-nav-row"></div><div class="shell-nav-row"></div><div class="shell-nav-row"></div>
+                <div class="shell-nav-row active"></div><div class="shell-nav-row"></div>
+            </div>
+        </aside>
+        <div class="shell-workspace">
+            <header class="shell-header"><h1>Employee Standing</h1></header>
+            <main class="shell-content">
+                <h2>Monthly Employee Evaluation</h2>
+                <div class="shell-subtitle"></div>
+                <div class="shell-cards">
+                    {% for card in "123" %}
+                    <div class="shell-card"><div class="shell-card-top"><div class="shell-avatar"></div><div class="shell-lines"><div class="shell-line"></div><div class="shell-line short"></div></div></div><div class="shell-metrics"><div class="shell-metric"></div><div class="shell-metric"></div></div></div>
+                    {% endfor %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="security-overlay">
+        <main class="pin-modal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+            <h1 id="pinTitle">Enter Admin PIN</h1>
+            {% if error %}<div class="error" id="pinError" role="alert">{{ error }}</div>{% else %}<div class="error" id="pinError" role="alert" hidden></div>{% endif %}
+            <form method="post" id="pinForm" autocomplete="off">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}">
+                <input type="hidden" name="pin" id="combinedPin">
+                <div class="otp-group" role="group" aria-label="Six-digit administrator PIN">
+                    {% for digit in "123456" %}
+                    <input class="otp-input" type="password" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="PIN digit {{ forloop.counter }}" autocomplete="{% if forloop.first %}one-time-code{% else %}off{% endif %}" {% if is_locked %}disabled{% endif %}>
+                    {% endfor %}
+                </div>
+                <div class="modal-actions">
+                    <a class="action-button cancel-button" href="{% url 'pages:dashboard' %}">Cancel / Exit</a>
+                    <button class="action-button verify-button" type="submit" {% if is_locked %}disabled{% endif %}>Verify</button>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        (() => {
+            const form = document.getElementById("pinForm");
+            const inputs = Array.from(document.querySelectorAll(".otp-input"));
+            const combinedPin = document.getElementById("combinedPin");
+            const errorBox = document.getElementById("pinError");
+            if (!form || !inputs.length || inputs[0].disabled) return;
+
+            const syncPin = () => { combinedPin.value = inputs.map(input => input.value).join(""); };
+            const showClientError = message => {
+                errorBox.textContent = message;
+                errorBox.hidden = false;
+            };
+
+            inputs.forEach((input, index) => {
+                input.addEventListener("input", () => {
+                    input.value = input.value.replace(/\D/g, "").slice(-1);
+                    syncPin();
+                    if (input.value && index < inputs.length - 1) inputs[index + 1].focus();
+                });
+                input.addEventListener("keydown", event => {
+                    if (event.key === "Backspace" && !input.value && index > 0) {
+                        inputs[index - 1].focus();
+                        inputs[index - 1].value = "";
+                        syncPin();
+                    } else if (event.key === "ArrowLeft" && index > 0) {
+                        event.preventDefault(); inputs[index - 1].focus();
+                    } else if (event.key === "ArrowRight" && index < inputs.length - 1) {
+                        event.preventDefault(); inputs[index + 1].focus();
+                    }
+                });
+                input.addEventListener("focus", () => input.select());
+            });
+
+            inputs[0].addEventListener("paste", event => {
+                event.preventDefault();
+                const digits = (event.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 6);
+                digits.split("").forEach((digit, index) => { inputs[index].value = digit; });
+                syncPin();
+                inputs[Math.min(digits.length, 6) - 1]?.focus();
+            });
+
+            form.addEventListener("submit", event => {
+                syncPin();
+                if (!/^\d{6}$/.test(combinedPin.value)) {
+                    event.preventDefault();
+                    showClientError("Enter all 6 PIN digits.");
+                    (inputs.find(input => !input.value) || inputs[0]).focus();
+                }
+            });
+
+            inputs[0].focus();
+        })();
+    </script>
+</body>
+</html>

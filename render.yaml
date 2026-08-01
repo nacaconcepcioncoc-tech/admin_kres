@@ -1,9 +1,3 @@
-databases:
-  - name: kres-db
-    plan: free
-    databaseName: kres_admin
-    user: kres_admin
-
 services:
   - type: web
     name: kres-admin
@@ -13,7 +7,7 @@ services:
     startCommand: "gunicorn storefront.wsgi:application"
     envVars:
       - key: DATABASE_URL
-        value: "postgresql://postgres:naca.concepcion_1605@db.iigrjbqwttfadldazvls.supabase.co:5432/postgres"
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
@@ -22,8 +16,12 @@ services:
         value: ".onrender.com,krescoadmin.xyz,www.krescoadmin.xyz"
       - key: CSRF_TRUSTED_ORIGINS
         value: "https://*.onrender.com,https://krescoadmin.xyz,https://www.krescoadmin.xyz"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_EMPLOYEE_PHOTOS_BUCKET
+        value: "employee-profile-photos"
       - key: PYTHON_VERSION
-        value: "3.14.0"
+        value: "3.13.5"
       # AWS S3 Configuration (add these in Render dashboard)
       - key: AWS_ACCESS_KEY_ID
         sync: false
@@ -33,3 +31,23 @@ services:
         value: "kres-admin-photos"
       - key: AWS_S3_REGION_NAME
         value: "us-east-1"
+
+  # Render schedules use UTC. Run daily at 16:05 UTC, which is 00:05 the
+  # following Manila day; the command itself acts only on Manila day 1.
+  - type: cron
+    name: kres-monthly-cleanup
+    runtime: python
+    schedule: "5 16 * * *"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py auto_delete_old_orders"
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: DEBUG
+        value: "False"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_EMPLOYEE_PHOTOS_BUCKET
+        value: "employee-profile-photos"

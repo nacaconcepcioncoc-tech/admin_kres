@@ -1,6 +1,42 @@
 from django.contrib import admin
-from django.utils.html import format_html
-from .models import Customer, Product, Order, OrderItem, Payment, StockAlert
+from django import forms
+from .models import (
+    Customer,
+    Order,
+    OrderItem,
+    Payment,
+    Employee,
+    EmployeeMonthlyPerformance,
+    EmployeeStandingPin,
+)
+
+
+class EmployeeStandingPinAdminForm(forms.ModelForm):
+    new_pin = forms.RegexField(
+        regex=r'^\d{4,12}$',
+        required=False,
+        strip=True,
+        widget=forms.PasswordInput(render_value=False),
+        help_text='Enter 4–12 digits. Leave blank when editing to keep the current PIN.',
+    )
+    confirm_pin = forms.CharField(
+        required=False,
+        strip=True,
+        widget=forms.PasswordInput(render_value=False),
+    )
+
+    class Meta:
+        model = EmployeeStandingPin
+        fields = ('is_active',)
+
+    def clean(self):
+        cleaned = super().clean()
+        new_pin = cleaned.get('new_pin')
+        if not self.instance.pk and not new_pin:
+            self.add_error('new_pin', 'A PIN is required.')
+        if new_pin != cleaned.get('confirm_pin'):
+            self.add_error('confirm_pin', 'The PINs do not match.')
+        return cleaned
 
 
 @admin.register(Customer)
@@ -39,58 +75,6 @@ class CustomerAdmin(admin.ModelAdmin):
     get_customer_payment.short_description = 'Total Payment'
 
 
-@admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
-    list_display = ['product_id', 'name', 'category', 'price', 'stock_quantity', 
-                    'get_stock_status', 'updated_at']
-    list_filter = ['category', 'is_active', 'created_at']
-    search_fields = ['name', 'description']
-    readonly_fields = ['product_id', 'created_at', 'updated_at']
-    
-    fieldsets = (
-        ('Product Information', {
-            'fields': ('name', 'description', 'category')
-        }),
-        ('Pricing', {
-            'fields': ('price', 'cost_price')
-        }),
-        ('Inventory', {
-            'fields': ('stock_quantity', 'low_stock_threshold', 'unit', 'is_active')
-        }),
-        ('System Information', {
-            'fields': ('product_id', 'created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
-    
-    def get_queryset(self, request):
-        """Filter to only show active Flowers and Fillers inventory items"""
-        qs = super().get_queryset(request)
-        return qs.filter(
-            is_active=True,
-            category__in=['FLOWERS', 'FILLERS']
-        ).exclude(sku__startswith='CUSTOM-').order_by('name')
-    
-    def get_stock_status(self, obj):
-        status = obj.get_stock_status()
-        if status == "Out of Stock":
-            color = 'red'
-        elif status == "Low Stock":
-            color = 'orange'
-        else:
-            color = 'green'
-        return format_html(
-            '<span style="color: {}; font-weight: bold;">{}</span>',
-            color, status
-        )
-    get_stock_status.short_description = 'Stock Status'
-    
-    def save_model(self, request, obj, form, change):
-        """Check for stock alerts after saving"""
-        super().save_model(request, obj, form, change)
-        StockAlert.check_and_create_alerts()
-
-
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 1
@@ -109,13 +93,19 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ['order_number', 'get_customer_display', 'status', 'get_order_total', 'get_total_items', 
                     'created_at']
     list_filter = ['status', 'created_at']
-    search_fields = ['order_number', 'customer__first_name', 'customer__last_name']
+    search_fields = ['order_number', 'sender_name', 'receiver_name', 'customer__first_name', 'customer__last_name']
     readonly_fields = ['order_id', 'order_number', 'subtotal', 'total', 'created_at', 'updated_at']
     inlines = [OrderItemInline]
     
     fieldsets = (
         ('Order Information', {
             'fields': ('order_number', 'customer', 'status', 'notes')
+        }),
+        ('Sender / Customer Information', {
+            'fields': ('sender_name', 'sender_phone', 'sender_address', 'sender_is_receiver')
+        }),
+        ('Receiver Information', {
+            'fields': ('receiver_name', 'customer_phone', 'customer_address', 'delivery_address')
         }),
         ('Order Totals', {
             'fields': ('subtotal', 'tax', 'discount', 'total')
@@ -128,7 +118,7 @@ class OrderAdmin(admin.ModelAdmin):
     
     def get_customer_display(self, obj):
         """Display customer name cleanly without extra info"""
-        return f"{obj.customer.first_name} {obj.customer.last_name}"
+        return obj.customer_name
     get_customer_display.short_description = 'Customer'
     
     def get_order_total(self, obj):
@@ -175,7 +165,7 @@ class PaymentAdmin(admin.ModelAdmin):
     
     def get_customer_name(self, obj):
         """Get customer name from order"""
-        return f"{obj.order.customer.first_name} {obj.order.customer.last_name}"
+        return obj.order.customer_name
     get_customer_name.short_description = 'Customer'
     
     def get_order_number(self, obj):
@@ -194,23 +184,109 @@ class PaymentAdmin(admin.ModelAdmin):
     get_payment_status.short_description = 'Payment Status'
 
 
-@admin.register(StockAlert)
-class StockAlertAdmin(admin.ModelAdmin):
-    list_display = ['get_product_name', 'get_alert_type', 'stock_level_at_alert', 'created_at']
-    list_filter = ['alert_type', 'alert_status', 'created_at']
-    search_fields = ['product__name']
-    readonly_fields = ['alert_id', 'created_at', 'resolved_at']
-    
-    def get_product_name(self, obj):
-        """Get product name without helper text"""
-        return obj.product.name
-    get_product_name.short_description = 'Product'
-    
-    def get_alert_type(self, obj):
-        """Get alert type without helper text"""
-        return obj.get_alert_type_display()
-    get_alert_type.short_description = 'Alert Type'
-    
+
+
+class EmployeeMonthlyPerformanceInline(admin.TabularInline):
+    model = EmployeeMonthlyPerformance
+    extra = 0
+    fields = ('year', 'month', 'stars', 'demerits', 'admin_remarks', 'updated_at')
+    readonly_fields = ('updated_at',)
+    ordering = ('-year', '-month')
+
+@admin.register(Employee)
+class EmployeeAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'full_name',
+        'position',
+        'monthly_points',
+        'total_stars',
+        'total_demerits',
+        'performance_status',
+        'updated_at',
+    )
+    list_filter = ('position',)
+    inlines = (EmployeeMonthlyPerformanceInline,)
+    search_fields = ('full_name', 'position')
+    readonly_fields = (
+        'id',
+        'monthly_points',
+        'total_stars',
+        'total_demerits',
+        'performance_status',
+        'created_at',
+        'updated_at',
+    )
+
+    fieldsets = (
+        ('Employee Profile', {
+            'fields': ('full_name', 'position', 'profile_picture_url')
+        }),
+        ('Performance Summary', {
+            'fields': ('monthly_points', 'total_stars', 'total_demerits', 'performance_status')
+        }),
+        ('System Information', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',),
+        }),
+    )
+
+
+
+
+@admin.register(EmployeeMonthlyPerformance)
+class EmployeeMonthlyPerformanceAdmin(admin.ModelAdmin):
+    list_display = (
+        'employee', 'year', 'month', 'stars', 'demerits', 'updated_at'
+    )
+    list_filter = ('year', 'month')
+    search_fields = ('employee__full_name', 'employee__position', 'admin_remarks')
+    autocomplete_fields = ('employee',)
+    readonly_fields = ('created_at', 'updated_at')
+    ordering = ('-year', '-month', 'employee__full_name')
+    fieldsets = (
+        ('Evaluation', {
+            'fields': ('employee', 'year', 'month', 'stars', 'demerits')
+        }),
+        ('Admin Remarks', {'fields': ('admin_remarks',)}),
+        ('System Information', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',),
+        }),
+    )
+
+    def delete_queryset(self, request, queryset):
+        employee_ids = list(queryset.values_list('employee_id', flat=True).distinct())
+        super().delete_queryset(request, queryset)
+        for employee in Employee.objects.filter(pk__in=employee_ids):
+            employee.recalculate_yearly_evaluation_summary()
+
+
+@admin.register(EmployeeStandingPin)
+class EmployeeStandingPinAdmin(admin.ModelAdmin):
+    form = EmployeeStandingPinAdminForm
+    list_display = ('id', 'is_active', 'updated_at', 'updated_by')
+    readonly_fields = ('updated_at', 'updated_by')
+    fields = ('new_pin', 'confirm_pin', 'is_active', 'updated_at', 'updated_by')
+
+    def has_module_permission(self, request):
+        return request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_superuser
+
     def has_add_permission(self, request):
-        # Prevent manual creation of alerts
-        return False
+        return request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def save_model(self, request, obj, form, change):
+        new_pin = form.cleaned_data.get('new_pin')
+        if new_pin:
+            obj.set_pin(new_pin)
+        obj.updated_by = request.user
+        super().save_model(request, obj, form, change)
