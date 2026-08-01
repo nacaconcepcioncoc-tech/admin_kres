@@ -1,0 +1,963 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KRES Co. Admin - Employee Standing</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { min-height: 100%; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #edf2f6;
+            color: #1f2937;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: #02182E;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            inset: 0 auto 0 0;
+            height: 100vh;
+            z-index: 100;
+            overflow: hidden;
+            box-shadow: 4px 0 20px rgba(2,24,46,.18);
+            transition: width .3s cubic-bezier(.4,0,.2,1);
+        }
+        .sidebar.collapsed { width: 72px; }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 50%;
+            left: 260px;
+            width: 18px;
+            height: 48px;
+            transform: translateY(-50%);
+            border: 0;
+            border-radius: 0 8px 8px 0;
+            background: #02182E;
+            color: #85C4E4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 200;
+            box-shadow: 3px 0 8px rgba(2,24,46,.2);
+            transition: left .3s cubic-bezier(.4,0,.2,1), background .2s;
+        }
+        .sidebar-toggle:hover { background: #0a2a46; }
+        .sidebar.collapsed ~ .sidebar-toggle { left: 72px; }
+        .sidebar.collapsed ~ .sidebar-toggle svg { transform: rotate(180deg); }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 22px 16px 20px;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .logo {
+            width: 46px;
+            height: 46px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,.95);
+            border: 2px solid rgba(133,196,228,.4);
+            box-shadow: 0 2px 10px rgba(133,196,228,.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .logo img { width: 42px; height: 42px; object-fit: contain; border-radius: 50%; }
+        .logo-text { overflow: hidden; transition: opacity .18s; }
+        .logo-text h1 {
+            font-family: "Times New Roman", serif;
+            font-size: 15px;
+            color: #fff;
+            margin-bottom: 2px;
+            white-space: nowrap;
+        }
+        .logo-text p {
+            font-size: 10px;
+            color: #7aaec8;
+            font-weight: 600;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .sidebar.collapsed .logo-text,
+        .sidebar.collapsed .nav-label,
+        .sidebar.collapsed .user-info { opacity: 0; pointer-events: none; }
+
+        .nav-section-label {
+            padding: 18px 20px 6px;
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(133,196,228,.45);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            white-space: nowrap;
+            transition: opacity .18s;
+        }
+        .sidebar.collapsed .nav-section-label { height: 0; padding: 0; opacity: 0; }
+
+        .nav-menu { flex: 1; padding: 4px 10px; overflow-y: auto; overflow-x: hidden; }
+        .nav-item {
+            height: 48px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 10px;
+            margin-bottom: 3px;
+            border-radius: 10px;
+            color: #8ab5cc;
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: .2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,.07); color: #d6edf7; }
+        .nav-item.active {
+            background: #85C4E4;
+            color: #02182E;
+            font-weight: 600;
+            box-shadow: 0 4px 14px rgba(133,196,228,.3);
+        }
+        .nav-icon-wrap {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: rgba(255,255,255,.06);
+        }
+        .nav-item.active .nav-icon-wrap { background: rgba(2,24,46,.15); }
+        .nav-item svg { width: 17px; height: 17px; }
+        .nav-label { flex: 1; transition: opacity .18s; }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px;
+            border-top: 1px solid rgba(255,255,255,.08);
+            background: rgba(0,0,0,.12);
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .admin-avatar {
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+            border-radius: 10px;
+            background: #85C4E4;
+            color: #02182E;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .user-info { flex: 1; overflow: hidden; transition: opacity .18s; }
+        .user-name { font-size: 13px; font-weight: 600; color: #fff; }
+        .user-role { font-size: 11px; color: #7aaec8; }
+        .logout-icon { width: 18px; height: 18px; color: #7aaec8; }
+
+        .main-content {
+            margin-left: 260px;
+            width: calc(100% - 260px);
+            min-height: 100vh;
+            transition: margin-left .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1);
+        }
+        .main-content.expanded { margin-left: 72px; width: calc(100% - 72px); }
+
+        .header {
+            min-height: 81px;
+            padding: 20px 32px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #e3eaf0;
+            box-shadow: 0 2px 8px rgba(26,77,110,.06);
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .header-left svg { width: 24px; height: 24px; color: #333; }
+        .header h2 { font-size: 28px; font-weight: 600; color: #022F56; }
+        .header-actions { display: flex; align-items: center; margin-left: auto; }
+        .lock-standing-form { margin: 0; }
+        .lock-standing-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 10px 16px;
+            border: 1px solid #b91c1c;
+            border-radius: 9px;
+            background: #fff;
+            color: #b91c1c;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .2s ease, color .2s ease, box-shadow .2s ease;
+        }
+        .lock-standing-button:hover,
+        .lock-standing-button:focus-visible {
+            background: #b91c1c;
+            color: #fff;
+            box-shadow: 0 5px 14px rgba(185, 28, 28, .18);
+            outline: none;
+        }
+        .lock-standing-button svg { width: 17px; height: 17px; }
+
+        .page-content {
+            width: 100%;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 28px 32px 110px;
+        }
+        .section-heading { margin-bottom: 18px; }
+        .section-heading h3 { font-size: 18px; color: #022F56; margin-bottom: 4px; }
+        .section-heading p { font-size: 13px; color: #6b7280; }
+
+        .employee-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 20px;
+            align-items: stretch;
+        }
+        .employee-card {
+            width: 100%;
+            min-height: 112px;
+            border: 1px solid rgba(133,196,228,.34);
+            border-radius: 14px;
+            background: #fff;
+            padding: 20px;
+            text-align: left;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(2,24,46,.07);
+            transition: transform .22s, box-shadow .22s, border-color .22s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .employee-card:hover, .employee-card:focus-visible {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(72,141,180,.16);
+            border-color: rgba(72,141,180,.55);
+            outline: none;
+        }
+        .employee-card-top { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .employee-card-info { min-width: 0; flex: 1; }
+        .employee-photo {
+            width: 68px;
+            height: 68px;
+            border-radius: 14px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: #e8eef4;
+            border: 1px solid #d7e2eb;
+        }
+        .employee-card-name { font-size: 16px; font-weight: 700; color: #111827; line-height: 1.35; overflow-wrap: anywhere; }
+        .employee-card-position { margin-top: 5px; font-size: 13px; line-height: 1.4; color: #64748b; overflow-wrap: anywhere; }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            padding: 55px 24px;
+            text-align: center;
+            border: 1px dashed #cbd9e5;
+            border-radius: 14px;
+            background: #fff;
+            color: #64748b;
+        }
+
+        .floating-add {
+            position: fixed;
+            right: 30px;
+            bottom: 30px;
+            z-index: 500;
+            min-height: 52px;
+            padding: 0 20px;
+            border: 0;
+            border-radius: 16px;
+            background: #022F56;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 12px 28px rgba(2,47,86,.28);
+            transition: transform .2s, background .2s;
+        }
+        .floating-add:hover { background: #064472; transform: translateY(-2px); }
+        .floating-add svg { width: 20px; height: 20px; }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(10,16,26,.62);
+            backdrop-filter: blur(4px);
+        }
+        .modal.show { display: flex; }
+        .modal-shell {
+            width: min(820px, 100%);
+            max-height: calc(100vh - 40px);
+            overflow: hidden;
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 24px 60px rgba(0,0,0,.25);
+            animation: modalIn .25s ease;
+        }
+        .modal-shell.form-shell { width: min(560px, 100%); }
+        @keyframes modalIn { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: none; } }
+        .modal-top {
+            padding: 20px 24px;
+            background: linear-gradient(135deg,#2c4456,#3d6680);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .modal-title { font-size: 19px; font-weight: 700; }
+        .modal-subtitle { margin-top: 3px; font-size: 12px; color: rgba(255,255,255,.68); }
+        .modal-close {
+            width: 34px;
+            height: 34px;
+            border: 1px solid rgba(255,255,255,.2);
+            border-radius: 50%;
+            background: rgba(255,255,255,.12);
+            color: #fff;
+            font-size: 21px;
+            cursor: pointer;
+        }
+        .modal-body { max-height: calc(100vh - 150px); overflow-y: auto; padding: 24px; }
+
+        .profile-head {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding: 16px;
+            border: 1px solid #e5edf3;
+            border-radius: 12px;
+            background: #f9fbfd;
+        }
+        .profile-photo { width: 84px; height: 84px; border-radius: 16px; object-fit: cover; border: 1px solid #d8e2eb; background: #e8eef4; }
+        .profile-name { font-size: 21px; font-weight: 800; color: #111827; }
+        .profile-position { margin-top: 5px; font-size: 13px; color: #64748b; }
+
+        .summary-title, .records-title { font-size: 15px; font-weight: 700; color: #022F56; margin-bottom: 12px; }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 26px;
+            align-items: stretch;
+        }
+        .summary-card {
+            min-height: 112px;
+            border: 1px solid rgba(133,196,228,.32);
+            border-radius: 12px;
+            padding: 16px;
+            background: #f9fbfd;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .summary-card-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: .5px; line-height: 1.35; }
+        .summary-card-value { margin-top: 7px; font-size: 24px; font-weight: 800; line-height: 1; color: #022F56; }
+
+        .records-wrap {
+            max-height: 340px;
+            overflow: auto;
+            border: 1px solid #e5edf3;
+            border-radius: 10px;
+            background: #fff;
+            scrollbar-gutter: stable;
+        }
+        .records-table {
+            width: 100%;
+            min-width: 720px;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+        }
+        .records-table th {
+            height: 44px;
+            padding: 0 14px;
+            text-align: left;
+            vertical-align: middle;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #eaf4f9;
+            color: #526273;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            white-space: nowrap;
+        }
+        .records-table td {
+            height: 56px;
+            padding: 10px 14px;
+            border-top: 1px solid #edf1f5;
+            font-size: 13px;
+            line-height: 1.45;
+            color: #374151;
+            vertical-align: middle;
+            overflow-wrap: anywhere;
+        }
+        .records-table th,
+        .records-table td { text-align: left; }
+        .records-table th:nth-child(3),
+        .records-table td:nth-child(3) { text-align: center; }
+        .records-table td:nth-child(1),
+        .records-table td:nth-child(2),
+        .records-table td:nth-child(3) { white-space: nowrap; }
+        .records-table td:nth-child(4) {
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+        .records-table tbody tr:hover { background: #fbfdff; }
+        .type-badge { display: inline-flex; align-items: center; min-width: 84px; justify-content: center; padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; line-height: 1; }
+        .type-positive { background: #dcfce7; color: #15803d; }
+        .type-negative { background: #fee2e2; color: #b91c1c; }
+        .no-records { padding: 28px; text-align: center; color: #94a3b8; font-size: 13px; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 7px; }
+        .form-group.full { grid-column: 1 / -1; }
+        .form-group label { font-size: 12px; font-weight: 700; color: #4b5563; }
+        .form-control {
+            width: 100%;
+            min-height: 42px;
+            padding: 10px 12px;
+            border: 1.5px solid #d9e2ea;
+            border-radius: 9px;
+            background: #fff;
+            color: #1f2937;
+            font: inherit;
+            font-size: 14px;
+        }
+        textarea.form-control { min-height: 100px; resize: vertical; }
+        .form-control:focus { outline: none; border-color: #488DB4; box-shadow: 0 0 0 3px rgba(72,141,180,.12); }
+        .form-error { display: none; margin-top: 14px; padding: 10px 12px; border-radius: 8px; background: #fee2e2; color: #b91c1c; font-size: 13px; }
+        .form-actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 22px; padding-top: 18px; border-top: 1px solid #edf2f6; }
+        .btn {
+            min-height: 42px;
+            padding: 0 17px;
+            border-radius: 9px;
+            border: 0;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-secondary { background: #edf2f6; color: #374151; }
+        .btn-primary { background: #022F56; color: #fff; }
+        .btn-primary:disabled { opacity: .65; cursor: wait; }
+
+        .toast {
+            position: fixed;
+            right: 28px;
+            top: 95px;
+            z-index: 3000;
+            max-width: 360px;
+            padding: 13px 16px;
+            border-radius: 10px;
+            background: #065f46;
+            color: #fff;
+            box-shadow: 0 12px 28px rgba(0,0,0,.18);
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateY(-8px);
+            pointer-events: none;
+            transition: .2s;
+        }
+        .toast.show { opacity: 1; transform: none; }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 72px; }
+            .sidebar-toggle { display: none; }
+            .logo-text, .nav-label, .user-info, .nav-section-label { display: none; }
+            .logo-section, .user-profile { justify-content: center; }
+            .nav-item { justify-content: center; padding: 0; }
+            .main-content { margin-left: 72px; width: calc(100% - 72px); }
+            .header { padding: 16px; min-height: 70px; }
+            .header h2 { font-size: 23px; }
+            .header-actions { margin-left: auto; }
+            .lock-standing-button { min-height: 40px; padding: 9px 12px; }
+            .lock-standing-label-long { display: none; }
+            .page-content { padding: 20px 16px 100px; }
+            .summary-grid, .form-grid { grid-template-columns: 1fr; }
+            .summary-card { min-height: 96px; }
+            .form-group.full { grid-column: auto; }
+            .floating-add { right: 16px; bottom: 16px; }
+        }
+        @media (max-width: 480px) {
+            .employee-grid { grid-template-columns: 1fr; }
+            .profile-head { align-items: flex-start; }
+            .profile-photo { width: 72px; height: 72px; }
+            .floating-add span { display: none; }
+            .floating-add { width: 54px; padding: 0; justify-content: center; border-radius: 50%; }
+            .modal { padding: 10px; }
+            .modal-body { padding: 18px; }
+        }
+
+        .employee-card-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .metric-chip {
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #f4f8fb;
+            border: 1px solid #e2ebf2;
+        }
+        .metric-chip-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 4px;
+        }
+        .metric-chip-value {
+            font-size: 18px;
+            font-weight: 800;
+            color: #022F56;
+        }
+        .history-status {
+            font-size: 12px;
+            color: #94a3b8;
+            font-style: italic;
+        }
+        .history-stars { color: #b7791f; font-weight: 800; }
+        .history-demerits { color: #b91c1c; font-weight: 800; }
+        .edit-notice {
+            display: none;
+            margin-bottom: 14px;
+            padding: 10px 12px;
+            border-radius: 9px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .edit-notice.show { display: block; }
+        .demerit-preview {
+            padding: 11px 12px;
+            border-radius: 9px;
+            background: #f8fafc;
+            border: 1px solid #dbe5ee;
+            font-size: 13px;
+            color: #475569;
+        }
+        .demerit-preview strong { color: #022F56; }
+
+    </style>
+    <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+</head>
+<body>
+
+    {% include 'includes/sidebar.html' with active_page='employee_standing' %}
+
+    <main class="main-content" id="mainContent">
+        <header class="header">
+            <div class="header-left">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <h2>Employee Standing</h2>
+            </div>
+            <div class="header-actions">
+                <form class="lock-standing-form" method="post" action="{% url 'pages:employee_standing_lock' %}">
+                    {% csrf_token %}
+                    <button class="lock-standing-button" type="submit" aria-label="Exit and lock Employee Standing">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M13 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Exit<span class="lock-standing-label-long"> &amp; Lock</span></span>
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <section class="page-content">
+            <div class="section-heading">
+                <h3>Monthly Employee Evaluation</h3>
+                <p>Yearly totals for {{ current_year }} are calculated automatically from one evaluation per employee per month.</p>
+            </div>
+
+            <div class="employee-grid" id="employeeGrid">
+                {% for employee in employees %}
+                <button
+                    type="button"
+                    class="employee-card"
+                    data-employee-id="{{ employee.pk }}"
+                    data-name="{{ employee.full_name|escape }}"
+                    data-position="{{ employee.position|default:''|escape }}"
+                    data-photo="{{ employee.profile_photo_url|default:''|escape }}"
+                    data-stars="{{ employee.yearly_total_stars }}"
+                    data-demerits="{{ employee.yearly_total_demerits }}"
+                    onclick="openEmployeeDetails(this)"
+                >
+                    <div class="employee-card-top">
+                        <img class="employee-photo" src="{{ employee.profile_photo_url|default:'' }}" alt="{{ employee.full_name }}" onerror="useFallbackImage(this)">
+                        <div class="employee-card-info">
+                            <div class="employee-card-name">{{ employee.full_name }}</div>
+                            <div class="employee-card-position">{{ employee.position|default:"Employee" }}</div>
+                        </div>
+                    </div>
+                    <div class="employee-card-summary">
+                        <div class="metric-chip">
+                            <span class="metric-chip-label">Total Stars</span>
+                            <span class="metric-chip-value card-stars">{{ employee.yearly_total_stars }}/24</span>
+                        </div>
+                        <div class="metric-chip">
+                            <span class="metric-chip-label">Total Demerits</span>
+                            <span class="metric-chip-value card-demerits">{{ employee.yearly_total_demerits }}</span>
+                        </div>
+                    </div>
+                </button>
+
+                <template id="history-{{ employee.pk }}">
+                    {% for item in employee.monthly_history %}
+                    <tr data-month="{{ item.month_number }}">
+                        <td>{{ item.month_name }}</td>
+                        {% if item.evaluation %}
+                            <td class="history-stars">{{ item.evaluation.stars }}</td>
+                            <td class="history-demerits">{{ item.evaluation.demerits }}</td>
+                            <td>{{ item.evaluation.admin_remarks }}</td>
+                        {% else %}
+                            <td colspan="3"><span class="history-status">Not yet evaluated</span></td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </template>
+                {% empty %}
+                <div class="empty-state">
+                    <strong>No employee profiles found.</strong>
+                    <div style="margin-top:6px;font-size:13px;">Add employees in the database or Django admin to display them here.</div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <button class="floating-add" type="button" onclick="openEvaluationModal()">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        <span>Monthly Evaluation</span>
+    </button>
+
+    <div class="modal" id="employeeModal" role="dialog" aria-modal="true" aria-labelledby="employeeModalTitle">
+        <div class="modal-shell">
+            <div class="modal-top">
+                <div>
+                    <div class="modal-title" id="employeeModalTitle">Employee Performance</div>
+                    <div class="modal-subtitle">{{ current_year }} monthly performance history</div>
+                </div>
+                <button class="modal-close" type="button" onclick="closeModal('employeeModal')" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="profile-head">
+                    <img id="detailPhoto" class="profile-photo" src="{% static 'images/default_profile.png' %}" alt="Employee profile photo" onerror="useFallbackImage(this)">
+                    <div>
+                        <div class="profile-name" id="detailName"></div>
+                        <div class="profile-position" id="detailPosition"></div>
+                    </div>
+                </div>
+
+                <div class="summary-title">Yearly Performance Summary</div>
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-card-label">Total Stars</div>
+                        <div class="summary-card-value" id="detailStars">0/24</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-label">Total Demerits</div>
+                        <div class="summary-card-value" id="detailDemerits">0</div>
+                    </div>
+                </div>
+
+                <div class="records-title">Monthly Performance History</div>
+                <div class="records-wrap">
+                    <table class="records-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Month</th>
+                                <th scope="col">Stars</th>
+                                <th scope="col">Demerits</th>
+                                <th scope="col">Admin Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailHistory"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="evaluationModal" role="dialog" aria-modal="true" aria-labelledby="evaluationModalTitle">
+        <div class="modal-shell form-shell">
+            <div class="modal-top">
+                <div>
+                    <div class="modal-title" id="evaluationModalTitle">Monthly Employee Evaluation</div>
+                    <div class="modal-subtitle">One evaluation per employee, month, and year</div>
+                </div>
+                <button class="modal-close" type="button" onclick="closeModal('evaluationModal')" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="edit-notice" id="editNotice">An evaluation already exists for this employee and month. The form is now in Edit mode.</div>
+                <form id="evaluationForm" novalidate>
+                    {% csrf_token %}
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label for="employeeSelect">Employee</label>
+                            <select id="employeeSelect" class="form-control" required>
+                                <option value="">{% if employees %}Select employee{% else %}No employees available{% endif %}</option>
+                                {% for employee in employees %}
+                                <option value="{{ employee.pk }}">{{ employee.full_name }}{% if employee.position %} — {{ employee.position }}{% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="evaluationMonth">Month</label>
+                            <select id="evaluationMonth" class="form-control" required>
+                                {% for number, name in month_choices %}
+                                <option value="{{ number }}" {% if number == today.month %}selected{% endif %}>{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="evaluationYear">Year</label>
+                            <input id="evaluationYear" class="form-control" type="number" min="2000" max="2100" value="{{ current_year }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="evaluationStars">Stars</label>
+                            <select id="evaluationStars" class="form-control" required>
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="evaluationDemerits">Demerits</label>
+                            <input id="evaluationDemerits" class="form-control" type="number" min="0" max="999" step="1" value="0" required>
+                        </div>
+                        <div class="form-group full">
+                            <label for="adminRemarks">Admin Remarks</label>
+                            <textarea id="adminRemarks" class="form-control" maxlength="2000" required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-error" id="formError"></div>
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" type="button" onclick="closeModal('evaluationModal')">Cancel</button>
+                        <button class="btn btn-primary" id="saveEvaluationButton" type="submit">Save Evaluation</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const fallbackPhoto = "{% static 'images/default_profile.png' %}";
+        const evaluationUrl = "{% url 'pages:employee_monthly_evaluation_ajax' %}";
+        const currentYear = Number("{{ current_year }}");
+        let activeEmployeeId = null;
+        let lookupController = null;
+
+        // A locked page restored from the browser back-forward cache must be
+        // revalidated by Django before any Employee Standing data is shown.
+        window.addEventListener("pageshow", event => {
+            if (event.persisted) window.location.reload();
+        });
+
+        function useFallbackImage(image) {
+            if (image.dataset.fallbackUsed === "1") return;
+            image.dataset.fallbackUsed = "1";
+            image.src = fallbackPhoto;
+        }
+
+        function openEmployeeDetails(card) {
+            activeEmployeeId = card.dataset.employeeId;
+            document.getElementById("detailName").textContent = card.dataset.name;
+            document.getElementById("detailPosition").textContent = card.dataset.position || "Employee";
+            document.getElementById("detailStars").textContent = `${card.dataset.stars || 0}/24`;
+            document.getElementById("detailDemerits").textContent = card.dataset.demerits || 0;
+
+            const photo = document.getElementById("detailPhoto");
+            photo.dataset.fallbackUsed = "0";
+            photo.src = card.dataset.photo || fallbackPhoto;
+
+            const source = document.getElementById(`history-${activeEmployeeId}`);
+            document.getElementById("detailHistory").innerHTML = source ? source.innerHTML.trim() : "";
+            showModal("employeeModal");
+        }
+
+        function openEvaluationModal() {
+            const form = document.getElementById("evaluationForm");
+            form.reset();
+            document.getElementById("evaluationYear").value = currentYear;
+            document.getElementById("editNotice").classList.remove("show");
+            document.getElementById("formError").style.display = "none";
+            document.getElementById("saveEvaluationButton").textContent = "Save Evaluation";
+            if (activeEmployeeId) document.getElementById("employeeSelect").value = activeEmployeeId;
+            showModal("evaluationModal");
+            checkExistingEvaluation();
+        }
+
+        function showModal(id) {
+            document.getElementById(id).classList.add("show");
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove("show");
+            if (!document.querySelector(".modal.show")) document.body.style.overflow = "";
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 2600);
+        }
+
+        async function checkExistingEvaluation() {
+            const employeeId = document.getElementById("employeeSelect").value;
+            const month = document.getElementById("evaluationMonth").value;
+            const year = document.getElementById("evaluationYear").value;
+            const notice = document.getElementById("editNotice");
+            if (!employeeId || !month || !year) {
+                notice.classList.remove("show");
+                return;
+            }
+
+            if (lookupController) lookupController.abort();
+            lookupController = new AbortController();
+
+            try {
+                const params = new URLSearchParams({employee_id: employeeId, month, year});
+                const response = await fetch(`${evaluationUrl}?${params}`, {
+                    credentials: "same-origin",
+                    headers: {"Accept": "application/json"},
+                    signal: lookupController.signal
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || "Unable to check evaluation.");
+
+                if (data.exists) {
+                    document.getElementById("evaluationStars").value = String(data.evaluation.stars);
+                    document.getElementById("evaluationDemerits").value = String(data.evaluation.demerits);
+                    document.getElementById("adminRemarks").value = data.evaluation.admin_remarks || "";
+                    document.getElementById("saveEvaluationButton").textContent = "Update Evaluation";
+                    notice.classList.add("show");
+                } else {
+                    document.getElementById("evaluationStars").value = "0";
+                    document.getElementById("evaluationDemerits").value = "0";
+                    document.getElementById("adminRemarks").value = "";
+                    document.getElementById("saveEvaluationButton").textContent = "Save Evaluation";
+                    notice.classList.remove("show");
+                }
+            } catch (error) {
+                if (error.name !== "AbortError") {
+                    document.getElementById("formError").textContent = error.message;
+                    document.getElementById("formError").style.display = "block";
+                }
+            }
+        }
+
+        ["employeeSelect", "evaluationMonth", "evaluationYear"].forEach(id => {
+            document.getElementById(id)?.addEventListener("change", checkExistingEvaluation);
+        });
+
+        document.getElementById("evaluationForm")?.addEventListener("submit", async function(event) {
+            event.preventDefault();
+            if (!this.checkValidity()) {
+                this.reportValidity();
+                return;
+            }
+
+            const button = document.getElementById("saveEvaluationButton");
+            const errorBox = document.getElementById("formError");
+            button.disabled = true;
+            button.textContent = "Saving...";
+            errorBox.style.display = "none";
+
+            const formData = new FormData();
+            formData.append("csrfmiddlewaretoken", this.querySelector("[name=csrfmiddlewaretoken]").value);
+            formData.append("employee_id", document.getElementById("employeeSelect").value);
+            formData.append("month", document.getElementById("evaluationMonth").value);
+            formData.append("year", document.getElementById("evaluationYear").value);
+            formData.append("stars", document.getElementById("evaluationStars").value);
+            formData.append("demerits", document.getElementById("evaluationDemerits").value);
+            formData.append("admin_remarks", document.getElementById("adminRemarks").value.trim());
+
+            try {
+                const response = await fetch(evaluationUrl, {
+                    method: "POST",
+                    body: formData,
+                    credentials: "same-origin",
+                    headers: {"X-Requested-With": "XMLHttpRequest", "Accept": "application/json"}
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || "Unable to save evaluation.");
+
+                closeModal("evaluationModal");
+                showToast(data.message);
+                window.location.reload();
+            } catch (error) {
+                errorBox.textContent = error.message || "Unable to save evaluation.";
+                errorBox.style.display = "block";
+                button.disabled = false;
+                button.textContent = document.getElementById("editNotice").classList.contains("show")
+                    ? "Update Evaluation"
+                    : "Save Evaluation";
+            }
+        });
+
+        document.querySelectorAll(".modal").forEach(modal => {
+            modal.addEventListener("click", event => {
+                if (event.target === modal) closeModal(modal.id);
+            });
+        });
+
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape") {
+                document.querySelectorAll(".modal.show").forEach(modal => closeModal(modal.id));
+            }
+        });
+    </script>
+
+    {% include 'logout_modal.html' %}
+    <script src="{% static 'js/sidebar.js' %}"></script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 {% load static %}
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -302,20 +303,44 @@
         /* Main Content */
         .main-content {
             margin-left: 260px;
-            flex: 1;
-            width: calc(100% - 260px);
-            background-color: #edf2f6;
+            width: calc(100vw - 260px);
+            max-width: none;
+            min-width: 0;
             min-height: 100vh;
+            background-color: #edf2f6;
             transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1), width 0.3s cubic-bezier(0.4,0,0.2,1);
         }
         .main-content.expanded {
             margin-left: 72px;
-            width: calc(100% - 72px);
+            width: calc(100vw - 72px);
         }
 
-        .header { background-color: white; padding: 25px 35px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); border-bottom: 1px solid #e5e5e5; }
-        .header h2 { color: #1a1a1a; font-size: 28px; font-weight: 700; }
-        .btn-group { display: flex; gap: 12px; }
+        .header {
+            width: 100%;
+            min-height: 81px;
+            padding: 20px 35px;
+            background-color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid #e5e5e5;
+        }
+        .header h2 {
+            margin: 0;
+            color: #022F56;
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .btn-group {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
         .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s ease; }
         .btn-primary { background: #488DB4; color: white; }
         .btn-primary:hover { background: #02182E; }
@@ -344,20 +369,17 @@
         }
         .btn-export-excel:hover { background: #f0fdf4; border-color: #059669; box-shadow: 0 3px 8px rgba(5,150,105,0.15); }
 
-        .view-more-btn {
-            display: block; width: 100%; padding: 11px;
-            margin-top: 4px;
-            background: #f9fafb; border: 1.5px dashed #d1d5db;
-            border-radius: 0 0 8px 8px;
-            color: #6b7280; font-size: 13px; font-weight: 600;
-            cursor: pointer; text-align: center;
-            transition: all 0.2s; font-family: inherit;
+        .page-content {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 30px 35px 70px;
         }
-        .view-more-btn:hover { background: #f3f4f6; color: #374151; border-color: #9ca3af; }
-        .sales-table-wrapper { overflow: hidden; }
-        .sales-table-wrapper.collapsed tbody tr:nth-child(n+6) { display: none; }
 
-        .page-content { padding: 30px 35px; max-width: 1600px; margin: 0 auto; }
+        .sales-overview-section {
+            width: 100%;
+            margin-bottom: 40px;
+        }
 
         /* 4. SECTION TITLES */
         .section-title {
@@ -373,16 +395,21 @@
 
         /* 5. SUMMARY CARDS */
         .summary-cards {
+            width: 100%;
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(280px, 420px));
+            align-items: stretch;
             gap: 20px;
             margin-bottom: 35px;
         }
 
         .summary-card {
+            width: 100%;
+            min-width: 0;
+            min-height: 190px;
             background: white;
             border-radius: 12px;
-            padding: 24px;
+            padding: 28px;
             box-shadow: 0 2px 8px rgba(8, 31, 92, 0.12);
             border: 1.2px solid rgba(8, 31, 92, 0.15);
             border-left: 5px solid #10b981;
@@ -393,6 +420,117 @@
             box-shadow: 0 6px 16px rgba(8, 31, 92, 0.16);
             transform: translateY(-2px);
             border-color: rgba(8, 31, 92, 0.25);
+        }
+
+        /* Employee Standings overview */
+        .employee-standings-section {
+            width: 100%;
+            margin-top: 4px;
+            margin-bottom: 40px;
+        }
+
+        .employee-standings-subtext {
+            margin-top: -10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .employee-standing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        .employee-standing-card {
+            width: 100%;
+            min-height: 168px;
+            border: 1px solid rgba(133,196,228,.34);
+            border-radius: 14px;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(2,24,46,.07);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .employee-standing-card-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .employee-standing-photo {
+            width: 68px;
+            height: 68px;
+            border-radius: 14px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: #e8eef4;
+            border: 1px solid #d7e2eb;
+        }
+
+        .employee-standing-info { min-width: 0; flex: 1; }
+        .employee-standing-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #111827;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+        .employee-standing-position {
+            margin-top: 5px;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #64748b;
+            overflow-wrap: anywhere;
+        }
+
+        .employee-standing-summary {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .employee-standing-metric {
+            min-width: 0;
+            padding: 10px 12px;
+            border: 1px solid #e5edf3;
+            border-radius: 10px;
+            background: #f9fbfd;
+            text-align: center;
+        }
+
+        .employee-standing-metric-label {
+            display: block;
+            font-size: 10px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: .45px;
+            line-height: 1.3;
+        }
+
+        .employee-standing-metric-value {
+            display: block;
+            margin-top: 5px;
+            font-size: 18px;
+            font-weight: 800;
+            color: #022F56;
+            line-height: 1;
+        }
+
+        .employee-standing-empty {
+            grid-column: 1 / -1;
+            padding: 44px 24px;
+            text-align: center;
+            border: 1px dashed #cbd9e5;
+            border-radius: 14px;
+            background: #fff;
+            color: #64748b;
         }
 
         .summary-card h4 {
@@ -504,190 +642,6 @@
         .badge-danger {
             background: #fee2e2;
             color: #991b1b;
-        }
-
-        /* Inventory filter tabs */
-        /* ===== INVENTORY BUCKET DESIGN ===== */
-        .inv-buckets {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 14px;
-            margin-bottom: 6px;
-        }
-        .inv-bucket {
-            border-radius: 14px;
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            overflow: hidden;
-            user-select: none;
-        }
-        .inv-bucket-header {
-            padding: 20px 22px 18px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .inv-bucket.in  { background: #f0fdf4; border-color: #bbf7d0; }
-        .inv-bucket.low { background: #fffbeb; border-color: #fde68a; }
-        .inv-bucket.out { background: #fff1f2; border-color: #fecdd3; }
-        .inv-bucket.in:hover  { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); }
-        .inv-bucket.low:hover { border-color: #d97706; box-shadow: 0 4px 16px rgba(217,119,6,0.12); }
-        .inv-bucket.out:hover { border-color: #dc2626; box-shadow: 0 4px 16px rgba(220,38,38,0.12); }
-        .inv-bucket.active.in  { border-color: #059669; box-shadow: 0 6px 20px rgba(5,150,105,0.15); }
-        .inv-bucket.active.low { border-color: #d97706; box-shadow: 0 6px 20px rgba(217,119,6,0.15); }
-        .inv-bucket.active.out { border-color: #dc2626; box-shadow: 0 6px 20px rgba(220,38,38,0.15); }
-
-        .inv-bucket-left { display: flex; flex-direction: column; gap: 2px; }
-        .inv-bucket-label {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-        .inv-bucket.in  .inv-bucket-label { color: #059669; }
-        .inv-bucket.low .inv-bucket-label { color: #d97706; }
-        .inv-bucket.out .inv-bucket-label { color: #dc2626; }
-
-        .inv-bucket-count {
-            font-size: 36px;
-            font-weight: 800;
-            line-height: 1;
-        }
-        .inv-bucket.in  .inv-bucket-count { color: #065f46; }
-        .inv-bucket.low .inv-bucket-count { color: #92400e; }
-        .inv-bucket.out .inv-bucket-count { color: #991b1b; }
-
-        .inv-bucket-sublabel {
-            font-size: 12px;
-            font-weight: 500;
-            color: #9ca3af;
-            margin-top: 2px;
-        }
-
-        .inv-bucket-icon {
-            width: 44px; height: 44px;
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .inv-bucket.in  .inv-bucket-icon { background: #d1fae5; }
-        .inv-bucket.low .inv-bucket-icon { background: #fef3c7; }
-        .inv-bucket.out .inv-bucket-icon { background: #fee2e2; }
-        .inv-bucket-icon svg { width: 22px; height: 22px; }
-        .inv-bucket.in  .inv-bucket-icon svg { color: #059669; }
-        .inv-bucket.low .inv-bucket-icon svg { color: #d97706; }
-        .inv-bucket.out .inv-bucket-icon svg { color: #dc2626; }
-
-        .inv-bucket-chevron {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 6px 0 10px;
-            color: #9ca3af;
-            transition: transform 0.25s ease;
-        }
-        .inv-bucket.active .inv-bucket-chevron { transform: rotate(180deg); }
-        .inv-bucket.in.active  .inv-bucket-chevron { color: #059669; }
-        .inv-bucket.low.active .inv-bucket-chevron { color: #d97706; }
-        .inv-bucket.out.active .inv-bucket-chevron { color: #dc2626; }
-
-        /* Expandable product list panel */
-        .inv-panel {
-            display: none;
-            border: 1.5px solid #e9eef3;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-top: 4px;
-            animation: invPanelIn 0.2s ease;
-        }
-        .inv-panel.show { display: block; }
-        @keyframes invPanelIn {
-            from { opacity: 0; transform: translateY(-6px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        .inv-panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 20px;
-            border-bottom: 1px solid #f0f0f0;
-            background: #fafafa;
-        }
-        .inv-panel-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #111827;
-        }
-        .inv-panel-close {
-            width: 28px; height: 28px;
-            background: #f3f4f6;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            color: #6b7280;
-            transition: all 0.15s;
-        }
-        .inv-panel-close:hover { background: #e5e7eb; color: #111827; }
-
-        .inv-product-list { padding: 12px 16px; }
-        .inv-product-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 12px;
-            border-radius: 8px;
-            transition: background 0.1s;
-        }
-        .inv-product-row:hover { background: #f9fafb; }
-        .inv-product-row + .inv-product-row { border-top: 1px solid #f3f4f6; }
-        .inv-product-info { display: flex; flex-direction: column; gap: 2px; }
-        .inv-product-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: #111827;
-        }
-        .inv-product-category {
-            font-size: 11px;
-            color: #9ca3af;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-        }
-        .inv-product-qty {
-            font-size: 15px;
-            font-weight: 700;
-            color: #1e3a4f;
-            white-space: nowrap;
-        }
-        .inv-product-qty span {
-            font-size: 11px;
-            font-weight: 500;
-            color: #9ca3af;
-            margin-left: 3px;
-        }
-        .inv-panel-empty {
-            padding: 28px;
-            text-align: center;
-            color: #9ca3af;
-            font-size: 13px;
-        }
-
-
-        .status-in-stock {
-            color: #059669;
-            font-weight: 600;
-        }
-
-        .status-low-stock {
-            color: #d97706;
-            font-weight: 600;
-        }
-
-        .status-out-of-stock {
-            color: #dc2626;
-            font-weight: 600;
         }
 
         /* 9. EMPTY STATE */
@@ -885,7 +839,7 @@
             font-weight: 700;
             color: #111827;
         }
-        .cal-stat-value.green { color: #059669; }
+        .cal-stat-value.green { color: #015e3d; }
 
         /* Calendar grid */
         .calendar-grid-wrap {
@@ -1100,6 +1054,56 @@
             color: #10b981;
         }
 
+
+        /* Responsive Reports Layout */
+        @media (max-width: 1024px) {
+            .header,
+            .page-content { padding-left: 24px; padding-right: 24px; }
+            .summary-cards { grid-template-columns: minmax(260px, 420px); }
+        }
+
+        @media (max-width: 768px) {
+            body { display: block; }
+            .sidebar { width: 72px; }
+            .sidebar-toggle { display: none; }
+            .sidebar .logo-text,
+            .sidebar .nav-label,
+            .sidebar .nav-section-label,
+            .sidebar .user-info { display: none; }
+            .sidebar .logo-section,
+            .sidebar .user-profile { justify-content: center; }
+            .sidebar .nav-item { justify-content: center; padding: 0; }
+
+            .main-content,
+            .main-content.expanded {
+                margin-left: 72px;
+                width: calc(100vw - 72px);
+            }
+
+            .header {
+                min-height: 70px;
+                padding: 16px 20px;
+            }
+            .header h2 { font-size: 24px; }
+            .btn-export-pdf { padding: 9px 14px; }
+            .page-content { padding: 24px 20px 60px; }
+            .summary-cards { grid-template-columns: minmax(0, 1fr); }
+            .summary-card { min-height: 165px; padding: 24px; }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                align-items: stretch;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .btn-group { justify-content: flex-start; }
+            .btn-export-pdf { width: 100%; justify-content: center; }
+            .page-content { padding: 20px 16px 50px; }
+            .section-title { font-size: 18px; }
+            .summary-card .value { font-size: 28px; }
+        }
+
         /* 10. PRINT STYLES */
         .print-only-header { display: none; }
         @media print {
@@ -1118,167 +1122,12 @@
                 break-inside: avoid;
             }
         }
-
-        /* NOTIFICATION STYLES */
-        .notification-icon { position: relative; cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; }
-        .notification-icon svg { width: 28px; height: 28px; color: #1a1a1a; }
-        .notification-badge { position: absolute; top: 2px; right: 2px; background: #ef4444; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
-        /* ===== INVENTORY CATEGORY BLOCKS (match inv-bucket style) ===== */
-        .inv-cat-block {
-            border-radius: 14px;
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            overflow: hidden;
-            user-select: none;
-        }
-        .inv-cat-block.flowers { background: #f0fdf4; border-color: #bbf7d0; }
-        .inv-cat-block.fillers { background: #eff6ff; border-color: #bfdbfe; }
-        .inv-cat-block.flowers:hover { border-color: #059669; box-shadow: 0 4px 16px rgba(5,150,105,0.12); }
-        .inv-cat-block.fillers:hover { border-color: #3b82f6; box-shadow: 0 4px 16px rgba(59,130,246,0.12); }
-        .inv-cat-block.flowers.open { border-color: #059669; box-shadow: 0 6px 20px rgba(5,150,105,0.15); }
-        .inv-cat-block.fillers.open { border-color: #3b82f6; box-shadow: 0 6px 20px rgba(59,130,246,0.15); }
-
-        .inv-cat-header {
-            padding: 20px 22px 18px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .inv-cat-left { display: flex; flex-direction: column; gap: 2px; }
-        .inv-cat-label {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-        .inv-cat-block.flowers .inv-cat-label { color: #059669; }
-        .inv-cat-block.fillers .inv-cat-label { color: #3b82f6; }
-
-        .inv-cat-bigcount {
-            font-size: 36px;
-            font-weight: 800;
-            line-height: 1;
-        }
-        .inv-cat-block.flowers .inv-cat-bigcount { color: #065f46; }
-        .inv-cat-block.fillers .inv-cat-bigcount { color: #1e3a8a; }
-
-        .inv-cat-sublabel {
-            font-size: 12px;
-            font-weight: 500;
-            color: #9ca3af;
-            margin-top: 2px;
-        }
-        .inv-cat-icon {
-            width: 44px; height: 44px;
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .inv-cat-block.flowers .inv-cat-icon { background: #d1fae5; }
-        .inv-cat-block.fillers .inv-cat-icon { background: #dbeafe; }
-        .inv-cat-icon svg { width: 22px; height: 22px; }
-        .inv-cat-block.flowers .inv-cat-icon svg { color: #059669; }
-        .inv-cat-block.fillers .inv-cat-icon svg { color: #3b82f6; }
-
-        .inv-cat-chevron-wrap {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 6px 0 10px;
-            color: #9ca3af;
-            transition: transform 0.25s ease;
-        }
-        .inv-cat-block.open .inv-cat-chevron-wrap { transform: rotate(180deg); }
-        .inv-cat-block.flowers.open .inv-cat-chevron-wrap { color: #059669; }
-        .inv-cat-block.fillers.open .inv-cat-chevron-wrap { color: #3b82f6; }
-
-        .inv-cat-body { background: white; border-top: 1px solid #f0f0f0; }
-        .inv-cat-product-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 11px 18px;
-            border-bottom: 1px solid #f3f4f6;
-            cursor: pointer;
-            transition: background 0.1s;
-        }
-        .inv-cat-product-row:last-child { border-bottom: none; }
-        .inv-cat-product-row:hover { background: #f9fafb; }
-        .inv-cat-product-row.active { background: #eff6ff; }
-        .inv-cat-product-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: #111827;
-        }
-        .inv-cat-product-meta {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .inv-cat-product-qty {
-            font-size: 13px;
-            font-weight: 700;
-            color: #1e3a4f;
-        }
-        .inv-cat-product-qty span {
-            font-size: 11px;
-            font-weight: 500;
-            color: #9ca3af;
-            margin-left: 2px;
-        }
-        .inv-stock-badge {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 20px;
-        }
-        .inv-stock-badge.in  { background:#d1fae5; color:#059669; }
-        .inv-stock-badge.low { background:#fef3c7; color:#d97706; }
-        .inv-stock-badge.out { background:#fee2e2; color:#dc2626; }
-
-        /* History drawer columns */
-        .inv-history-cols {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-        .inv-history-col-title {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #6b7280;
-            margin-bottom: 8px;
-            padding-bottom: 6px;
-            border-bottom: 1.5px solid #f0f0f0;
-        }
-        .inv-history-entry {
-            padding: 8px 10px;
-            border-radius: 7px;
-            background: #f9fafb;
-            border-left: 3px solid #e5e7eb;
-            margin-bottom: 6px;
-        }
-        .inv-history-entry.add  { border-left-color: #059669; }
-        .inv-history-entry.edit { border-left-color: #3d5a73; }
-        .inv-history-entry-qty  { font-size: 13px; font-weight: 700; color: #111827; }
-        .inv-history-entry-date { font-size: 11px; color: #9ca3af; margin-top: 2px; }
-        .inv-history-entry-status { font-size: 11px; font-weight: 600; margin-top: 3px; }
-        .inv-history-empty { font-size: 12px; color: #9ca3af; padding: 10px 0; }
-
-        .notification-dropdown { position: absolute; top: 60px; right: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,.1); width: 300px; max-height: 400px; overflow-y: auto; z-index: 1000; display: none; }
-        .notification-dropdown.show { display: block; }
-        .notification-header { padding: 15px; border-bottom: 1px solid #e0e0e0; font-weight: 600; color: #1a1a1a; }
-        .notification-item { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
-        .notification-item:hover { background: #f5f5f5; }
-        .notification-item-title { font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
-        .notification-item-text { font-size: 12px; color: #666; }
-        .notification-footer { padding: 10px 15px; text-align: center; border-top: 1px solid #e0e0e0; color: #488DB4; font-size: 13px; font-weight: 600; }
     </style>
+    <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
 </head>
 <body>
+    {% include 'includes/sidebar.html' with active_page='reports' %}
+    {% comment %}Legacy copied sidebar retained only as template history; the shared include above is authoritative.
     <!-- SIDEBAR -->
     <div class="sidebar" id="sidebar">
         <div class="logo-section">
@@ -1305,16 +1154,6 @@
                 </div>
                 <span class="nav-label">Dashboard</span>
                 <span class="nav-tooltip">Dashboard</span>
-            </a>
-            <a href="{% url 'pages:inventory' %}" class="nav-item">
-                <div class="nav-icon-wrap">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M20 7H4C2.9 7 2 7.9 2 9V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V9C22 7.9 21.1 7 20 7Z" stroke="currentColor" stroke-width="2" fill="none"/>
-                        <path d="M12 7V3M8 7V5M16 7V5" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                </div>
-                <span class="nav-label">Inventory</span>
-                <span class="nav-tooltip">Inventory</span>
             </a>
             <a href="{% url 'pages:orders' %}" class="nav-item">
                 <div class="nav-icon-wrap">
@@ -1385,6 +1224,7 @@
             <polyline points="15 18 9 12 15 6"/>
         </svg>
     </div>
+    {% endcomment %}
 
     <!-- MAIN CONTENT -->
     <div class="main-content" id="mainContent">
@@ -1396,7 +1236,7 @@
         <header class="header">
             <h2>Reports</h2>
             <div class="btn-group">
-                <button class="btn btn-export-pdf" onclick="window.print()">
+                <button class="btn btn-export-pdf" id="exportMonthlySalesPdfButton" type="button" onclick="exportMonthlySalesPDF()">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                     Export PDF
                 </button>
@@ -1405,193 +1245,53 @@
 
         <div class="page-content">
             <!-- ============== SECTION 1: SALES OVERVIEW ============== -->
-            <div style="margin-bottom: 40px;">
+            <div class="sales-overview-section">
                 <h2 class="section-title">Sales Overview</h2>
                 <div class="summary-cards">
                     <div class="summary-card" onclick="openCalendarModal()" style="cursor: pointer; transition: all 0.3s ease;">
-                        <h4>Total Sales</h4>
-                        <div class="value">₱<span id="totalSalesAmount">{{ total_sales|floatformat:0 }}</span></div>
-                        <div class="subtext">All completed orders (Click to view by month)</div>
-                    </div>
-                    <div class="summary-card">
-                        <h4>Monthly Sales</h4>
-                        <div class="value">₱<span id="monthlySalesAmount">{{ monthly_sales.total_revenue|floatformat:0 }}</span></div>
-                        <div class="subtext">{{ monthly_sales.total_orders }} order{{ monthly_sales.total_orders|pluralize }}</div>
+                        <h4>Total Monthly Sales</h4>
+                        <div class="value">₱<span id="totalMonthlySalesAmount">{{ total_monthly_sales.total_revenue }}</span></div>
+                        <div class="subtext">{{ current_month_name }} {{ current_month_year }} · {{ total_monthly_sales.total_orders }} completed order{{ total_monthly_sales.total_orders|pluralize }} · Click to view by date</div>
                     </div>
                 </div>
             </div>
 
-            <!-- ============== SECTION 2: ALL PRODUCT ORDERS ============== -->
-            <div class="content-section">
-                <h3>
-                    <span class="section-icon">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2"/>
-                            <line x1="3" y1="9" x2="21" y2="9"/>
-                            <line x1="9" y1="21" x2="9" y2="9"/>
-                            <line x1="15" y1="14" x2="15" y2="20"/>
-                            <line x1="12" y1="17" x2="18" y2="17"/>
-                        </svg>
-                    </span>
-                    All Product Orders
-                </h3>
-                <p style="font-size:13px;color:#9ca3af;margin-top:-12px;margin-bottom:18px;">Aggregated from all orders — total quantity ordered and revenue per product.</p>
-                {% if top_selling_products %}
-                <div class="sales-table-wrapper collapsed" id="salesTableWrapper">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Product / Item</th>
-                            <th style="text-align:center;">Total Orders</th>
-                            <th style="text-align:right;">Total Revenue</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for product in top_selling_products %}
-                        <tr>
-                            <td style="color:#9ca3af;font-size:13px;width:36px;">{{ forloop.counter }}</td>
-                            <td>
-                                <div style="font-weight:700;color:#111827;font-size:14px;">{{ product.name }}</div>
-                                <div style="font-size:11px;color:#9ca3af;margin-top:1px;">{{ product.total_quantity }} order{{ product.total_quantity|pluralize }}</div>
-                            </td>
-                            <td style="text-align:center;">
-                                <span style="display:inline-flex;align-items:center;justify-content:center;background:#eff6ff;color:#1d4ed8;font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:40px;">{{ product.total_quantity }}</span>
-                            </td>
-                            <td style="text-align:right;">
-                                <span class="badge badge-success" style="font-size:13px;font-weight:700;">₱{{ product.total_revenue|floatformat:2 }}</span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                </div>
-                {% if top_selling_products|length > 5 %}
-                <button class="view-more-btn" id="viewMoreSalesBtn" onclick="toggleSalesTable()">
-                    ▼ View All Products ({{ top_selling_products|length }} total)
-                </button>
-                {% endif %}
-                {% else %}
-                <div class="empty-state">
-                    <p>No product orders found yet</p>
-                </div>
-                {% endif %}
-            </div>
+            <!-- ============== SECTION 2: EMPLOYEE STANDINGS ============== -->
+            <section class="employee-standings-section" aria-labelledby="employeeStandingsTitle">
+                <h2 class="section-title" id="employeeStandingsTitle">Employee Standings</h2>
+                <p class="employee-standings-subtext">Current-year totals for {{ employee_standing_year }}, calculated automatically from monthly employee evaluations.</p>
 
-            <!-- ============== SECTION 3: INVENTORY SUMMARY (OPERATIONAL OVERVIEW) ============== -->
-            <!-- Removed LOW STOCK and OUT OF STOCK containers as per user request -->
-
-            <!-- ============== INVENTORY PRODUCTS TABLE ============== -->
-            <div class="content-section">
-                <div style="margin-bottom:18px;">
-                    <h3 style="margin:0 0 4px; font-size:16px; font-weight:700; color:#111827;">
-                        <span class="section-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 8V21H3V8"/>
-                                <path d="M23 3H1v5h22V3z"/>
-                                <line x1="10" y1="12" x2="14" y2="12"/>
-                            </svg>
-                        </span>
-                        Product Inventory Details
-                    </h3>
-                    <p style="margin:0; font-size:12px; color:#9ca3af;">Click a category to expand, then click a product to view its history</p>
-                </div>
-
-                {% if all_products %}
-
-                <!-- Hidden data store -->
-                <div id="inv-data" style="display:none;">
-                    {% for product in all_products %}
-                    <div data-status="{% if product.stock_status == 'Out of Stock' %}out{% elif product.stock_status == 'Low Stock' %}low{% else %}in{% endif %}"
-                         data-name="{{ product.name }}"
-                         data-category="{{ product.category|default:'Uncategorized' }}"
-                         data-qty="{{ product.stock_quantity }}"
-                         data-unit="{{ product.unit }}">
-                    </div>
+                <div class="employee-standing-grid">
+                    {% for employee in employees %}
+                    <article class="employee-standing-card">
+                        <div class="employee-standing-card-top">
+                            {% if employee.profile_photo_url %}
+                            <img class="employee-standing-photo" src="{{ employee.profile_photo_url }}" alt="{{ employee.full_name }}" onerror="this.onerror=null;this.src='{% static 'images/default_profile.png' %}';">
+                            {% else %}
+                            <img class="employee-standing-photo" src="{% static 'images/default_profile.png' %}" alt="{{ employee.full_name }}">
+                            {% endif %}
+                            <div class="employee-standing-info">
+                                <div class="employee-standing-name">{{ employee.full_name }}</div>
+                                <div class="employee-standing-position">{{ employee.position|default:"Employee" }}</div>
+                            </div>
+                        </div>
+                        <div class="employee-standing-summary">
+                            <div class="employee-standing-metric">
+                                <span class="employee-standing-metric-label">Total Stars</span>
+                                <span class="employee-standing-metric-value">{{ employee.yearly_total_stars }}/24</span>
+                            </div>
+                            <div class="employee-standing-metric">
+                                <span class="employee-standing-metric-label">Total Demerits</span>
+                                <span class="employee-standing-metric-value">{{ employee.yearly_total_demerits }}/12</span>
+                            </div>
+                        </div>
+                    </article>
+                    {% empty %}
+                    <div class="employee-standing-empty">No employees are available.</div>
                     {% endfor %}
                 </div>
+            </section>
 
-                <!-- Category Containers: Flowers & Fillers -->
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px;" id="invCategoryWrap">
-
-                    <!-- FLOWERS -->
-                    <div class="inv-cat-block flowers" id="catBlock-FLOWERS" onclick="toggleCatBlock('FLOWERS')">
-                        <div class="inv-cat-header">
-                            <div class="inv-cat-left">
-                                <span class="inv-cat-label">Flowers</span>
-                                <span class="inv-cat-bigcount" id="catCount-FLOWERS">0</span>
-                                <span class="inv-cat-sublabel">products</span>
-                            </div>
-                            <div class="inv-cat-icon">
-                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="inv-cat-chevron-wrap">
-                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- FILLERS -->
-                    <div class="inv-cat-block fillers" id="catBlock-FILLERS" onclick="toggleCatBlock('FILLERS')">
-                        <div class="inv-cat-header">
-                            <div class="inv-cat-left">
-                                <span class="inv-cat-label">Fillers</span>
-                                <span class="inv-cat-bigcount" id="catCount-FILLERS">0</span>
-                                <span class="inv-cat-sublabel">products</span>
-                            </div>
-                            <div class="inv-cat-icon">
-                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="inv-cat-chevron-wrap">
-                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- Expandable product list panels (below the cards) -->
-                <div id="catBody-FLOWERS" style="display:none;border:1.5px solid #bbf7d0;border-radius:12px;overflow:hidden;margin-bottom:8px;animation:invPanelIn 0.2s ease;">
-                    <div style="padding:10px 18px 6px;background:#f0fdf4;border-bottom:1px solid #d1fae5;">
-                        <span style="font-size:12px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.5px;">Flowers</span>
-                    </div>
-                    <div id="catProductList-FLOWERS"></div>
-                </div>
-                <div id="catBody-FILLERS" style="display:none;border:1.5px solid #bfdbfe;border-radius:12px;overflow:hidden;margin-bottom:8px;animation:invPanelIn 0.2s ease;">
-                    <div style="padding:10px 18px 6px;background:#eff6ff;border-bottom:1px solid #dbeafe;">
-                        <span style="font-size:12px;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:0.5px;">Fillers</span>
-                    </div>
-                    <div id="catProductList-FILLERS"></div>
-                </div>
-
-                <!-- Product History Drawer (shown below category when a product is clicked) -->
-                <div id="invHistoryDrawer" style="display:none;margin-top:10px;border:1.5px solid #e9eef3;border-radius:12px;overflow:hidden;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:#fafafa;border-bottom:1px solid #f0f0f0;">
-                        <div>
-                            <span id="invHistoryDrawerTitle" style="font-size:13px;font-weight:700;color:#111827;"></span>
-                            <span style="font-size:11px;color:#9ca3af;margin-left:8px;">Stock History</span>
-                        </div>
-                        <button onclick="closeHistoryDrawer()" style="width:26px;height:26px;background:#f3f4f6;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6b7280;">
-                            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
-                    </div>
-                    <div id="invHistoryDrawerContent" style="padding:16px 18px;background:white;"></div>
-                </div>
-
-                {% else %}
-                <div class="empty-state">
-                    <p>No inventory items available</p>
-                </div>
-                {% endif %}
-            </div>
         </div>
     </div>
 
@@ -1607,8 +1307,8 @@
                         </svg>
                     </div>
                     <div>
-                        <div class="calendar-title">Sales Calendar</div>
-                        <div class="calendar-subtitle">Click a month, then a day to see order details</div>
+                        <div class="calendar-title">Total Monthly Sales Calendar</div>
+                        <div class="calendar-subtitle">{{ current_month_name }} {{ current_month_year }} · Select a date to view completed orders and sales</div>
                     </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;background:#fef9e7;border-left:3px solid #f59e0b;border-radius:5px;padding:6px 12px;margin-right:12px;">
@@ -1627,21 +1327,9 @@
 
             <!-- Body -->
             <div class="calendar-body">
-                <!-- Left: months list -->
-                <div class="calendar-months-panel" id="monthsPanel">
-                    <div class="months-panel-label">Months</div>
-                    <div id="monthsList"></div>
-                </div>
-
-                <!-- Right: calendar grid + orders -->
+                <!-- Current month calendar grid + orders -->
                 <div class="calendar-right-panel" id="calRightPanel">
-                    <div class="cal-no-month" id="calNoMonth">
-                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                        <p>Select a month to view the sales calendar</p>
-                    </div>
-                    <div id="calGridSection" style="display:none; flex-direction:column; flex:1; overflow:hidden; min-height:0;">
+                    <div id="calGridSection" style="display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0;">
                         <div class="calendar-month-title-bar" id="calMonthTitleBar">
                             <h3 id="calMonthTitle"></h3>
                             <div class="calendar-month-stats">
@@ -1682,10 +1370,14 @@
         </div>
     </div>
 
-    {{ monthly_sales_by_day|json_script:"monthly-sales-data" }}
-    {{ monthly_orders_by_day|json_script:"monthly-orders-data" }}
+    {{ current_month_sales_by_day|json_script:"current-month-sales-data" }}
+    {{ current_month_orders_by_day|json_script:"current-month-orders-data" }}
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="{% static 'js/sidebar.js' %}"></script>
 
     <script>
+        /* Legacy page-specific sidebar behavior disabled; static/js/sidebar.js is authoritative.
         // Sidebar collapse toggle with localStorage persistence
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -1700,18 +1392,12 @@
             const sidebar = document.getElementById('sidebar');
             const toggle = document.getElementById('sidebarToggle');
             const main = document.getElementById('mainContent');
-            
-            if (!main) return;
-            
-            if (sidebar.classList.contains('collapsed')) {
-                toggle.style.left = '72px';
-                main.style.marginLeft = '72px';
-                main.style.width = 'calc(100% - 72px)';
-            } else {
-                toggle.style.left = '260px';
-                main.style.marginLeft = '260px';
-                main.style.width = 'calc(100% - 260px)';
-            }
+
+            if (!sidebar || !main) return;
+
+            const collapsed = sidebar.classList.contains('collapsed');
+            main.classList.toggle('expanded', collapsed);
+            if (toggle) toggle.style.left = collapsed ? '72px' : '260px';
         }
         
         // Restore sidebar state on page load from localStorage
@@ -1738,71 +1424,286 @@
             event.preventDefault();
             window.location.href = url;
         }
+        */
 
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
 
-        // Load monthly sales data from backend
-        const monthlySalesData = JSON.parse(document.getElementById('monthly-sales-data').textContent);
-        const monthlyOrdersData = JSON.parse(document.getElementById('monthly-orders-data').textContent);
+        // Load the current Manila month directly from the backend.
+        const currentMonthSalesData = JSON.parse(document.getElementById('current-month-sales-data').textContent);
+        const currentMonthOrdersData = JSON.parse(document.getElementById('current-month-orders-data').textContent);
+        const reportMonthName = '{{ current_month_name|escapejs }}';
+        const reportMonthNumber = Number('{{ current_month_number }}');
+        const reportMonthYear = Number('{{ current_month_year }}');
+        const reportCurrentDay = Number('{{ current_month_day }}');
 
-        let selectedMonth = null;
+        function getMonthlySalesRows() {
+            const daysInMonth = new Date(reportMonthYear, reportMonthNumber, 0).getDate();
+            const rows = [];
+            let totalRevenue = 0;
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayKey = String(day);
+                const revenue = Number(currentMonthSalesData[dayKey] || 0);
+                const orders = Array.isArray(currentMonthOrdersData[dayKey])
+                    ? currentMonthOrdersData[dayKey]
+                    : [];
+
+                if (revenue > 0 || orders.length > 0) {
+                    const names = orders
+                        .map(order => String(
+                            order.customer_name ||
+                            order.sender_name ||
+                            order.sender_customer_name ||
+                            'Unnamed Customer'
+                        ).trim())
+                        .filter(Boolean);
+
+                    rows.push({
+                        date: new Date(
+                            reportMonthYear,
+                            reportMonthNumber - 1,
+                            day
+                        ).toLocaleDateString('en-PH', {
+                            month: 'short',
+                            day: '2-digit',
+                            year: 'numeric'
+                        }),
+                        revenue,
+                        customerNames: [...new Set(names)].length
+                            ? [...new Set(names)]
+                            : ['Unnamed Customer']
+                    });
+
+                    totalRevenue += revenue;
+                }
+            }
+
+            return { rows, totalRevenue };
+        }
+
+        function formatPesoForPdf(value) {
+            return `PHP ${Number(value || 0).toLocaleString('en-PH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })}`;
+        }
+
+        async function exportMonthlySalesPDF() {
+            const button = document.getElementById('exportMonthlySalesPdfButton');
+            const originalContent = button ? button.innerHTML : '';
+
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert('The PDF generator could not be loaded. Check your internet connection and try again.');
+                return;
+            }
+
+            if (button) {
+                button.disabled = true;
+                button.textContent = 'Generating PDF...';
+            }
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const report = getMonthlySalesRows();
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const margin = 16;
+                const footerSpace = 18;
+                const contentWidth = pageWidth - (margin * 2);
+                const dateWidth = 42;
+                const revenueWidth = 52;
+                const customerWidth = contentWidth - dateWidth - revenueWidth;
+                let y = 16;
+
+                function drawReportHeader(showSummary = true) {
+                    doc.setFillColor(2, 47, 86);
+                    doc.roundedRect(margin, y, contentWidth, 27, 3, 3, 'F');
+
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(18);
+                    doc.text('Monthly Sales Report', margin + 7, y + 10);
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(10);
+                    doc.text(`${reportMonthName} ${reportMonthYear}`, margin + 7, y + 18);
+                    doc.text(
+                        `Generated: ${new Date().toLocaleString('en-PH')}`,
+                        pageWidth - margin - 7,
+                        y + 18,
+                        { align: 'right' }
+                    );
+
+                    y += 34;
+
+                    if (showSummary) {
+                        doc.setFillColor(239, 246, 250);
+                        doc.setDrawColor(207, 226, 236);
+                        doc.roundedRect(margin, y, contentWidth, 22, 3, 3, 'FD');
+
+                        doc.setTextColor(82, 98, 115);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(9);
+                        doc.text('TOTAL MONTHLY REVENUE', margin + 6, y + 8);
+
+                        doc.setTextColor(2, 47, 86);
+                        doc.setFontSize(15);
+                        doc.text(formatPesoForPdf(report.totalRevenue), margin + 6, y + 17);
+
+                        y += 30;
+                    }
+                }
+
+                function drawTableHeader() {
+                    const headerHeight = 10;
+
+                    doc.setFillColor(72, 141, 180);
+                    doc.rect(margin, y, contentWidth, headerHeight, 'F');
+
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(8.5);
+                    doc.text('Date', margin + 4, y + 6.5);
+                    doc.text('Total Daily Revenue (PHP)', margin + dateWidth + 4, y + 6.5);
+                    doc.text(
+                        'Sender/Customer Name',
+                        margin + dateWidth + revenueWidth + 4,
+                        y + 6.5
+                    );
+
+                    y += headerHeight;
+                }
+
+                function startNewPage() {
+                    doc.addPage();
+                    y = 16;
+                    drawReportHeader(false);
+                    drawTableHeader();
+                }
+
+                drawReportHeader(true);
+                drawTableHeader();
+
+                if (!report.rows.length) {
+                    doc.setFillColor(249, 251, 252);
+                    doc.setDrawColor(225, 232, 237);
+                    doc.rect(margin, y, contentWidth, 14, 'FD');
+                    doc.setTextColor(107, 114, 128);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(10);
+                    doc.text(
+                        'No completed or paid sales records were found for this month.',
+                        margin + 4,
+                        y + 9
+                    );
+                } else {
+                    report.rows.forEach((row, index) => {
+                        const customerLines = doc.splitTextToSize(
+                            row.customerNames.join(', '),
+                            customerWidth - 8
+                        );
+                        const rowHeight = Math.max(
+                            10,
+                            (customerLines.length * 4.6) + 5
+                        );
+
+                        if (y + rowHeight > pageHeight - footerSpace) {
+                            startNewPage();
+                        }
+
+                        if (index % 2 === 0) {
+                            doc.setFillColor(248, 251, 253);
+                            doc.rect(margin, y, contentWidth, rowHeight, 'F');
+                        }
+
+                        doc.setDrawColor(226, 232, 238);
+                        doc.rect(margin, y, contentWidth, rowHeight);
+                        doc.line(margin + dateWidth, y, margin + dateWidth, y + rowHeight);
+                        doc.line(
+                            margin + dateWidth + revenueWidth,
+                            y,
+                            margin + dateWidth + revenueWidth,
+                            y + rowHeight
+                        );
+
+                        doc.setTextColor(31, 41, 55);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(9);
+                        doc.text(row.date, margin + 4, y + 6.5);
+                        doc.text(
+                            formatPesoForPdf(row.revenue),
+                            margin + dateWidth + 4,
+                            y + 6.5
+                        );
+                        doc.text(
+                            customerLines,
+                            margin + dateWidth + revenueWidth + 4,
+                            y + 6.5
+                        );
+
+                        y += rowHeight;
+                    });
+                }
+
+                const totalPages = doc.getNumberOfPages();
+                for (let page = 1; page <= totalPages; page++) {
+                    doc.setPage(page);
+                    doc.setDrawColor(220, 228, 234);
+                    doc.line(margin, pageHeight - 13, pageWidth - margin, pageHeight - 13);
+                    doc.setTextColor(120, 132, 145);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(8);
+                    doc.text('KRES Co. Admin', margin, pageHeight - 7);
+                    doc.text(
+                        `Page ${page} of ${totalPages}`,
+                        pageWidth - margin,
+                        pageHeight - 7,
+                        { align: 'right' }
+                    );
+                }
+
+                const safeMonth = reportMonthName.replace(/[^a-z0-9]/gi, '_');
+                doc.save(`KRES_Monthly_Sales_${safeMonth}_${reportMonthYear}.pdf`);
+            } catch (error) {
+                console.error('Monthly Sales PDF export failed:', error);
+                alert(`Unable to generate the PDF: ${error.message || error}`);
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = originalContent;
+                }
+            }
+        }
 
         function openCalendarModal() {
             document.getElementById('calendarModal').classList.add('show');
-            renderMonthsList();
+            renderCurrentMonthCalendar();
         }
 
         function closeCalendarModal() {
             document.getElementById('calendarModal').classList.remove('show');
-            selectedMonth = null;
-            document.getElementById('calGridSection').style.display = 'none';
-            document.getElementById('calNoMonth').style.display = 'flex';
+            document.querySelectorAll('.cal-day-cell.selected').forEach(c => c.classList.remove('selected'));
             document.getElementById('calOrdersList').style.display = 'none';
             document.getElementById('calPrompt').style.display = 'flex';
         }
 
-        function renderMonthsList() {
-            const list = document.getElementById('monthsList');
-            list.innerHTML = '';
-            const months = Object.keys(monthlySalesData);
-            months.forEach(month => {
-                const totalRevenue = Object.values(monthlySalesData[month]).reduce((a, b) => a + b, 0);
-                const hasData = totalRevenue > 0;
-                const item = document.createElement('div');
-                item.className = 'cal-month-item' + (hasData ? ' has-data' : '');
-                item.dataset.month = month;
-                item.innerHTML = `
-                    <span class="cal-month-name">${month}</span>
-                    <span class="cal-month-revenue">${hasData ? '\u20B1' + totalRevenue.toLocaleString('en-PH', {maximumFractionDigits: 0}) : '\u2014'}</span>
-                `;
-                item.onclick = () => selectMonth(month, item);
-                list.appendChild(item);
-            });
-        }
-
-        function selectMonth(month, itemEl) {
-            selectedMonth = month;
-            document.querySelectorAll('.cal-month-item').forEach(i => i.classList.remove('active'));
-            itemEl.classList.add('active');
-            renderCalendarGrid(month);
-        }
-
-        function renderCalendarGrid(month) {
-            const monthIndex = Object.keys(monthlySalesData).indexOf(month);
-            const year = new Date().getFullYear();
-            const firstDay = new Date(year, monthIndex, 1);
-            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+        function renderCurrentMonthCalendar() {
+            const monthIndex = reportMonthNumber - 1;
+            const firstDay = new Date(reportMonthYear, monthIndex, 1);
+            const daysInMonth = new Date(reportMonthYear, monthIndex + 1, 0).getDate();
             const startDow = firstDay.getDay();
-            const today = new Date();
+            const totalRevenue = Object.values(currentMonthSalesData).reduce((a, b) => a + Number(b || 0), 0);
+            const totalOrders = Object.values(currentMonthOrdersData).reduce((a, b) => a + b.length, 0);
 
-            const dailyData = monthlySalesData[month];
-            const dailyOrders = monthlyOrdersData[month];
-            const totalRevenue = Object.values(dailyData).reduce((a, b) => a + b, 0);
-            const totalOrders = Object.values(dailyOrders).reduce((a, b) => a + b.length, 0);
-
-            document.getElementById('calMonthTitle').textContent = `${month} ${year}`;
+            document.getElementById('calMonthTitle').textContent = `${reportMonthName} ${reportMonthYear}`;
             document.getElementById('calMonthOrderCount').textContent = totalOrders;
-            document.getElementById('calMonthRevenue').textContent = '\u20B1' + totalRevenue.toLocaleString('en-PH', {maximumFractionDigits: 0});
+            document.getElementById('calMonthRevenue').textContent = '₱' + totalRevenue.toLocaleString('en-PH', {maximumFractionDigits: 2});
 
             const grid = document.getElementById('calGrid');
             grid.innerHTML = '';
@@ -1814,72 +1715,67 @@
             }
 
             for (let day = 1; day <= daysInMonth; day++) {
-                const dayStr = day.toString();
-                const amount = dailyData[dayStr] || 0;
-                const hasData = amount > 0;
-                const isToday = (today.getFullYear() === year && today.getMonth() === monthIndex && today.getDate() === day);
-
+                const dayKey = String(day);
+                const amount = Number(currentMonthSalesData[dayKey] || 0);
+                const dayOrders = currentMonthOrdersData[dayKey] || [];
+                const hasData = dayOrders.length > 0;
+                const isToday = day === reportCurrentDay;
                 const cell = document.createElement('div');
                 cell.className = 'cal-day-cell' + (hasData ? ' has-sales' : ' no-sales') + (isToday ? ' today-cell' : '');
-                cell.dataset.day = dayStr;
+                cell.dataset.day = dayKey;
 
                 if (hasData) {
-                    const fmt = amount >= 1000 ? '\u20B1' + (amount/1000).toFixed(1) + 'k' : '\u20B1' + amount.toLocaleString('en-PH', {maximumFractionDigits: 0});
-                    cell.innerHTML = `<span class="cal-day-num">${day}</span><span class="cal-cell-amount">${fmt}</span>`;
-                    cell.onclick = () => selectDay(month, dayStr, cell);
+                    const formattedAmount = amount >= 1000
+                        ? '₱' + (amount / 1000).toFixed(1) + 'k'
+                        : '₱' + amount.toLocaleString('en-PH', {maximumFractionDigits: 0});
+                    cell.innerHTML = `<span class="cal-day-num">${day}</span><span class="cal-cell-amount">${formattedAmount}</span>`;
+                    cell.onclick = () => selectCurrentMonthDay(dayKey, cell);
                 } else {
                     cell.innerHTML = `<span class="cal-day-num">${day}</span>`;
+                    cell.onclick = () => selectCurrentMonthDay(dayKey, cell);
                 }
                 grid.appendChild(cell);
             }
 
-            document.getElementById('calNoMonth').style.display = 'none';
-            const gridSection = document.getElementById('calGridSection');
-            gridSection.style.display = 'flex';
             document.getElementById('calOrdersList').style.display = 'none';
             document.getElementById('calPrompt').style.display = 'flex';
         }
 
-        function selectDay(month, dayStr, cellEl) {
+        function selectCurrentMonthDay(dayKey, cellEl) {
             document.querySelectorAll('.cal-day-cell.selected').forEach(c => c.classList.remove('selected'));
             cellEl.classList.add('selected');
 
-            const dayOrders = monthlyOrdersData[month][dayStr] || [];
-            const dayAmount = monthlySalesData[month][dayStr] || 0;
+            const dayOrders = currentMonthOrdersData[dayKey] || [];
+            const dayAmount = Number(currentMonthSalesData[dayKey] || 0);
+            const dateObj = new Date(reportMonthYear, reportMonthNumber - 1, Number(dayKey));
+            const formattedDate = dateObj.toLocaleDateString('en-PH', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
 
-            const monthIndex = Object.keys(monthlySalesData).indexOf(month);
-            const year = new Date().getFullYear();
-            const dateObj = new Date(year, monthIndex, parseInt(dayStr));
-            const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-            const prompt = document.getElementById('calPrompt');
+            document.getElementById('calPrompt').style.display = 'none';
             const ordersList = document.getElementById('calOrdersList');
-            prompt.style.display = 'none';
             ordersList.style.display = 'block';
 
-            let html = `
+            let content = `
                 <div class="cal-orders-date-header">
                     <h4>${formattedDate}</h4>
-                    <span class="cal-orders-total-badge">\u20B1${dayAmount.toLocaleString('en-PH', {maximumFractionDigits: 2})}</span>
+                    <span class="cal-orders-total-badge">₱${dayAmount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
             `;
 
-            if (dayOrders.length > 0) {
+            if (dayOrders.length) {
                 dayOrders.forEach(order => {
-                    const orderDate = order.order_date ? new Date(order.order_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
-                    html += `
+                    content += `
                         <div class="cal-order-card">
                             <div class="cal-order-left">
-                                <span class="cal-order-number">ID #${order.order_id} &nbsp;&middot;&nbsp; ${order.order_number}</span>
                                 <span class="cal-order-customer">${order.customer_name}</span>
-                                <span class="cal-order-date-text">${orderDate}</span>
                             </div>
-                            <span class="cal-order-amount">\u20B1${order.total.toLocaleString('en-PH', {maximumFractionDigits: 2})}</span>
+                            <span class="cal-order-amount">₱${Number(order.total || 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </div>
                     `;
                 });
             } else {
-                html += `
+                content += `
                     <div class="cal-orders-empty">
                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -1888,159 +1784,7 @@
                     </div>
                 `;
             }
-            ordersList.innerHTML = html;
-        }
-
-        // ===== INVENTORY CATEGORY + HISTORY LOGIC =====
-        let activeProductKey = null;
-
-        document.addEventListener('DOMContentLoaded', function() {
-            buildCategoryBlocks();
-        });
-
-        function buildCategoryBlocks() {
-            const items = document.querySelectorAll('#inv-data [data-status]');
-            const cats = { FLOWERS: [], FILLERS: [] };
-
-            items.forEach(item => {
-                const cat = (item.dataset.category || '').toUpperCase();
-                if (cats[cat] !== undefined) cats[cat].push(item);
-            });
-
-            ['FLOWERS', 'FILLERS'].forEach(cat => {
-                const countEl = document.getElementById('catCount-' + cat);
-                const listEl  = document.getElementById('catProductList-' + cat);
-                if (!countEl || !listEl) return;
-
-                countEl.textContent = cats[cat].length;
-
-                if (cats[cat].length === 0) {
-                    listEl.innerHTML = '<div style="padding:18px;text-align:center;font-size:13px;color:#9ca3af;">No products in this category.</div>';
-                    return;
-                }
-
-                let html = '';
-                cats[cat].forEach(item => {
-                    const status = item.dataset.status;
-                    const badgeClass = status === 'in' ? 'in' : status === 'low' ? 'low' : 'out';
-                    const badgeLabel = status === 'in' ? 'In Stock' : status === 'low' ? 'Low Stock' : 'Out of Stock';
-                    const key = cat + '::' + item.dataset.name;
-                    html += `
-                        <div class="inv-cat-product-row" id="prodrow-${encodeKey(key)}" onclick="toggleProductHistory('${escStr(item.dataset.name)}', '${cat}', '${status}', ${item.dataset.qty}, '${escStr(item.dataset.unit)}', '${key}')">
-                            <span class="inv-cat-product-name">${item.dataset.name}</span>
-                            <div class="inv-cat-product-meta">
-                                <span class="inv-cat-product-qty">${item.dataset.qty}<span>${item.dataset.unit}</span></span>
-                                <span class="inv-stock-badge ${badgeClass}">${badgeLabel}</span>
-                                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="color:#9ca3af;flex-shrink:0;">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                                </svg>
-                            </div>
-                        </div>`;
-                });
-                listEl.innerHTML = html;
-            });
-        }
-
-        function encodeKey(k) { return k.replace(/[^a-zA-Z0-9]/g, '_'); }
-        function escStr(s) { return s.replace(/'/g, "\\'"); }
-
-        function toggleCatBlock(cat) {
-            const block  = document.getElementById('catBlock-' + cat);
-            const body   = document.getElementById('catBody-' + cat);
-            const isOpen = block.classList.contains('open');
-            block.classList.toggle('open', !isOpen);
-            body.style.display = isOpen ? 'none' : '';
-            if (isOpen) closeHistoryDrawer();
-        }
-
-        function toggleProductHistory(name, cat, status, qty, unit, key) {
-            const drawer = document.getElementById('invHistoryDrawer');
-
-            // Deactivate previously active row
-            if (activeProductKey) {
-                const prev = document.getElementById('prodrow-' + encodeKey(activeProductKey));
-                if (prev) prev.classList.remove('active');
-            }
-
-            // Toggle off if same product clicked again
-            if (activeProductKey === key) {
-                closeHistoryDrawer();
-                return;
-            }
-
-            activeProductKey = key;
-            const row = document.getElementById('prodrow-' + encodeKey(key));
-            if (row) row.classList.add('active');
-
-            // Set title
-            document.getElementById('invHistoryDrawerTitle').textContent = name;
-
-            // Build history columns from localStorage
-            let history = [];
-            try { history = JSON.parse(localStorage.getItem('kres_product_history')) || []; } catch(e) {}
-
-            const productHistory = history.filter(h => h.productName === name);
-            const addEntries  = productHistory.filter(h => h.action === 'add');
-            const editEntries = productHistory.filter(h => h.action === 'edit');
-
-            function fmtDate(ts) {
-                const d = new Date(ts);
-                return d.toLocaleDateString('en-PH', {month:'short', day:'numeric', year:'numeric'}) + ', ' +
-                       d.toLocaleTimeString('en-PH', {hour:'2-digit', minute:'2-digit'});
-            }
-            function statusColor(s) {
-                return s === 'In Stock' ? '#059669' : s === 'Low Stock' ? '#d97706' : '#dc2626';
-            }
-
-            let addHtml = '';
-            if (addEntries.length === 0) {
-                addHtml = '<div class="inv-history-empty">No add record yet.</div>';
-            } else {
-                addEntries.forEach(e => {
-                    addHtml += `<div class="inv-history-entry add">
-                        <div class="inv-history-entry-qty">${e.qty} ${e.unit}</div>
-                        <div class="inv-history-entry-status" style="color:${statusColor(e.stockStatus)}">${e.stockStatus}</div>
-                        <div class="inv-history-entry-date">${fmtDate(e.timestamp)}</div>
-                    </div>`;
-                });
-            }
-
-            let editHtml = '';
-            if (editEntries.length === 0) {
-                editHtml = '<div class="inv-history-empty">No updates yet.</div>';
-            } else {
-                [...editEntries].reverse().forEach(e => {
-                    editHtml += `<div class="inv-history-entry edit">
-                        <div class="inv-history-entry-qty">${e.qty} ${e.unit}</div>
-                        <div class="inv-history-entry-status" style="color:${statusColor(e.stockStatus)}">${e.stockStatus}</div>
-                        <div class="inv-history-entry-date">${fmtDate(e.timestamp)}</div>
-                    </div>`;
-                });
-            }
-
-            document.getElementById('invHistoryDrawerContent').innerHTML = `
-                <div class="inv-history-cols">
-                    <div>
-                        <div class="inv-history-col-title">Added</div>
-                        ${addHtml}
-                    </div>
-                    <div>
-                        <div class="inv-history-col-title">Stock Updates</div>
-                        ${editHtml}
-                    </div>
-                </div>`;
-
-            drawer.style.display = '';
-            drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-
-        function closeHistoryDrawer() {
-            document.getElementById('invHistoryDrawer').style.display = 'none';
-            if (activeProductKey) {
-                const prev = document.getElementById('prodrow-' + encodeKey(activeProductKey));
-                if (prev) prev.classList.remove('active');
-            }
-            activeProductKey = null;
+            ordersList.innerHTML = content;
         }
 
         function exportReportsToCSV() {
@@ -2051,8 +1795,7 @@
             csv += '=== SALES OVERVIEW ===\n';
             csv += 'Metric,Amount\n';
             const summaryCards = document.querySelectorAll('.summary-card .value');
-            csv += 'Total Sales,' + summaryCards[0].innerText + '\n';
-            csv += 'Monthly Sales,' + summaryCards[1].innerText + '\n\n';
+            csv += 'Total Monthly Sales,' + summaryCards[0].innerText + '\n\n';
 
             // Function to grab tables
             function tableToCSV(table, title) {
@@ -2073,9 +1816,6 @@
             if (tables.length >= 1) {
                 csv += tableToCSV(tables[0], '=== SALES PERFORMANCE OVERVIEW ===');
             }
-            if (tables.length >= 2) {
-                csv += tableToCSV(tables[1], '=== INVENTORY DETAILS ===');
-            }
 
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
@@ -2092,51 +1832,15 @@
             }
         });
 
-        function toggleSalesTable() {
-            const wrapper = document.getElementById('salesTableWrapper');
-            const btn = document.getElementById('viewMoreSalesBtn');
-            if (!wrapper || !btn) return;
-            const isCollapsed = wrapper.classList.contains('collapsed');
-            wrapper.classList.toggle('collapsed', !isCollapsed);
-            if (isCollapsed) {
-                btn.textContent = '▲ Show Less';
-            } else {
-                const total = wrapper.querySelectorAll('tbody tr').length;
-                btn.textContent = '▼ View More Products (' + total + ' total)';
-            }
-        }
-
-        // Notification dropdown functionality
-        function toggleNotificationDropdown(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            const dropdown = document.querySelector('.notification-dropdown');
-            if (dropdown) {
-                dropdown.classList.toggle('show');
-            }
-        }
-
-        // Close notification dropdown when clicking outside
-        document.addEventListener('click', function(event) {
-            const dropdown = document.querySelector('.notification-dropdown');
-            const notificationIcon = document.querySelector('.notification-icon');
-            
-            if (dropdown && !dropdown.contains(event.target) && !notificationIcon.contains(event.target)) {
-                dropdown.classList.remove('show');
-            }
-        });
-
         // Format amounts with commas
         function formatAmountsWithCommas() {
-            const monthlySalesAmount = document.getElementById('monthlySalesAmount');
-            const totalSalesAmount = document.getElementById('totalSalesAmount');
-            if (monthlySalesAmount) {
-                monthlySalesAmount.textContent = parseInt(monthlySalesAmount.textContent).toLocaleString('en-US');
-            }
-            if (totalSalesAmount) {
-                totalSalesAmount.textContent = parseInt(totalSalesAmount.textContent).toLocaleString('en-US');
-            }
-        }
+    const amount=document.getElementById('totalMonthlySalesAmount');
+    if(!amount) return;
+    const value=Number(amount.textContent.replace(/,/g,'').trim());
+    if(!Number.isNaN(value)){
+        amount.textContent=value.toLocaleString('en-PH',{maximumFractionDigits:0});
+    }
+}
 
         // Export orders to CSV
         function exportOrdersToCSV() {

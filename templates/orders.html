@@ -1,5 +1,4 @@
 {% load static %}
-{% load manila_tz %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -322,17 +321,17 @@
         .header-left svg { width: 24px; height: 24px; color: #333; }
         .header h2 { font-size: 28px; font-weight: 600; color: #1a1a1a; }
 
-        .notification-icon { position: relative; cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; }
-        .notification-icon svg { width: 28px; height: 28px; color: #1a1a1a; }
-        .notification-badge { position: absolute; top: 2px; right: 2px; background: #ef4444; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
-        .notification-dropdown { position: absolute; top: 60px; right: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 300px; max-height: 400px; overflow-y: auto; z-index: 1000; display: none; }
-        .notification-dropdown.show { display: block; }
-        .notification-header { padding: 15px; border-bottom: 1px solid #e0e0e0; font-weight: 600; color: #1a1a1a; }
-        .notification-item { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
-        .notification-item:hover { background: #f5f5f5; }
-        .notification-item-title { font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
-        .notification-item-text { font-size: 12px; color: #666; }
-        .notification-footer { padding: 10px 15px; text-align: center; border-top: 1px solid #e0e0e0; color: #3d5a73; font-size: 13px; font-weight: 600; }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
 
         .orders-content { padding: 30px 35px; padding-bottom: 120px; }
         .orders-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
@@ -422,23 +421,7 @@
             display: flex; align-items: center; gap: 9px;
         }
         .btn-completed-orders:hover { background: linear-gradient(135deg,#ea580c,#f97316); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(194,65,12,0.45); }
-        .btn-draft-orders {
-            background: linear-gradient(135deg,#2c4456,#3d6680); color:white;
-            padding: 12px 24px; border: 2px solid transparent; border-radius: 14px;
-            font-size: 14px; font-weight: 600; cursor: pointer;
-            box-shadow: 0 4px 14px rgba(44,68,86,0.25);
-            transition: all 0.3s ease; font-family: inherit;
-            display: flex; align-items: center; gap: 10px; position: relative;
-        }
-        .btn-draft-orders:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 8px 24px rgba(44,68,86,0.35); 
-            background: linear-gradient(135deg,#3d6680,#4a7a8a);
-        }
-        .btn-draft-orders:active { transform: translateY(0); }
-        #draftBadge { display:none !important; }
-        #draftBadge.show { display:inline-flex !important; }
-        /* Completed Orders Modal */
+        /* Completed Orders This Month Modal */
         .completed-shell {
             background: white; border-radius: 16px;
             width: 96%; max-width: 900px;
@@ -465,29 +448,6 @@
         .completed-items { font-weight:400; color:#1f2937; }
         .completed-amount { font-weight:700; color:#dc2626; font-size:14px; }
 
-        /* ── DRAFT ORDERS STYLING ── */
-        .draft-item {
-            display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;padding:16px 20px;
-            background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;transition:all 0.2s;
-        }
-        .draft-item:hover { border-color:#2c4456;background:#f0f4f8;box-shadow:0 4px 12px rgba(44,68,86,0.1); }
-        .draft-item-info { display:flex;flex-direction:column;gap:6px; }
-        .draft-item-title { font-weight:700;color:#1f2937;font-size:15px;text-transform:uppercase; }
-        .draft-item-meta { font-size:12px;color:#6b7280; }
-        .draft-item-actions { display:flex;gap:10px;flex-shrink:0; }
-        .draft-btn {
-            padding:9px 16px;border-radius:9px;border:none;cursor:pointer;font-size:12px;font-weight:600;
-            transition:all 0.2s;font-family:inherit;display:flex;align-items:center;gap:6px;white-space:nowrap;
-        }
-        .draft-btn-open {
-            background:linear-gradient(135deg,#2c4456,#3d6680);color:white;box-shadow:0 2px 8px rgba(44,68,86,0.15);
-        }
-        .draft-btn-open:hover { transform:translateY(-1px);box-shadow:0 4px 12px rgba(44,68,86,0.25); }
-        .draft-btn-delete {
-            background:#fee2e2;color:#dc2626;border:1.5px solid #fecaca;
-        }
-        .draft-btn-delete:hover { background:#fecaca;transform:translateY(-1px); }
-
         /* ── CONFIRMATION MODAL BUTTON STYLES ── */
         .confirm-modal-btn {
             transition:all 0.2s;
@@ -497,8 +457,6 @@
         }
         .confirm-modal-btn:hover { transform:translateY(-1px); }
         .confirm-modal-cancel:hover { background:#f3f4f6 !important; }
-        .confirm-modal-delete:hover { box-shadow:0 6px 16px rgba(220,38,38,0.35) !important; }
-        .confirm-modal-exit:hover { box-shadow:0 6px 16px rgba(37,99,235,0.35) !important; }
 
         /* ── MODAL OVERLAY ── */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(10,16,26,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
@@ -906,144 +864,123 @@
             .details-footer { padding:16px 24px; flex-direction:column-reverse; }
             .btn-close-details { width:100%; }
         }
-    </style>
+    
+        .orders-header-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+            padding: 0;
+            flex-wrap: wrap;
+        }
+        @media (max-width: 768px) {
+            .orders-header-actions {
+                width: 100%;
+                justify-content: flex-start;
+                margin-top: 12px;
+            }
+
+            .header {
+                flex-wrap: wrap;
+            }
+        }
+
+
+
+        /* Header copied exactly from dashboard.html */
+        .header {
+            background-color: #FFFFFF;
+            padding: 20px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(26,77,110,0.06);
+            border-bottom: 1px solid #e3eaf0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-left svg {
+            width: 24px;
+            height: 24px;
+            color: #333;
+        }
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        .header h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #022F56;
+        }
+
+        @media (max-width: 768px) {
+            .header { padding: 14px 16px; }
+        }
+
+</style>
+    <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
 </head>
 <body>
 
 <!-- Sidebar -->
-<div class="sidebar" id="sidebar">
-    <div class="logo-section">
-        <div class="logo">
-            <img src="{% static 'images/logo.png' %}" alt="KRES Logo" style="width: 70px; height: 70px; object-fit: contain;">
-        </div>
-        <div class="logo-text">
-            <h1>KRES Co. Admin</h1>
-            <p>Management Panel</p>
-        </div>
-    </div>
+{% include 'includes/sidebar.html' with active_page='orders' %}
 
-    <div class="nav-section-label">Main Menu</div>
-
-    <nav class="nav-menu">
-        <a href="{% url 'pages:dashboard' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor"/>
-                    <rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/>
-                    <rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
-                    <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
-                </svg>
-            </div>
-            <span class="nav-label">Dashboard</span>
-            <span class="nav-tooltip">Dashboard</span>
-        </a>
-        <a href="{% url 'pages:inventory' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 7H4C2.9 7 2 7.9 2 9V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V9C22 7.9 21.1 7 20 7Z" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M12 7V3M8 7V5M16 7V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <span class="nav-label">Inventory</span>
-            <span class="nav-tooltip">Inventory</span>
-        </a>
-        <a href="{% url 'pages:orders' %}" class="nav-item active">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                    <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
-                    <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <span class="nav-label">Orders</span>
-            <span class="nav-tooltip">Orders</span>
-        </a>
-        <a href="{% url 'pages:customers' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <circle cx="17" cy="10" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M2 20C2 16.5 5 14 9 14C13 14 16 16.5 16 20" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M13 20C13 17.5 15 16 17 16C19 16 22 17.5 22 20" stroke="currentColor" stroke-width="2" fill="none"/>
-                </svg>
-            </div>
-            <span class="nav-label">Customers</span>
-            <span class="nav-tooltip">Customers</span>
-        </a>
-        <a href="{% url 'pages:payments' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M2 10H22M6 14H10M6 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <span class="nav-label">Payments</span>
-            <span class="nav-tooltip">Payments</span>
-        </a>
-        <a href="{% url 'pages:reports' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M8 2V6M16 2V6M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    <circle cx="8" cy="14" r="1" fill="currentColor"/>
-                    <circle cx="12" cy="14" r="1" fill="currentColor"/>
-                    <circle cx="16" cy="14" r="1" fill="currentColor"/>
-                    <circle cx="8" cy="18" r="1" fill="currentColor"/>
-                    <circle cx="12" cy="18" r="1" fill="currentColor"/>
-                </svg>
-            </div>
-            <span class="nav-label">Reports</span>
-            <span class="nav-tooltip">Reports</span>
-        </a>
-    </nav>
-
-    <div class="user-profile">
-        <div class="avatar">A</div>
-        <div class="user-info">
-            <div class="user-name">Admin User</div>
-            <div class="user-email">Administrator</div>
-        </div>
-        <a href="#" onclick="openLogoutModal(); return false;" style="text-decoration:none;display:inline-flex;align-items:center;">
-            <svg class="logout-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </a>
-    </div>
-</div>
-
-<!-- Sidebar Toggle Button -->
-<div class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="15 18 9 12 15 6"/>
-    </svg>
-</div>
-
-<!-- Main Content -->
 <div class="main-content" id="mainContent">
     <header class="header">
         <div class="header-left">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
             <h2>Orders</h2>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-            <button class="btn btn-draft-orders" onclick="openDraftOrdersModal()" title="View saved draft orders">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2M3 7h18M16 5l-4-2M12 3l-4 2"></path></svg>
-                Draft Orders <span id="draftBadge" style="display:none;margin-left:8px;background:#ef4444;color:white;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;">0</span>
-            </button>
+
+        <div class="orders-header-actions">
             <button class="btn btn-completed-orders" onclick="openCompletedOrdersModal()">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Completed Orders
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Completed Orders This Month
             </button>
             <button class="btn btn-export-excel" onclick="exportOrdersToCSV()">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <path d="M3 9h18M3 15h18M9 3v18"/>
+                </svg>
                 Export Excel
             </button>
         </div>
     </header>
 
+
     <div class="orders-content">
         <div class="orders-header">
-            <h3>{% if status_filter == 'pending' %}Pending Orders{% elif status_filter == 'completed' %}Completed Orders{% else %}All Orders{% endif %}</h3>
+            <h3>{% if status_filter == 'pending' %}Pending Orders{% elif status_filter == 'completed' %}Completed Orders This Month{% else %}All Orders{% endif %}</h3>
             <div class="status-filter">
                 <select id="statusFilter" class="filter-select">
                     <option value="all" {% if not status_filter or status_filter == 'all' %}selected{% endif %}>All Status</option>
@@ -1069,7 +1006,7 @@
                     <tr>
                         <th>Delivery Date</th>
                         <th>Customer</th>
-                        <th>Items</th>
+                        <th>Order</th>
                         <th>Amount</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -1079,20 +1016,29 @@
                     {% for order in orders %}
                     <tr data-status="{{ order.status }}"
                         data-id="{{ order.order_id }}"
+                        data-customer-name="{{ order.customer_name }}"
+                        data-receiver-name="{{ order.receiver_name|default:order.customer_name }}"
                         data-phone="{{ order.customer_phone }}"
                         data-address="{{ order.customer_address }}"
+                        data-delivery-address="{{ order.delivery_address|default:order.customer_address }}"
+                        data-delivery-date="{{ order.delivery_date|date:'Y-m-d' }}"
+                        data-delivery-time="{{ order.delivery_time|time:'H:i' }}"
+                        data-product-name="{% for item in order.items.all %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+                        data-total="{{ order.total }}"
                         data-notes="{{ order.notes }}"
                         data-date="{{ order.created_at|date:'Y-m-d' }}"
                         data-time="{{ order.created_at|date:'H:i' }}"
                         data-delivery="{{ order.delivery_date|date:'Y-m-d'|default:'-' }}"
-                        data-delivery-time="{{ order.delivery_time|date:'H:i'|default:'-' }}"
+                        data-is-tomorrow="{{ order.is_delivery_tomorrow|yesno:'true,false' }}"
                         data-amount="₱ {{ order.total|floatformat:2 }}"
                         data-fulfilled="{{ order.fulfilled_by|default:'' }}"
                         data-sender-name="{{ order.sender_name|default:'' }}"
                         data-sender-phone="{{ order.sender_phone|default:'' }}"
+                        data-sender-is-receiver="{% if order.sender_is_receiver %}true{% else %}false{% endif %}"
                         data-rider-name="{{ order.rider_name|default:'' }}"
-                        data-rider-phone="{{ order.rider_phone|default:'' }}"
                         data-rider-vehicle="{{ order.rider_vehicle|default:'' }}"
+                        data-balance-payment="{{ order.balance_payment|floatformat:2 }}"
+                        data-additional-payment="{{ order.additional_payment|default:''|escape }}"
                         data-payment-status="{% with p=order.payments.first %}{% if p %}{{ p.payment_status }}{% else %}pending{% endif %}{% endwith %}"
                         data-payment-method="{% with p=order.payments.first %}{% if p %}{{ p.payment_method }}{% else %}—{% endif %}{% endwith %}"
                         data-delivery-type="{% if '[PICK UP]' in order.notes %}pickup{% else %}dropoff{% endif %}"
@@ -1111,7 +1057,7 @@
                                 <span style="color: #d1d5db;">—</span>
                             {% endif %}
                         </td>
-                        <td class="customer-name">{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
+                        <td class="customer-name">{{ order.customer_name }}</td>
                         <td class="item-name">
                             {% for item in order.items.all %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
                         </td>
@@ -1128,18 +1074,19 @@
                                     {% endif %}
                                 {% endwith %}
                             {% endif %}
+                        </td>
                         <td>
                             <div class="action-cell">
-                                <button class="btn-view-details" onclick="viewOrderDetails('{{ order.order_id }}')">
+                                <button type="button" class="btn-view-details" data-order-id="{{ order.order_id }}">
                                     View Details
                                 </button>
                                 {% if order.status != 'completed' %}
-                                <button class="btn-complete-order" onclick="markCompleted('{{ order.order_id }}', this)" title="Mark as Fully Paid">
+                                <button type="button" class="btn-complete-order" onclick="markCompleted('{{ order.order_id }}', this)" title="Mark as Fully Paid">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                                     Done
                                 </button>
                                 {% else %}
-                                <button class="btn-complete-order done" disabled>
+                                <button type="button" class="btn-complete-order done" disabled>
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                                     Completed
                                 </button>
@@ -1175,8 +1122,8 @@
         <div class="completed-shell">
             <div class="completed-top">
                 <div>
-                    <div class="completed-title"> Completed Orders</div>
-                    <div class="completed-subtitle">All fully paid & fulfilled orders</div>
+                    <div class="completed-title"> Completed Orders This Month</div>
+                    <div class="completed-subtitle">Completed orders for the current Manila month</div>
                 </div>
                 <button class="close-btn" onclick="closeCompletedOrdersModal()">&times;</button>
             </div>
@@ -1184,29 +1131,25 @@
                 <table class="completed-table">
                     <thead>
                         <tr>
-                            <th style="width:22%;">Order Number</th>
-                            <th style="width:14%;">Date Delivered</th>
-                            <th style="width:20%;">Customer</th>
-                            <th style="width:29%;">Items</th>
-                            <th style="width:15%;">Amount</th>
+                            <th style="width:20%;">Date Delivered</th>
+                            <th style="width:25%;">Customer</th>
+                            <th style="width:35%;">Items</th>
+                            <th style="width:20%;">Amount</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for order in completed_orders %}
                         <tr>
-                            <td class="completed-order-number">
-                                <span class="completed-order-id">ORD-{{ order.order_id|stringformat:"04d" }}</span><span class="completed-order-divider">|</span><span class="completed-order-date-part">{{ order.created_at|date:"Y-m-d" }}</span>
-                            </td>
                             <td class="completed-delivered-date">{{ order.updated_at|date:"M d / Y" }}</td>
-                            <td class="completed-customer">{{ order.customer.first_name }} {{ order.customer.last_name }}</td>
+                            <td class="completed-customer">{{ order.customer_name }}</td>
                             <td class="completed-items">{% for item in order.items.all %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
                             <td class="completed-amount">₱ {{ order.total|floatformat:2 }}</td>
                         </tr>
                         {% endfor %}
                         {% if not completed_orders %}
-                        <tr><td colspan="5" style="text-align:center;padding:40px;color:#9ca3af;">
+                        <tr><td colspan="4" style="text-align:center;padding:40px;color:#9ca3af;">
                             <div style="font-size:32px;margin-bottom:8px;"></div>
-                            <div style="font-weight:600;">No completed orders yet</div>
+                            <div style="font-weight:600;">No completed orders this month yet</div>
                         </td></tr>
                         {% endif %}
                     </tbody>
@@ -1214,76 +1157,6 @@
             </div>
         </div>
     </div>
-
-    <!-- ══ DRAFT ORDERS MODAL ══ -->
-    <div id="draftOrdersModal" class="modal">
-        <div class="completed-shell">
-            <div class="completed-top" style="background: linear-gradient(135deg,#2c4456,#3d6680);">
-                <div>
-                    <div class="completed-title"> Draft Orders</div>
-                    <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:3px;">Incomplete order forms saved as drafts</div>
-                </div>
-                <button class="close-btn" onclick="closeDraftOrdersModal()">&times;</button>
-            </div>
-            <div class="completed-body" style="padding:0;background:#ffffff;">
-                <div id="draftOrdersContainer" style="display:flex;flex-direction:column;gap:14px;padding:28px;">
-                    <!-- Draft items will be rendered here by JavaScript -->
-                </div>
-                <div id="noDraftsPlaceholder" style="text-align:center;padding:80px 28px;color:#9ca3af;">
-                    <div style="font-size:64px;margin-bottom:16px;opacity:0.6;">📋</div>
-                    <div style="font-size:17px;font-weight:700;margin-bottom:8px;color:#475569;">No Draft Orders Yet</div>
-                    <div style="font-size:14px;color:#6b7280;line-height:1.5;">Start filling out an order form to create and save a draft</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ══ DELETE DRAFT CONFIRMATION MODAL ══ -->
-    <div id="deleteDraftConfirmModal" class="modal">
-        <div style="background:white;border-radius:16px;width:96%;max-width:420px;padding:28px;box-shadow:0 24px 60px rgba(0,0,0,0.3);overflow:hidden;animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);">
-            <div id="deleteDraftMessage" style="font-size:14px;color:#4b5563;line-height:1.6;margin-bottom:24px;">
-                Are you sure you want to delete this draft? All unsaved changes will be permanently lost.
-            </div>
-            <div style="display:flex;gap:12px;justify-content:flex-end;">
-                <button onclick="closeDeletDraftModal()" class="confirm-modal-btn confirm-modal-cancel" style="padding:10px 22px;border-radius:10px;border:1.5px solid #e5e7eb;background:white;color:#1f2937;font-size:13px;font-weight:600;">
-                    Cancel
-                </button>
-                <button id="confirmDeleteDraftBtn" onclick="confirmDeleteDraft()" class="confirm-modal-btn confirm-modal-delete" style="padding:10px 22px;border-radius:10px;border:none;background:linear-gradient(135deg,#dc2626,#ef4444);color:white;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(220,38,38,0.25);">
-                    Delete Draft
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ══ EXIT WARNING MODAL ══ -->
-    <div id="exitWarningModal" class="modal">
-        <div style="background:white;border-radius:16px;width:96%;max-width:480px;padding:0;box-shadow:0 24px 60px rgba(0,0,0,0.3);overflow:hidden;animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);">
-            <div style="background:linear-gradient(135deg,#f59e0b,#fbbf24);padding:26px 28px;display:flex;align-items:center;gap:16px;">
-                <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:28px;">⚠️</div>
-                <div>
-                    <div style="font-size:18px;font-weight:700;color:white;">Wait! Your Form Has Changes</div>
-                    <div style="font-size:13px;color:rgba(255,255,255,0.8);margin-top:2px;">Don't lose your progress</div>
-                </div>
-            </div>
-            <div style="padding:24px 28px;background:#fafaf9;">
-                <div style="font-size:14px;color:#4b5563;line-height:1.6;margin-bottom:24px;">
-                    <div style="margin-bottom:12px;">You have unsaved changes in the order form. Your progress has been automatically saved as a draft.</div>
-                    <div style="padding:12px 14px;background:#fef3c7;border-left:4px solid #f59e0b;border-radius:6px;font-size:13px;color:#92400e;font-weight:500;">
-                        💾 Your draft will be available in the "Draft Orders" section
-                    </div>
-                </div>
-                <div style="display:flex;gap:12px;justify-content:flex-end;">
-                    <button id="stayOnPageBtn" onclick="closeExitWarning()" class="confirm-modal-btn confirm-modal-cancel" style="padding:11px 24px;border-radius:10px;border:1.5px solid #e5e7eb;background:white;color:#1f2937;font-size:13px;font-weight:600;">
-                        Keep Editing
-                    </button>
-                    <button id="confirmExitBtn" onclick="proceedExit()" class="confirm-modal-btn confirm-modal-exit" style="padding:11px 24px;border-radius:10px;border:none;background:linear-gradient(135deg,#2563eb,#3b82f6);color:white;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(37,99,235,0.25);">
-                        Exit Form
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
 
     <!-- ══ CREATE ORDER MODAL ══ -->
     <div id="addOrderModal" class="modal">
@@ -1315,89 +1188,9 @@
                         <span id="errorText">Please fill in all required fields.</span>
                     </div>
 
-                    <!-- ─── SECTION 1: RECEIVER ─── -->
-                    <div class="nf-section">
-                        <div class="nf-section-head" style="--sec-color:#2563eb;--sec-bg:#eff6ff;">
-                            <div class="nf-sec-icon" style="background:#eff6ff;color:#2563eb;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            </div>
-                            <span>Receiver Information</span>
-                        </div>
-                        <div class="nf-grid">
-                            <div class="nf-field span-2">
-                                <label>Full Name <span class="req">*</span></label>
-                                <div class="nf-input-wrap">
-                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                    <input type="text" id="customerName" name="customerName" placeholder="e.g. Maria Santos" autocomplete="off" required>
-                                </div>
-                            </div>
-                            <div class="nf-field">
-                                <label>Contact Number <span class="req">*</span></label>
-                                <div class="nf-input-wrap">
-                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.82 2 2 0 012 .9h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6z"/></svg>
-                                    <input type="tel" id="contactNumber" name="contactNumber" placeholder="09123456789" autocomplete="off" required>
-                                </div>
-                            </div>
-                            <div class="nf-field">
-                                <label>Fulfilled By</label>
-                                <div class="nf-input-wrap">
-                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                                    <input type="text" id="fulfilledBy" name="fulfilledBy" placeholder="e.g. Anna (florist on duty)" autocomplete="off">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <input type="hidden" id="editingOrderId" value="">
 
-                    <!-- ─── SECTION 2: ORDER ─── -->
-                    <div class="nf-section">
-                        <div class="nf-section-head">
-                            <div class="nf-sec-icon" style="background:#fdf4ff;color:#9333ea;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 14l-4-4 1.4-1.4L12 13.2l4.6-4.6L18 10l-6 6z"/></svg>
-                            </div>
-                            <span>Order Details</span>
-                        </div>
-                        <div class="nf-grid">
-                            <div class="nf-field span-2">
-                                <label>Product / Bouquet <span class="req">*</span></label>
-                                <div class="nf-input-wrap">
-                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-                                    <input type="text" id="orderProduct" name="orderProduct" placeholder="e.g. Rose Bouquet, Sunflower Arrangement" autocomplete="off" required>
-                                </div>
-                            </div>
-                            <div class="nf-field">
-                                <label>Amount (₱) <span class="req">*</span></label>
-                                <div class="nf-input-wrap">
-                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-                                    <input type="number" id="orderAmount" name="orderAmount" placeholder="0.00" min="0" step="0.01" autocomplete="off" required>
-                                </div>
-                            </div>
-                            <div class="nf-field">
-                                <label>Special Note</label>
-                                <div class="nf-input-wrap">
-                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                                    <input type="text" id="specialRequests" name="specialRequests" placeholder="Ribbon color, extra wrapping..." autocomplete="off">
-                                </div>
-                            </div>
-                            <div class="nf-field span-2">
-                                <label>Reference Photo <span style="font-size:10px;color:#9ca3af;font-weight:400;">(optional)</span></label>
-                                <div id="photoUploadArea" onclick="document.getElementById('orderPhoto').click()" style="border:2px dashed #d1d5db;border-radius:10px;padding:18px;text-align:center;cursor:pointer;background:#f8fafc;transition:all 0.2s;">
-                                    <input type="file" id="orderPhoto" name="orderPhoto" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)">
-                                    <div id="photoPlaceholder">
-                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" style="margin-bottom:6px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                                        <p style="font-size:12px;color:#9ca3af;margin:0;">Click to upload a photo or reference image</p>
-                                        <p style="font-size:11px;color:#c4c9d4;margin:4px 0 0;">JPG, PNG, WEBP accepted</p>
-                                    </div>
-                                    <div id="photoPreview" style="display:none;position:relative;">
-                                        <img id="photoPreviewImg" src="" alt="Preview" style="max-height:140px;max-width:100%;border-radius:8px;object-fit:contain;">
-                                        <button type="button" onclick="removePhoto(event)" style="position:absolute;top:-8px;right:-8px;background:#ef4444;color:white;border:none;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
-                                        <p id="photoFileName" style="font-size:11px;color:#6b7280;margin:6px 0 0;"></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ─── SECTION 3: DELIVERY ─── -->
+                    <!-- ─── SECTION 1: DELIVERY ─── -->
                     <div class="nf-section">
                         <div class="nf-section-head">
                             <div class="nf-sec-icon" style="background:#f0fdf4;color:#16a34a;">
@@ -1405,85 +1198,58 @@
                             </div>
                             <span>Delivery</span>
                         </div>
-
-                        <!-- Drop off / Pick up toggle -->
                         <div class="delivery-type-row">
-                            <label class="delivery-radio" id="radioDropOff">
-                                <input type="radio" name="deliveryType" value="dropoff" checked onchange="onDeliveryTypeChange()">
-                                <span class="delivery-radio-box">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                                    Local Drop Off
-                                </span>
-                            </label>
-                            <label class="delivery-radio" id="radioPickUp">
-                                <input type="radio" name="deliveryType" value="pickup" onchange="onDeliveryTypeChange()">
-                                <span class="delivery-radio-box">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                    Local Pick Up
-                                </span>
-                            </label>
+                            <label class="delivery-radio" id="radioDropOff"><input type="radio" name="deliveryType" value="dropoff" checked onchange="onDeliveryTypeChange()"><span class="delivery-radio-box">Local Drop Off</span></label>
+                            <label class="delivery-radio" id="radioPickUp"><input type="radio" name="deliveryType" value="pickup" onchange="onDeliveryTypeChange()"><span class="delivery-radio-box">Local Pick Up</span></label>
                         </div>
                         <input type="hidden" id="deliveryType" name="deliveryTypeHidden" value="dropoff">
-
                         <div class="nf-grid" style="margin-top:12px;">
-                            <div class="nf-field" id="addressField">
-                                <label>Delivery Address <span class="req" id="addressReq">*</span></label>
-                                <div class="nf-input-wrap">
-                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                    <input type="text" id="address" name="address" placeholder="e.g. 123 Rizal St, CDO" autocomplete="off" required>
-                                </div>
-                            </div>
-                            <div class="nf-field">
-                                <label id="deliveryDateLabel">Delivery Date <span class="req">*</span></label>
-                                <div class="nf-input-wrap">
-                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                    <input type="date" id="deliveryDate" name="deliveryDate" required>
-                                </div>
-                            </div>
-                            <div class="nf-field span-2">
-                                <label>Delivery Time <span class="req">*</span></label>
-                                <div class="nf-input-wrap">
-                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                    <input type="time" id="deliveryTime" name="deliveryTime" required>
-                                </div>
-                            </div>
+                            <div class="nf-field span-2" id="addressField"><label>Delivery Address <span class="req" id="addressReq">*</span></label><div class="nf-input-wrap"><input class="no-icon" type="text" id="address" name="address" placeholder="e.g. 123 Rizal St, CDO" autocomplete="off" required></div></div>
+                            <div class="nf-field"><label>Delivery Date <span class="req">*</span></label><div class="nf-input-wrap"><input class="no-icon" type="date" id="deliveryDate" name="deliveryDate" required></div></div>
+                            <div class="nf-field"><label>Delivery Time <span class="req">*</span></label><div class="nf-input-wrap"><input class="no-icon" type="time" id="deliveryTime" name="deliveryTime" required></div></div>
                         </div>
                     </div>
 
-                    <!-- ─── SECTION 3B: SENDER INFORMATION ─── -->
+                    <!-- ─── SECTION 2: SENDER ─── -->
                     <div class="nf-section" id="senderSection">
-                        <div class="nf-section-head">
-                            <div class="nf-sec-icon" style="background:#fce7f3;color:#ec4899;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            </div>
-                            <span>Sender Information</span>
-                        </div>
+                        <div class="nf-section-head"><div class="nf-sec-icon" style="background:#fce7f3;color:#ec4899;">✉</div><span>Sender</span></div>
                         <div class="nf-grid">
-                            <div class="nf-field">
-                                <label>Sender Name <span class="req">*</span></label>
-                                <div class="nf-input-wrap">
-                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                    <input type="text" id="senderName" name="senderName" placeholder="e.g. John Doe" autocomplete="off" required>
-                                </div>
-                            </div>
-                            <div class="nf-field">
-                                <label>Sender Contact Number <span class="req">*</span></label>
-                                <div class="nf-input-wrap">
-                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.82 2 2 0 012 .9h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6z"/></svg>
-                                    <input type="tel" id="senderPhone" name="senderPhone" placeholder="09123456789" autocomplete="off" required>
-                                </div>
-                            </div>
+                            <div class="nf-field"><label>Sender Full Name <span class="req">*</span></label><div class="nf-input-wrap"><input class="no-icon" type="text" id="senderName" name="senderName" placeholder="e.g. John Doe" autocomplete="off" required></div></div>
+                            <div class="nf-field"><label>Sender Contact Number <span class="req">*</span></label><div class="nf-input-wrap"><input class="no-icon" type="tel" id="senderPhone" name="senderPhone" placeholder="09123456789" autocomplete="off" required></div></div>
+</div>
+                        <div style="padding:0 18px 16px;">
+                            <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#475569;cursor:pointer;">
+                                <input type="checkbox" id="senderIsReceiver" onchange="toggleSenderIsReceiver()" style="width:15px;height:15px;">
+                                Sender is also the Receiver.
+                            </label>
                         </div>
                     </div>
 
+                    <!-- ─── SECTION 3: RECEIVER ─── -->
+                    <div class="nf-section" id="receiverSection">
+                        <div class="nf-section-head"><div class="nf-sec-icon" style="background:#eff6ff;color:#2563eb;">👤</div><span>Receiver</span></div>
+                        <div class="nf-grid">
+                            <div class="nf-field"><label>Receiver Full Name <span class="req">*</span></label><div class="nf-input-wrap"><input class="no-icon" type="text" id="customerName" name="customerName" placeholder="e.g. Maria Santos" autocomplete="off" required></div></div>
+                            <div class="nf-field"><label>Receiver Contact Number <span class="req">*</span></label><div class="nf-input-wrap"><input class="no-icon" type="tel" id="contactNumber" name="contactNumber" placeholder="09123456789" autocomplete="off" required></div></div>
+                            <input type="hidden" id="receiverAddress" name="receiverAddress" value="">
+                        </div>
+                    </div>
 
+                    <!-- ─── SECTION 4: ORDER DETAILS ─── -->
+                    <div class="nf-section">
+                        <div class="nf-section-head"><div class="nf-sec-icon" style="background:#fdf4ff;color:#9333ea;">✿</div><span>Order Details</span></div>
+                        <div class="nf-grid">
+                            <div class="nf-field"><label>Product / Bouquet <span class="req">*</span></label><div class="nf-input-wrap"><input class="no-icon" type="text" id="orderProduct" name="orderProduct" placeholder="e.g. Rose Bouquet" autocomplete="off" required></div></div>
+                            <div class="nf-field"><label>Special Note</label><div class="nf-input-wrap"><input class="no-icon" type="text" id="specialRequests" name="specialRequests" placeholder="Ribbon color, extra wrapping..." autocomplete="off"></div></div>
+                            <div class="nf-field"><label>Amount (₱) <span class="req">*</span></label><div class="nf-input-wrap"><input class="no-icon" type="number" id="orderAmount" name="orderAmount" placeholder="0.00" min="0" step="0.01" inputmode="decimal" autocomplete="off" required></div></div>
+                            <div class="nf-field"><label>Fulfilled By</label><div class="nf-input-wrap"><input class="no-icon" type="text" id="fulfilledBy" name="fulfilledBy" placeholder="e.g. Anna" autocomplete="off"></div></div>
+                        </div>
+                    </div>
 
-                    <!-- ─── hidden stubs so submitAddOrder JS reads them without error ─── -->
                     <input type="hidden" id="riderName" value="">
-                    <input type="hidden" id="riderPhone" value="">
                     <input type="hidden" id="riderVehicle" value="">
 
-                    <!-- ─── SECTION 4: PAYMENT ─── -->
+                    <!-- ─── SECTION 5: PAYMENT ─── -->
                     <div class="nf-section" style="margin-bottom:0;">
                         <div class="nf-section-head">
                             <div class="nf-sec-icon" style="background:#fff7ed;color:#ea580c;">
@@ -1497,10 +1263,11 @@
                                 <div class="nf-input-wrap">
                                     <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
                                     <select id="paymentMethod" name="paymentMethod" required>
-                                        <option value="">Select method...</option>
-                                        <option value="cash"> Cash</option>
-                                        <option value="gcash"> GCash</option>
-                                        <option value="bank_transfer"> Bank Transfer</option>
+                                        <option value="Select_method">Select method...</option>
+                                        <option value="gcash_james"> GCash James</option>
+                                        <option value="gcash_banban"> GCash Banban</option>
+                                        <option value="gcash_kysan"> GCash Kysan</option>
+                                        <option value="rcbc"> RCBC</option>
                                     </select>
                                 </div>
                             </div>
@@ -1512,13 +1279,21 @@
                                 </div>
                                 <input type="hidden" id="paymentStatus" name="paymentStatus" value="pending">
                             </div>
-                            <div class="nf-field span-2">
-                                <label id="downPaymentLabel">Down Payment Amount <span class="req">*</span></label>
+                            <div class="nf-field">
+                                <label id="downPaymentLabel">Payment Amount <span class="req">*</span></label>
                                 <div class="nf-input-wrap">
-                                    <svg class="nf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                                    <span class="nf-icon" aria-hidden="true" style="font-size:14px;font-weight:700;line-height:1;">₱</span>
                                     <input type="number" id="downPaymentAmount" name="downPaymentAmount" placeholder="e.g. 1500.00" step="0.01" min="0" required>
                                 </div>
                             </div>
+                            <div class="nf-field">
+                                <label>Balance Payment (₱) <span style="font-size:10px;color:#94a3b8;font-weight:500;">(Optional)</span></label>
+                                <div class="nf-input-wrap">
+                                    <span class="nf-icon" aria-hidden="true" style="font-size:14px;font-weight:700;line-height:1;">₱</span>
+                                    <input type="number" id="balancePayment" name="balancePayment" placeholder="0.00" min="0" step="0.01" inputmode="decimal" autocomplete="off">
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -1541,7 +1316,6 @@
             </div>
         </div>
     </div>
-
 
     <!-- ══ ORDER DETAILS MODAL ══ -->
     <div id="orderDetailsModal" class="modal">
@@ -1589,9 +1363,43 @@
 
                         <div class="detail-row" style="padding:12px 0; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
                             <div class="detail-icon" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:18px;height:18px;"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                <span aria-hidden="true" style="font-size:17px;font-weight:800;color:#475569;line-height:1;">₱</span>
                             </div>
                             <div class="detail-info"><div class="detail-label" style="font-size:10px; color:#64748b; font-weight:600;">AMOUNT</div><div class="detail-value" id="detailOrderAmount" style="font-size:14px; color:#059669; font-weight:700;">—</div></div>
+                        </div>
+
+                        <div class="detail-row" style="padding:12px 0; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                            <div class="detail-icon" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                <span aria-hidden="true" style="font-size:17px;font-weight:800;color:#475569;line-height:1;">₱</span>
+                            </div>
+                            <div class="detail-info">
+                                <div class="detail-label" style="font-size:10px;color:#64748b;font-weight:600;">BALANCE PAYMENT</div>
+                                <div class="detail-value" id="detailBalancePayment" style="font-size:13px;color:#1e293b;font-weight:700;">₱ 0.00</div>
+                            </div>
+                        </div>
+
+                        <div class="detail-row" style="padding:12px 0; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                            <div class="detail-icon" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:18px;height:18px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L8 18l-4 1 1-4z"/></svg>
+                            </div>
+                            <div class="detail-info" style="min-width:0;">
+                                <div class="detail-label" style="font-size:10px;color:#64748b;font-weight:600;">ADDITIONAL PAYMENT</div>
+                                <div id="additionalPaymentEditWrap" style="display:flex;align-items:center;gap:7px;margin-top:5px;">
+                                    <div style="position:relative;flex:1;min-width:0;">
+                                        <span aria-hidden="true" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:700;color:#475569;">₱</span>
+                                        <input type="text" id="detailAdditionalPaymentInput" maxlength="255"
+                                            placeholder="Enter additional payment"
+                                            autocomplete="off"
+                                            style="width:100%;min-width:0;padding:7px 9px 7px 25px;border:1.5px solid #cbd5e1;border-radius:7px;font-size:12px;font-family:inherit;color:#1e293b;outline:none;">
+                                    </div>
+                                    <button type="button" id="btnUpdateAdditionalPayment" onclick="saveAdditionalPayment()"
+                                        style="padding:7px 11px;background:#334155;color:white;border:none;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                                        Save
+                                    </button>
+                                </div>
+                                <div id="detailAdditionalPaymentSaved" class="detail-value"
+                                    style="display:none;font-size:13px;color:#1e293b;font-weight:700;margin-top:5px;">—</div>
+                            </div>
                         </div>
 
                         <div class="detail-row" style="padding:12px 0; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
@@ -1610,9 +1418,9 @@
 
                         <div class="detail-row" id="detailDownPaymentRow" style="display:none; padding:12px 0; gap:12px; border-bottom:none;">
                             <div class="detail-icon" style="width:36px;height:36px;border-radius:8px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:18px;height:18px;"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                <span aria-hidden="true" style="font-size:17px;font-weight:800;color:#475569;line-height:1;">₱</span>
                             </div>
-                            <div class="detail-info"><div class="detail-label" style="font-size:10px; color:#64748b; font-weight:600;">DOWN PAYMENT</div><div class="detail-value" id="detailDownPaymentAmount" style="font-size:13px; color:#1e293b; font-weight:600;">—</div></div>
+                            <div class="detail-info"><div class="detail-label" id="detailPaymentAmountLabel" style="font-size:10px; color:#64748b; font-weight:600;">DOWN PAYMENT AMOUNT</div><div class="detail-value" id="detailDownPaymentAmount" style="font-size:13px; color:#1e293b; font-weight:600;">—</div></div>
                         </div>
 
                         <div class="detail-row" style="padding:12px 0; gap:12px; border-bottom:none; margin-top:4px;">
@@ -1632,8 +1440,37 @@
                     </div>
                     <div style="padding:16px 18px; display:flex; flex-direction:column; gap:0;">
 
+                        <!-- Delivery Info -->
+                        <div id="detailDeliverySection" style="margin-bottom:14px; padding-bottom:14px; border-bottom:2px solid #e2e8f0;">
+                            <div style="font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:1px; padding:0 0 10px; margin:0;">🚚 DELIVERY</div>
+
+                            <div class="detail-row" style="padding:8px 0; gap:12px;">
+                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:16px;height:16px;"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                                </div>
+                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Type</div><div class="detail-value" id="detailDeliveryType" style="font-size:12px; color:#1e293b;">—</div></div>
+                            </div>
+                            <div class="detail-row" id="detailDeliveryAddressRow" style="padding:8px 0; gap:12px;">
+                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Drop-off Address</div><div class="detail-value" id="detailDropoffAddress" style="font-size:12px; color:#1e293b;">—</div></div>
+                            </div>
+
+                            <div class="detail-row" style="padding:8px 0; gap:12px;">
+                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:16px;height:16px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                </div>
+                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Date</div><div class="detail-value" id="detailDeliveryDate" style="font-size:12px; color:#1e293b;">—</div></div>
+                            </div>
+
+                            <div class="detail-row" style="padding:8px 0; gap:12px; border-bottom:none;">
+                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                </div>
+                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Time</div><div class="detail-value" id="detailDeliveryTime" style="font-size:12px; color:#1e293b;">—</div></div>
+                            </div>
+                        </div>
+
                         <!-- Receiver section -->
-                        <div style="margin-bottom:14px; padding-bottom:14px; border-bottom:2px solid #e2e8f0;">
+                        <div id="detailReceiverSection" style="margin-bottom:14px; padding-bottom:14px; border-bottom:2px solid #e2e8f0;">
                             <div style="font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:1px; padding:0 0 10px; margin:0;">📌 RECEIVER</div>
 
                             <div class="detail-row" style="padding:8px 0; gap:12px;">
@@ -1652,12 +1489,6 @@
                                 <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Phone</div><div class="detail-value" id="detailContactNumber" style="font-size:12px; color:#1e293b;">—</div></div>
                             </div>
 
-                            <div class="detail-row" id="detailAddressRow" style="padding:8px 0; gap:12px;">
-                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:16px;height:16px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                </div>
-                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Address</div><div class="detail-value" id="detailAddress" style="font-size:12px; color:#1e293b; line-height:1.4;">—</div></div>
-                            </div>
                         </div>
 
                         <!-- Sender section -->
@@ -1679,32 +1510,7 @@
                                 </div>
                                 <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Phone</div><div class="detail-value" id="detailSenderPhone" style="font-size:12px; color:#1e293b;">—</div></div>
                             </div>
-                        </div>
-
-                        <!-- Delivery Info -->
-                        <div style="margin-bottom:14px; padding-bottom:14px; border-bottom:2px solid #e2e8f0;">
-                            <div style="font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:1px; padding:0 0 10px; margin:0;">🚚 DELIVERY</div>
-
-                            <div class="detail-row" style="padding:8px 0; gap:12px;">
-                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:16px;height:16px;"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                                </div>
-                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Type</div><div class="detail-value" id="detailDeliveryType" style="font-size:12px; color:#1e293b;">—</div></div>
-                            </div>
-
-                            <div class="detail-row" style="padding:8px 0; gap:12px;">
-                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:16px;height:16px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                </div>
-                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Date</div><div class="detail-value" id="detailDeliveryDate" style="font-size:12px; color:#1e293b;">—</div></div>
-                            </div>
-
-                            <div class="detail-row" style="padding:8px 0; gap:12px; border-bottom:none;">
-                                <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" style="width:16px;height:16px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                </div>
-                                <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Time</div><div class="detail-value" id="detailDeliveryTime" style="font-size:12px; color:#1e293b;">—</div></div>
-                            </div>
+                            <div id="detailSamePersonNotice" style="display:none;margin-top:10px;padding:9px 11px;border-radius:8px;background:#ecfdf5;color:#047857;font-size:12px;font-weight:700;">✓ Sender is also the Receiver</div>
                         </div>
 
                         <!-- Rider section -->
@@ -1718,28 +1524,16 @@
                                     </div>
                                     <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Name</div><div class="detail-value" id="detailRiderName" style="font-size:12px; color:#1e293b;">—</div></div>
                                 </div>
-                                <input type="text" id="riderNameInput" placeholder="Enter rider name…" autocomplete="off"
-                                    style="width:100%; padding:8px 10px; border:1.5px solid #d1d5db; border-radius:7px; font-size:12px; font-family:inherit; color:#1e293b; outline:none; transition:border-color 0.2s; background:#fff;"
-                                    oninput="this.value=this.value.replace(/\b\w/g,c=>c.toUpperCase())"
-                                    onfocus="this.style.borderColor='#334155'" onblur="this.style.borderColor='#d1d5db'">
-                            </div>
-
-                            <div class="detail-row" style="flex-direction:column; align-items:stretch; gap:6px; padding:8px 0; border-bottom:none;">
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <div class="detail-icon" style="width:32px;height:32px;border-radius:7px;background:#f1f5f9; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
-                                        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" style="width:16px;height:16px;color:#475569;">
-                                            <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
-                                        </svg>
-                                    </div>
-                                    <div class="detail-info"><div class="detail-label" style="font-size:9px; color:#64748b; font-weight:600;">Phone</div><div class="detail-value" id="detailRiderPhone" style="font-size:12px; color:#1e293b;">—</div></div>
+                                <div id="riderNameEditWrap">
+                                    <input type="text" id="riderNameInput" placeholder="Enter rider name…" autocomplete="off"
+                                        style="width:100%; padding:8px 10px; border:1.5px solid #d1d5db; border-radius:7px; font-size:12px; font-family:inherit; color:#1e293b; outline:none; transition:border-color 0.2s; background:#fff;"
+                                        oninput="this.value=this.value.replace(/\b\w/g,c=>c.toUpperCase())"
+                                        onfocus="this.style.borderColor='#334155'" onblur="this.style.borderColor='#d1d5db'">
                                 </div>
-                                <input type="tel" id="riderPhoneInput" placeholder="Enter rider phone…" autocomplete="off"
-                                    style="width:100%; padding:8px 10px; border:1.5px solid #d1d5db; border-radius:7px; font-size:12px; font-family:inherit; color:#1e293b; outline:none; transition:border-color 0.2s; background:#fff;"
-                                    onfocus="this.style.borderColor='#334155'" onblur="this.style.borderColor='#d1d5db'">
                             </div>
 
-                            <div style="display:flex; justify-content:flex-end; margin-top:10px;">
-                                <button onclick="saveRiderInfo()" id="btnSaveRider"
+                            <div id="riderSaveWrap" style="display:flex; justify-content:flex-end; margin-top:10px;">
+                                <button type="button" onclick="saveRiderInfo()" id="btnSaveRider"
                                     style="padding:8px 16px; background:#334155; color:white; border:none; border-radius:7px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.2s; letter-spacing:0.4px;">
                                     Save Rider
                                 </button>
@@ -1749,48 +1543,20 @@
                     </div>
                 </div>
 
-                <!-- ═══ COL 3: Reference Photo & Special Note ═══ -->
+                <!-- ═══ COL 3: Special Note ═══ -->
                 <div class="detail-column" style="gap:0; padding:0; overflow:hidden; display:flex; flex-direction:column;">
                     <div class="detail-column-title" style="padding:14px 18px 12px; margin-bottom:0; background:#334155; -webkit-text-fill-color:white; color:white; border-radius:0; font-size:11px; letter-spacing:1.2px; font-weight:700;">
-                        🖼️ REFERENCE & NOTES
+                        📝 SPECIAL NOTE
                     </div>
-                    <div style="padding:16px 18px; display:flex; flex-direction:column; gap:12px; flex:1;">
-
-                        <!-- Photo section -->
-                        <div id="detailPhotoWrapper" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border:2px dashed #d1d5db; border-radius:10px; background:#f8fafc; padding:14px; min-height:180px; cursor:pointer; transition:all 0.2s;" onclick="document.getElementById('detailPhotoLightbox').style.display='flex'">
-                            <!-- No photo state -->
-                            <div id="detailNoPhoto" style="text-align:center;">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#a8b5c0" stroke-width="1.5" style="margin-bottom:8px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                                <p style="font-size:12px;color:#64748b;margin:0;font-weight:500;">No photo attached</p>
-                                <p style="font-size:11px;color:#9ca3af;margin:4px 0 0;">Upload during order creation</p>
-                            </div>
-                            <!-- Photo preview -->
-                            <img id="detailPhotoImg" src="" alt="Reference Photo" style="display:none; max-width:100%; max-height:100%; border-radius:8px; object-fit:contain; box-shadow:0 2px 8px rgba(0,0,0,0.1); cursor:zoom-in;">
-                        </div>
-
-                        <div id="detailPhotoMeta" style="display:none; background:#f8fafc; border-radius:8px; padding:10px 12px; border:1px solid #e2e8f0;">
-                            <p style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.8px;margin:0 0 4px;">📎 File</p>
-                            <p id="detailPhotoName" style="font-size:11px;color:#64748b;margin:0;word-break:break-all;"></p>
-                        </div>
-
-                        <!-- Special notes -->
+                    <div style="padding:16px 18px;">
                         <div style="background:#f8fafc; border-radius:10px; padding:12px; border:1px solid #e2e8f0;">
-                            <p style="font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:1px; padding:0 0 8px; margin:0;">📝 SPECIAL NOTES</p>
                             <p id="detailSpecialNote" style="font-size:12px;color:#1e293b;margin:0;white-space:pre-wrap;line-height:1.5;">—</p>
                         </div>
-
                     </div>
                 </div>
 
             </div><!-- end details-body -->
-
-            <!-- Lightbox for photo zoom -->
-            <div id="detailPhotoLightbox" style="display:none; position:fixed; z-index:9999; inset:0; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;" onclick="this.style.display='none'">
-                <img id="detailPhotoLightboxImg" src="" alt="Reference Photo" style="max-width:90vw; max-height:90vh; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.5); object-fit:contain;">
-                <button onclick="document.getElementById('detailPhotoLightbox').style.display='none'" style="position:fixed;top:20px;right:24px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:50%;width:36px;height:36px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
-            </div>
-
-            <!-- ── Footer ── -->
+<!-- ── Footer ── -->
             <div class="details-footer" style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; gap:12px; background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%); border-top:1px solid #e2e8f0;">
                 <div style="display:flex; align-items:center; gap:8px; flex:1; padding:12px 16px; background:white; border-radius:10px; border:1px solid #e2e8f0;">
                     <label style="color:#334155; margin:0; white-space:nowrap; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Payment:</label>
@@ -1808,6 +1574,15 @@
 </div><!-- end main-content -->
 
 <script>
+const orderEndpoints = Object.freeze({
+    create: "{% url 'pages:order_create_ajax' %}",
+    update: "{% url 'pages:order_update_ajax' %}",
+    paymentGet: "{% url 'pages:payment_get_by_order_ajax' %}",
+    paymentUpdate: "{% url 'pages:payment_update_by_order_ajax' %}",
+    riderUpdate: "{% url 'pages:order_update_rider_ajax' %}",
+    statusUpdate: "{% url 'pages:order_update_status_ajax' %}"
+});
+
 // ── CSRF helper ──
 function getCookie(name) {
     for (const c of document.cookie.split(';')) {
@@ -1827,123 +1602,94 @@ function csrfToken() {
 }
 
 // Sidebar collapse toggle with localStorage persistence
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const toggle = document.getElementById('sidebarToggle');
-    const main = document.getElementById('mainContent');
-    const isCollapsed = sidebar.classList.toggle('collapsed');
-    localStorage.setItem('sidebarCollapsed', isCollapsed);
-    updateSidebarLayout();
-}
 
-function updateSidebarLayout() {
-    const sidebar = document.getElementById('sidebar');
-    const toggle = document.getElementById('sidebarToggle');
-    const main = document.getElementById('mainContent');
-    
-    if (!main) return;
-    
-    if (sidebar.classList.contains('collapsed')) {
-        toggle.style.left = '72px';
-        main.style.marginLeft = '72px';
-        main.style.width = 'calc(100% - 72px)';
-    } else {
-        toggle.style.left = '260px';
-        main.style.marginLeft = '260px';
-        main.style.width = 'calc(100% - 260px)';
-    }
-}
+
+
 
 // Restore sidebar state on page load from localStorage
-document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('sidebar');
-    const main = document.getElementById('mainContent');
-    
-    if (!sidebar || !main) return;
-    
-    // Restore saved state after sufficient delay to ensure DOM and all other scripts are ready
-    setTimeout(() => {
-        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-        if (isCollapsed) {
-            sidebar.classList.add('collapsed');
-        } else {
-            sidebar.classList.remove('collapsed');
-        }
-        updateSidebarLayout();
-    }, 50);
-});
+
 
 // Navigation without smooth transition
 function smoothNavigation(url) {
     event.preventDefault();
     window.location.href = url;
 }
-
-// ── Notification dropdown functionality ──
-function toggleNotificationDropdown(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    const dropdown = document.getElementById('notificationDropdown');
-    
-    if (dropdown) {
-        dropdown.classList.toggle('show');
-    }
-}
-
-// Close notification dropdown when clicking outside
-document.addEventListener('click', function(event) {
-    const dropdown = document.getElementById('notificationDropdown');
-    const notificationIcon = document.querySelector('.notification-icon');
-    
-    if (dropdown && !dropdown.contains(event.target) && !notificationIcon.contains(event.target)) {
-        dropdown.classList.remove('show');
-    }
-});
-
 // ── Delivery Type Toggle (Add Order form) ──
 function onDeliveryTypeChange() {
-    const selected = document.querySelector('input[name="deliveryType"]:checked').value;
+    const selected = document.querySelector('input[name="deliveryType"]:checked')?.value || 'dropoff';
     document.getElementById('deliveryType').value = selected;
-    const addressField  = document.getElementById('addressField');
-    const addressInput  = document.getElementById('address');
-    const dateLabel     = document.getElementById('deliveryDateLabel');
-    const senderSection = document.getElementById('senderSection');
-    const senderNameEl  = document.getElementById('senderName');
-    const senderPhoneEl = document.getElementById('senderPhone');
 
-    if (selected === 'pickup') {
-        addressField.style.opacity  = '0.4';
-        addressInput.required       = false;
-        addressInput.placeholder    = 'N/A — Customer will pick up';
-        dateLabel.innerHTML         = 'Pick-up Date <span class="req">*</span>';
-        // Hide sender section and remove required
-        senderSection.style.display = 'none';
-        senderNameEl.required       = false;
-        senderPhoneEl.required      = false;
+    const isPickup = selected === 'pickup';
+    const addressField = document.getElementById('addressField');
+    const addressInput = document.getElementById('address');
+    const receiverSection = document.getElementById('receiverSection');
+    const senderIsReceiver = document.getElementById('senderIsReceiver');
+    const receiverFields = [
+        document.getElementById('customerName'),
+        document.getElementById('contactNumber')
+    ];
+
+    // Local Pick Up does not require any address or separate receiver details.
+    addressField.style.opacity = isPickup ? '0.55' : '1';
+    addressInput.required = !isPickup;
+    addressInput.disabled = isPickup;
+    addressInput.readOnly = isPickup;
+    if (isPickup) addressInput.value = '';
+    addressInput.placeholder = isPickup
+        ? 'Not required for local pickup'
+        : 'e.g. 123 Rizal St, CDO';
+    addressInput.style.cursor = isPickup ? 'not-allowed' : '';
+    addressInput.style.backgroundColor = isPickup ? '#e5e7eb' : '';
+
+    if (isPickup) {
+        receiverSection.style.display = 'none';
+        receiverFields.forEach(field => {
+            if (!field) return;
+            field.required = false;
+            field.disabled = true;
+        });
     } else {
-        addressField.style.opacity  = '1';
-        addressInput.required       = true;
-        addressInput.placeholder    = 'e.g. 123 Rizal St, CDO';
-        dateLabel.innerHTML         = 'Delivery Date <span class="req">*</span>';
-        // Show sender section and restore required
-        senderSection.style.display = '';
-        senderNameEl.required       = true;
-        senderPhoneEl.required      = true;
+        // Restore the normal drop-off receiver behavior.
+        if (senderIsReceiver && senderIsReceiver.checked) {
+            toggleSenderIsReceiver();
+        } else {
+            receiverSection.style.display = '';
+            receiverFields.forEach(field => {
+                if (!field) return;
+                field.disabled = false;
+                field.required = true;
+            });
+        }
     }
 }
 
 // ── Open / Close modals ──
 function openAddOrderModal() {
+    applyMinimumDeliveryDate();
+
+    // Cash is no longer available when creating a new order. Remove any
+    // temporary legacy option that may have been added while editing an
+    // existing Cash order.
+    const paymentMethodSelect = document.getElementById('paymentMethod');
+    const legacyCashOption = paymentMethodSelect?.querySelector('option[data-legacy-cash="true"]');
+    if (legacyCashOption) legacyCashOption.remove();
+
     document.getElementById('addOrderModal').classList.add('show');
     clearFormError();
-    // Attach form listeners for auto-save
-    setTimeout(() => {
-        attachFormListeners();
-    }, 100);
 }
 function closeAddOrderModal() {
     document.getElementById('addOrderModal').classList.remove('show');
     document.getElementById('addOrderForm').reset();
+    const sameBox = document.getElementById('senderIsReceiver');
+    if (sameBox) sameBox.checked = false;
+    document.getElementById('receiverSection').style.display = '';
+    ['customerName','contactNumber'].forEach(id => { const el=document.getElementById(id); if(el){ el.disabled=false; el.required=true; } });
+    const receiverAddressField = document.getElementById('receiverAddress');
+    if (receiverAddressField) receiverAddressField.value = '';
+    document.getElementById('editingOrderId').value = '';
+    document.querySelector('.modal-title').textContent = 'New Order';
+    const submitBtn = document.querySelector('button[form="addOrderForm"]');
+    if (submitBtn) submitBtn.innerHTML = 'Create Order';
     // reset chips
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
     const pendingChip = document.querySelector('.chip[data-value="pending"]');
@@ -1956,9 +1702,15 @@ function closeAddOrderModal() {
     const af = document.getElementById('addressField');
     const ai = document.getElementById('address');
     if (af) af.style.opacity = '1';
-    if (ai) { ai.required = true; ai.placeholder = 'e.g. 123 Rizal St, CDO'; }
-    const dl = document.getElementById('deliveryDateLabel');
-    if (dl) dl.innerHTML = 'Delivery Date <span class="req">*</span>';
+    if (ai) {
+        ai.required = true;
+        ai.disabled = false;
+        ai.readOnly = false;
+        ai.style.cursor = '';
+        ai.style.backgroundColor = '';
+        ai.placeholder = 'e.g. 123 Rizal St, CDO';
+    }
+    
     // restore sender section (default is dropoff)
     const ss = document.getElementById('senderSection');
     if (ss) ss.style.display = '';
@@ -1966,25 +1718,9 @@ function closeAddOrderModal() {
     const sp = document.getElementById('senderPhone');
     if (sn) sn.required = true;
     if (sp) sp.required = true;
-    // reset photo upload
-    const pf = document.getElementById('orderPhoto');
-    if (pf) pf.value = '';
-    const ppImg = document.getElementById('photoPreviewImg');
-    if (ppImg) ppImg.src = '';
-    const ppDiv = document.getElementById('photoPreview');
-    if (ppDiv) ppDiv.style.display = 'none';
-    const ppPh = document.getElementById('photoPlaceholder');
-    if (ppPh) ppPh.style.display = 'block';
-    const ppArea = document.getElementById('photoUploadArea');
-    if (ppArea) { ppArea.style.borderColor = '#d1d5db'; ppArea.style.background = '#f8fafc'; }
     clearFormError();
-    // Clear form change tracking and auto-save timer
-    window._formChanged = false;
-    clearTimeout(window._autoSaveTimer);
-    window._currentDraftId = null;
 }
 function closeOrderDetailsModal() {
-    stopImageSyncPolling();
     document.getElementById('orderDetailsModal').classList.remove('show');
     window._currentOrderId = null;
 }
@@ -1995,318 +1731,28 @@ function closeCompletedOrdersModal() {
     document.getElementById('completedOrdersModal').classList.remove('show');
 }
 
-// ── DRAFT ORDERS MANAGEMENT ──
-function openDraftOrdersModal() {
-    document.getElementById('draftOrdersModal').classList.add('show');
-    loadDraftOrders();
-}
-
-function closeDraftOrdersModal() {
-    document.getElementById('draftOrdersModal').classList.remove('show');
-}
-
-function saveDraftOrder() {
-    // Only save if the modal is open (user is actively editing)
-    const addOrderModal = document.getElementById('addOrderModal');
-    if (!addOrderModal || !addOrderModal.classList.contains('show')) {
-        return;
-    }
-
-    const formData = {
-        customerName: document.getElementById('customerName').value.trim(),
-        contactNumber: document.getElementById('contactNumber').value.trim(),
-        address: document.getElementById('address').value.trim(),
-        deliveryDate: document.getElementById('deliveryDate').value.trim(),
-        deliveryTime: document.getElementById('deliveryTime').value.trim(),
-        orderProduct: document.getElementById('orderProduct').value.trim(),
-        orderAmount: document.getElementById('orderAmount').value.trim(),
-        specialRequests: document.getElementById('specialRequests').value.trim(),
-        paymentMethod: document.getElementById('paymentMethod').value,
-        paymentStatus: document.getElementById('paymentStatus').value,
-        downPaymentAmount: document.getElementById('downPaymentAmount').value.trim(),
-        fulfilledBy: document.getElementById('fulfilledBy').value.trim(),
-        deliveryType: document.getElementById('deliveryType').value || 'dropoff',
-        senderName: document.getElementById('senderName').value.trim(),
-        senderPhone: document.getElementById('senderPhone').value.trim(),
-        riderName: document.getElementById('riderName').value.trim(),
-        riderPhone: document.getElementById('riderPhone').value.trim(),
-        riderVehicle: document.getElementById('riderVehicle').value.trim(),
-        savedAt: new Date().toISOString()
-    };
-    
-    // Check if form has ANY meaningful data (at least one field filled)
-    const hasAnyData = Object.entries(formData).some(([key, val]) => {
-        if (key === 'savedAt') return false;
-        return val && val !== '' && val !== 'dropoff' && val !== 'pending';
-    });
-    
-    if (!hasAnyData) return; // Don't save completely empty forms
-    
-    // Use existing draft ID if reopening a draft, otherwise create new one
-    let draftId = window._currentDraftId;
-    if (!draftId) {
-        draftId = 'draft_' + Date.now();
-        window._currentDraftId = draftId;
-    }
-    
-    const drafts = JSON.parse(localStorage.getItem('orderDrafts') || '{}');
-    drafts[draftId] = formData;
-    
-    localStorage.setItem('orderDrafts', JSON.stringify(drafts));
-    updateDraftBadge();
-    console.log('Draft saved:', draftId);
-}
-
-function loadDraftOrders() {
-    const drafts = JSON.parse(localStorage.getItem('orderDrafts') || '{}');
-    const container = document.getElementById('draftOrdersContainer');
-    const placeholder = document.getElementById('noDraftsPlaceholder');
-    
-    container.innerHTML = '';
-    
-    if (Object.keys(drafts).length === 0) {
-        container.style.display = 'none';
-        placeholder.style.display = 'block';
-        return;
-    }
-    
-    placeholder.style.display = 'none';
-    container.style.display = 'flex';
-    
-    Object.entries(drafts).forEach(([draftId, data]) => {
-        const savedDate = new Date(data.savedAt);
-        const dateStr = savedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        
-        const div = document.createElement('div');
-        div.className = 'draft-item';
-        div.innerHTML = `
-            <div class="draft-item-info">
-                <div class="draft-item-title">
-                    ${data.customerName || 'Unnamed Order'} - ${data.orderProduct || 'No product'}
-                </div>
-                <div class="draft-item-meta">
-                    Saved: ${dateStr} | Amount: ₱ ${parseFloat(data.orderAmount || 0).toFixed(2)}
-                </div>
-            </div>
-            <div class="draft-item-actions">
-                <button class="draft-btn draft-btn-open" onclick="openDraftForEditing('${draftId}')">
-                    Continue Editing
-                </button>
-                <button class="draft-btn draft-btn-delete" onclick="deleteDraft('${draftId}')">
-                    Delete
-                </button>
-            </div>
-        `;
-        container.appendChild(div);
-    });
-}
-
-function openDraftForEditing(draftId) {
-    const drafts = JSON.parse(localStorage.getItem('orderDrafts') || '{}');
-    const data = drafts[draftId];
-    
-    if (!data) {
-        alert('Draft not found.');
-        return;
-    }
-    
-    // Load data into form
-    document.getElementById('customerName').value = data.customerName || '';
-    document.getElementById('contactNumber').value = data.contactNumber || '';
-    document.getElementById('address').value = data.address || '';
-    document.getElementById('deliveryDate').value = data.deliveryDate || '';
-    document.getElementById('deliveryTime').value = data.deliveryTime || '';
-    document.getElementById('orderProduct').value = data.orderProduct || '';
-    document.getElementById('orderAmount').value = data.orderAmount || '';
-    document.getElementById('specialRequests').value = data.specialRequests || '';
-    document.getElementById('paymentMethod').value = data.paymentMethod || '';
-    document.getElementById('paymentStatus').value = data.paymentStatus || 'pending';
-    document.getElementById('downPaymentAmount').value = data.downPaymentAmount || '';
-    document.getElementById('fulfilledBy').value = data.fulfilledBy || '';
-    document.getElementById('senderName').value = data.senderName || '';
-    document.getElementById('senderPhone').value = data.senderPhone || '';
-    document.getElementById('riderName').value = data.riderName || '';
-    document.getElementById('riderPhone').value = data.riderPhone || '';
-    document.getElementById('riderVehicle').value = data.riderVehicle || '';
-    
-    // Update delivery type UI
-    const deliveryType = data.deliveryType || 'dropoff';
-    document.getElementById('deliveryType').value = deliveryType;
-    document.querySelector(`input[name="deliveryType"][value="${deliveryType}"]`).checked = true;
-    onDeliveryTypeChange();
-    
-    // Update payment status chips
-    const selectedChip = document.querySelector(`.chip[data-value="${data.paymentStatus || 'pending'}"]`);
-    if (selectedChip) {
-        selectChip(selectedChip);
-    }
-    
-    // Store the draft ID for deletion after submission
-    window._currentDraftId = draftId;
-    
-    closeDraftOrdersModal();
-    openAddOrderModal();
-}
-
-function deleteDraft(draftId) {
-    window._draftToDelete = draftId;
-    document.getElementById('deleteDraftConfirmModal').classList.add('show');
-}
-
-function closeDeletDraftModal() {
-    document.getElementById('deleteDraftConfirmModal').classList.remove('show');
-    window._draftToDelete = null;
-}
-
-function confirmDeleteDraft() {
-    const draftId = window._draftToDelete;
-    if (!draftId) return;
-    
-    const btn = document.getElementById('confirmDeleteDraftBtn');
-    const origText = btn.textContent;
-    btn.textContent = 'Deleting...';
-    btn.disabled = true;
-    
-    setTimeout(() => {
-        const drafts = JSON.parse(localStorage.getItem('orderDrafts') || '{}');
-        delete drafts[draftId];
-        localStorage.setItem('orderDrafts', JSON.stringify(drafts));
-        
-        updateDraftBadge();
-        loadDraftOrders(); // Refresh the modal
-        closeDeletDraftModal();
-        
-        // Show success message
-        showDeleteSuccessNotification();
-        
-        btn.textContent = origText;
-        btn.disabled = false;
-    }, 600);
-}
-
-function updateDraftBadge() {
-    const drafts = JSON.parse(localStorage.getItem('orderDrafts') || '{}');
-    const count = Object.keys(drafts).length;
-    const badge = document.getElementById('draftBadge');
-    
-    if (count > 0) {
-        badge.textContent = count;
-        badge.classList.add('show');
-    } else {
-        badge.classList.remove('show');
-    }
-}
-
-// Store form state for auto-save when user is typing
-window._formChanged = false;
-window._autoSaveTimer = null;
-window._currentDraftId = null;
-
-// Enhanced auto-save with form input tracking
-function attachFormListeners() {
-    const formInputs = document.querySelectorAll('#addOrderForm input, #addOrderForm select, #addOrderForm textarea');
-    
-    formInputs.forEach(input => {
-        // Remove old listeners to prevent duplicates
-        input.removeEventListener('input', handleFormChange);
-        input.removeEventListener('change', handleFormChange);
-        
-        // Attach new listeners
-        input.addEventListener('input', handleFormChange);
-        input.addEventListener('change', handleFormChange);
-    });
-}
-
-function handleFormChange() {
-    window._formChanged = true;
-    
-    // Debounce: save after 1.5 seconds of inactivity
-    clearTimeout(window._autoSaveTimer);
-    window._autoSaveTimer = setTimeout(() => {
-        saveDraftOrder();
-    }, 1500);
-}
-
-// Attach listeners when modal opens
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize draft badge on page load
-    updateDraftBadge();
-    
-    // Attach listeners to initial form if modal happens to be open
-    setTimeout(() => {
-        attachFormListeners();
-    }, 500);
-});
-
-// Show exit warning when user tries to leave with unsaved changes
-window._allowExit = false;
-
-window.addEventListener('beforeunload', function(e) {
-    const addOrderModal = document.getElementById('addOrderModal');
-    const isModalOpen = addOrderModal && addOrderModal.classList.contains('show');
-    
-    if (isModalOpen && window._formChanged && !window._allowExit) {
-        // Show our custom modal instead of browser default
-        e.preventDefault();
-        e.returnValue = '';
-        
-        // Show custom warning modal
-        setTimeout(() => {
-            document.getElementById('exitWarningModal').classList.add('show');
-        }, 100);
-        
-        return undefined;
-    }
-});
-
-// Modal control functions
-function closeExitWarning() {
-    document.getElementById('exitWarningModal').classList.remove('show');
-}
-
-function proceedExit() {
-    window._allowExit = true;
-    document.getElementById('exitWarningModal').classList.remove('show');
-    window.history.back();
-}
-
-function showDeleteSuccessNotification() {
-    // Create a temporary success notification
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: white;
-        padding: 16px 20px;
-        border-radius: 10px;
-        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
-        font-weight: 600;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        z-index: 5000;
-        animation: slideInRight 0.3s ease-out;
-    `;
-    notification.innerHTML = '✓ Draft deleted successfully';
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.style.animation = 'slideOutRight 0.3s ease-out';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
-}
-
 // ── Payment chip selector ──
+function updatePaymentAmountLabel(paymentStatus) {
+    const label = document.getElementById('downPaymentLabel');
+    const input = document.getElementById('downPaymentAmount');
+    const isFullyPaid = paymentStatus === 'completed';
+
+    if (label) {
+        label.innerHTML = (isFullyPaid ? 'Full Payment Amount' : 'Down Payment Amount') +
+            ' <span class="req">*</span>';
+    }
+    if (input) {
+        input.placeholder = isFullyPaid ? 'Enter full payment amount' : 'Enter down payment amount';
+    }
+}
+
 function selectChip(el) {
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
+
     const val = el.getAttribute('data-value');
     document.getElementById('paymentStatus').value = val;
-    const lbl = document.getElementById('downPaymentLabel');
-    if (lbl) lbl.innerHTML = (val === 'completed' ? 'Payment Amount' : 'Down Payment Amount') + ' <span class="req">*</span>';
+    updatePaymentAmountLabel(val);
 }
 
 // ── Form error helpers ──
@@ -2321,110 +1767,180 @@ function clearFormError() {
 }
 
 // ── Submit: Create Order ──
+
+function toggleSenderIsReceiver() {
+    const isPickup = (document.getElementById('deliveryType')?.value || 'dropoff') === 'pickup';
+    const checked = document.getElementById('senderIsReceiver')?.checked === true;
+    const receiverSection = document.getElementById('receiverSection');
+    const fields = {
+        name: document.getElementById('customerName'),
+        phone: document.getElementById('contactNumber')
+    };
+    const receiverAddressField = document.getElementById('receiverAddress');
+    if (isPickup || checked) {
+        fields.name.value = document.getElementById('senderName').value.trim();
+        fields.phone.value = document.getElementById('senderPhone').value.trim();
+        if (receiverAddressField) {
+            receiverAddressField.value = isPickup ? '' : document.getElementById('address').value.trim();
+        }
+        Object.values(fields).forEach(el => {
+            el.required = false;
+            el.disabled = true;
+        });
+        receiverSection.style.display = 'none';
+    } else {
+        Object.values(fields).forEach(el => {
+            el.disabled = false;
+            el.required = true;
+        });
+        receiverSection.style.display = '';
+    }
+}
+
+document.addEventListener('input', function(event) {
+    if (['senderName','senderPhone','address'].includes(event.target.id) && document.getElementById('senderIsReceiver')?.checked) {
+        toggleSenderIsReceiver();
+    }
+});
+
 function submitAddOrder(event) {
     event.preventDefault();
     clearFormError();
+    if (document.getElementById('senderIsReceiver')?.checked) toggleSenderIsReceiver();
 
-    const customerName    = document.getElementById('customerName').value.trim();
-    const contactNumber   = document.getElementById('contactNumber').value.trim();
-    let   address         = document.getElementById('address').value.trim();
+    const deliveryType = document.getElementById('deliveryType').value || 'dropoff';
+    const isPickup = deliveryType === 'pickup';
+    const selectedSamePerson = document.getElementById('senderIsReceiver').checked;
+    const senderIsReceiver = isPickup || selectedSamePerson;
+
+    const senderNameValue = document.getElementById('senderName').value.trim();
+    const senderPhoneValue = document.getElementById('senderPhone').value.trim();
+
+    const customerName = senderIsReceiver
+        ? senderNameValue
+        : document.getElementById('customerName').value.trim();
+    const contactNumber = senderIsReceiver
+        ? senderPhoneValue
+        : document.getElementById('contactNumber').value.trim();
+
+    let address = isPickup ? '' : document.getElementById('address').value.trim();
+    // The Delivery Address is the single official destination address.
+    const receiverAddress = isPickup ? '' : address;
+    const receiverAddressField = document.getElementById('receiverAddress');
+    if (receiverAddressField) receiverAddressField.value = receiverAddress;
     const deliveryDate    = document.getElementById('deliveryDate').value.trim();
     const deliveryTime    = document.getElementById('deliveryTime').value.trim();
     const orderProduct    = document.getElementById('orderProduct').value.trim();
-    const orderAmount     = document.getElementById('orderAmount').value.trim();
-    const specialRequests = document.getElementById('specialRequests').value.trim();
+    const orderAmount       = document.getElementById('orderAmount').value.trim();
+    const balancePayment    = document.getElementById('balancePayment').value.trim();
+    const specialRequests   = document.getElementById('specialRequests').value.trim();
     const paymentMethod   = document.getElementById('paymentMethod').value;
     const paymentStatus   = document.getElementById('paymentStatus').value;
     const downPaymentAmount = document.getElementById('downPaymentAmount').value.trim();
     const fulfilledBy     = document.getElementById('fulfilledBy').value.trim();
-    const deliveryType    = document.getElementById('deliveryType').value || 'dropoff';
     const senderName      = document.getElementById('senderName').value.trim();
     const senderPhone     = document.getElementById('senderPhone').value.trim();
     const riderName       = document.getElementById('riderName').value.trim();
-    const riderPhone      = document.getElementById('riderPhone').value.trim();
     const riderVehicle    = document.getElementById('riderVehicle').value.trim();
 
-    if (!customerName)  { showFormError('Please enter receiver name.'); return; }
-    if (!contactNumber) { showFormError('Please enter receiver contact number.'); return; }
-    if (deliveryType === 'dropoff' && !address) { showFormError('Please enter a delivery address.'); return; }
-    if (deliveryType === 'pickup') { address = ''; }
+    if (!senderName) { showFormError('Please enter sender name.'); return; }
+    if (!senderPhone) { showFormError('Please enter sender contact number.'); return; }
+
+    if (!isPickup) {
+        if (!customerName) { showFormError('Please enter receiver name.'); return; }
+        if (!contactNumber) { showFormError('Please enter receiver contact number.'); return; }
+        if (!address) { showFormError('Please enter a delivery address.'); return; }
+    }
     if (!orderProduct)  { showFormError('Please enter the product/bouquet.'); return; }
     if (!orderAmount)   { showFormError('Please enter the order amount.'); return; }
+    if (balancePayment !== '' && (!Number.isFinite(Number(balancePayment)) || Number(balancePayment) < 0)) {
+        showFormError('Balance payment must be a valid non-negative amount.');
+        return;
+    }
     if (!deliveryDate)  { showFormError('Please select a delivery date.'); return; }
     if (!deliveryTime)  { showFormError('Please enter a delivery time.'); return; }
     if (!paymentMethod) { showFormError('Please select a payment method.'); return; }
     if (!paymentStatus) { showFormError('Please select a payment status.'); return; }
     if (!downPaymentAmount) { showFormError('Please enter the down payment amount.'); return; }
-    if (deliveryType === 'dropoff' && !senderName)  { showFormError('Please enter sender name.'); return; }
-    if (deliveryType === 'dropoff' && !senderPhone) { showFormError('Please enter sender contact number.'); return; }
+    
 
     const toTitle    = s => s.toLowerCase().replace(/\w/g, c => c.toUpperCase());
-    const firstName  = customerName.trim().split(/\s+/)[0].charAt(0).toUpperCase() + customerName.trim().split(/\s+/)[0].slice(1).toLowerCase();
-    const lastName   = (() => { const parts = customerName.trim().split(/\s+/); return parts.length > 1 ? parts.slice(1).map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ') : ''; })();
-    const autoEmail  = 'customer_' + contactNumber.replace(/\D/g, '') + '_' + Date.now() + '@kres.local';
+    const senderParts = senderName.trim().split(/\s+/);
+    const senderFirstName = senderParts[0].charAt(0).toUpperCase() + senderParts[0].slice(1).toLowerCase();
+    const senderLastName = senderParts.length > 1
+        ? senderParts.slice(1).map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ')
+        : '';
+    const autoEmail  = 'customer_' + senderPhone.replace(/\D/g, '') + '_' + Date.now() + '@kres.local';
 
     const payload = {
+        // Customer/buyer fields always represent the sender.
         customer_email:      autoEmail,
-        customer_first_name: firstName,
-        customer_last_name:  lastName,
-        customer_phone:      contactNumber,
-        customer_address:    address,
+        customer_first_name: senderFirstName,
+        customer_last_name:  senderLastName,
+        customer_phone:      senderPhone,
+        customer_address:    '',
+        // Receiver fields remain independent from the customer/sender record.
+        receiver_name:       capitalize(isPickup ? senderName : customerName),
+        receiver_full_name:  capitalize(isPickup ? senderName : customerName),
+        receiver_phone:      isPickup ? senderPhone : contactNumber,
+        contact_number:      isPickup ? senderPhone : contactNumber,
+        receiver_address:    receiverAddress,
+        delivery_address:    address,
+        sender_is_receiver:  senderIsReceiver,
         items: [{ product_name: capitalize(orderProduct.trim()), quantity: 1, unit_price: parseFloat(orderAmount) || 0 }],
         notes:          (deliveryType === 'pickup' ? '[PICK UP] ' : '[DROP OFF] ') + specialRequests,
         payment_method: paymentMethod,
         payment_status: paymentStatus,
         payment_amount: parseFloat(downPaymentAmount) || 0,
+        balance_payment: parseFloat(balancePayment) || 0,
         delivery_date:  deliveryDate,
         delivery_time:  deliveryTime,
         fulfilled_by:   fulfilledBy ? fulfilledBy.charAt(0).toUpperCase() + fulfilledBy.slice(1).toLowerCase() : '',
         sender_name:    capitalize(senderName),
         sender_phone:   senderPhone,
+        sender_address: '',
         rider_name:     deliveryType === 'dropoff' ? capitalize(riderName) : '',
-        rider_phone:    deliveryType === 'dropoff' ? riderPhone : '',
         rider_vehicle:  deliveryType === 'dropoff' ? riderVehicle : '',
         tax: 0, discount: 0
     };
 
     const btn = document.querySelector('button[form="addOrderForm"]');
     const origHTML = btn.innerHTML;
-    btn.innerHTML = '⏳ Creating...';
+    btn.innerHTML = document.getElementById('editingOrderId').value ? '⏳ Updating...' : '⏳ Creating...';
     btn.disabled  = true;
 
-    fetch('/ajax/order/create/', {
+    const editingId = document.getElementById('editingOrderId').value;
+    if (editingId) payload.order_id = parseInt(editingId, 10);
+    const endpoint = editingId ? orderEndpoints.update : orderEndpoints.create;
+    fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
         body: JSON.stringify(payload)
     })
-    .then(r => { if (!r.ok) throw new Error('Server error ' + r.status); return r.json(); })
+    .then(async response => {
+        let data = {};
+        try {
+            data = await response.json();
+        } catch (parseError) {
+            data = {};
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                data.message ||
+                data.error ||
+                ('Server returned error ' + response.status)
+            );
+        }
+
+        return data;
+    })
     .then(data => {
         btn.innerHTML = origHTML;
         btn.disabled  = false;
         if (data.success) {
-            // Save reference photo for this order to localStorage
-            const previewImg = document.getElementById('photoPreviewImg');
-            const photoFileNameEl = document.getElementById('photoFileName');
-            if (previewImg && previewImg.src && previewImg.src !== window.location.href && previewImg.style.display !== 'none') {
-                const newOrderId = (data.order && data.order.id) || data.order_id || data.id || null;
-                if (newOrderId) {
-                    try {
-                        localStorage.setItem('orderPhoto_' + newOrderId, JSON.stringify({ src: previewImg.src, name: photoFileNameEl ? photoFileNameEl.textContent : '' }));
-                    } catch(e) { console.warn('Could not save photo to localStorage', e); }
-                }
-            }
             btn.innerHTML        = '✓ Created!';
             btn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
-            
-            // Clear draft after successful submission
-            if (window._currentDraftId) {
-                const drafts = JSON.parse(localStorage.getItem('orderDrafts') || '{}');
-                delete drafts[window._currentDraftId];
-                localStorage.setItem('orderDrafts', JSON.stringify(drafts));
-                window._currentDraftId = null;
-            }
-            
-            // Reset form state
-            window._formChanged = false;
-            clearTimeout(window._autoSaveTimer);
             
             setTimeout(() => location.reload(), 1200);
         } else {
@@ -2434,7 +1950,7 @@ function submitAddOrder(event) {
     .catch(err => {
         btn.innerHTML = origHTML;
         btn.disabled  = false;
-        showFormError('Could not reach server: ' + err.message);
+        showFormError(err.message || 'The order could not be saved. Please check the form and try again.');
     });
 }
 
@@ -2461,12 +1977,86 @@ function capitalize(str) {
     return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
 }
 
+function normalizePesoDisplay(value, fallback = '₱ 0.00') {
+    const raw = String(value ?? '').trim();
+    if (!raw || raw === '—') return fallback;
+
+    const cleaned = raw.replace(/\$/g, '').replace(/₱/g, '').trim();
+    const numeric = Number(cleaned.replace(/,/g, ''));
+
+    if (Number.isFinite(numeric)) {
+        return '₱ ' + numeric.toFixed(2);
+    }
+
+    return '₱ ' + cleaned;
+}
+
+function setAdditionalPaymentState(savedValue) {
+    const input = document.getElementById('detailAdditionalPaymentInput');
+    const editWrap = document.getElementById('additionalPaymentEditWrap');
+    const savedDisplay = document.getElementById('detailAdditionalPaymentSaved');
+
+    const normalized = String(savedValue ?? '').trim();
+    const hasSavedValue = normalized !== '';
+
+    if (input) input.value = '';
+
+    if (editWrap) {
+        editWrap.style.display = hasSavedValue ? 'none' : 'flex';
+    }
+
+    if (savedDisplay) {
+        savedDisplay.style.display = hasSavedValue ? 'block' : 'none';
+        savedDisplay.textContent = hasSavedValue
+            ? normalizePesoDisplay(normalized, '₱ 0.00')
+            : '—';
+    }
+}
+
+function setRiderNameState(savedName, isCompleted = false) {
+    const nameDisplay = document.getElementById('detailRiderName');
+    const input = document.getElementById('riderNameInput');
+    const editWrap = document.getElementById('riderNameEditWrap');
+    const saveWrap = document.getElementById('riderSaveWrap');
+    const button = document.getElementById('btnSaveRider');
+
+    const normalized = String(savedName ?? '').trim();
+    const hasSavedName = normalized !== '';
+
+    if (nameDisplay) nameDisplay.textContent = hasSavedName ? normalized : '—';
+    if (input) {
+        input.value = '';
+        input.disabled = isCompleted;
+    }
+
+    const showEditor = !hasSavedName && !isCompleted;
+    if (editWrap) editWrap.style.display = showEditor ? 'block' : 'none';
+    if (saveWrap) saveWrap.style.display = showEditor ? 'flex' : 'none';
+
+    if (button) {
+        button.disabled = !showEditor;
+        button.style.opacity = showEditor ? '1' : '0.4';
+        button.style.cursor = showEditor ? 'pointer' : 'not-allowed';
+    }
+}
+
 // ── View Order Details ──
 function viewOrderDetails(orderId) {
-    const row = document.querySelector('tr[data-id="' + orderId + '"]');
-    if (!row) return;
+    const normalizedOrderId = String(orderId).trim();
+    const row = document.querySelector('tr[data-id="' + CSS.escape(normalizedOrderId) + '"]');
+    const modal = document.getElementById('orderDetailsModal');
 
-    window._currentOrderId = orderId;
+    if (!row || !modal) {
+        console.error('Unable to open order details.', {
+            orderId: normalizedOrderId,
+            rowFound: Boolean(row),
+            modalFound: Boolean(modal)
+        });
+        return;
+    }
+
+    window._currentOrderId = normalizedOrderId;
+    modal.classList.add('show');
 
     // Construct order number from data attributes
     const orderNum = (row.getAttribute('data-order-number') || '') + '-' + (row.getAttribute('data-order-date') || '');
@@ -2483,74 +2073,104 @@ function viewOrderDetails(orderId) {
     const formattedTime = convertTo12Hour(rawTime);
     document.getElementById('detailOrderDate').textContent     = rawDate + (formattedTime ? ' at ' + formattedTime : '');
     document.getElementById('detailOrderItem').textContent     = row.querySelector('.item-name').textContent.trim();
-    document.getElementById('detailOrderAmount').textContent   = row.getAttribute('data-amount') || row.querySelector('.order-amount').textContent.trim();
-    const methodMap = { cash: 'Cash', gcash: 'GCash', bank_transfer: 'Bank Transfer', credit_card: 'Credit Card', debit_card: 'Debit Card', paymaya: 'PayMaya', other: 'Other' };
+    document.getElementById('detailOrderAmount').textContent = normalizePesoDisplay(
+        row.getAttribute('data-amount') || row.querySelector('.order-amount').textContent.trim()
+    );
+    const balanceValue = parseFloat(row.getAttribute('data-balance-payment') || '0');
+    const balanceDisplay = document.getElementById('detailBalancePayment');
+    if (balanceDisplay) balanceDisplay.textContent = '₱ ' + balanceValue.toFixed(2);
+
+    const savedAdditionalPayment = row.getAttribute('data-additional-payment') || '';
+    setAdditionalPaymentState(savedAdditionalPayment);
+    const methodMap = { cash: 'Cash', gcash_james: 'GCash James', gcash_banban: 'GCash Banban', gcash_kysan: 'GCash Kysan', rcbc: 'RCBC' };
     document.getElementById('detailPaymentMethod').textContent = methodMap[rawMethod] || rawMethod || '—';
-    document.getElementById('detailPaymentStatusDisplay').textContent = payStatus === 'completed' ? 'Fully Paid' : 'Down Payment';
-    
-    // Middle column - Receiver & Sender
-    document.getElementById('detailCustomerName').textContent  = row.querySelector('.customer-name').textContent.trim();
-    document.getElementById('detailContactNumber').textContent = row.getAttribute('data-phone') || '—';
-    const addressValue = dtRaw === 'pickup' ? '—' : (row.getAttribute('data-address') || '—');
-    document.getElementById('detailAddress').textContent       = addressValue;
-    
-    // Sender information - get from data-sender-* attributes
-    const senderName = row.getAttribute('data-sender-name') || '—';
-    const senderPhone = row.getAttribute('data-sender-phone') || '—';
-    document.getElementById('detailSenderName').textContent    = senderName;
-    document.getElementById('detailSenderPhone').textContent   = senderPhone;
+    document.getElementById('detailPaymentStatusDisplay').textContent =
+        payStatus === 'completed' ? 'Fully Paid' : 'Down Payment';
 
-    // Show/hide delivery address row and sender section for pickup orders
-    const detailAddressRow    = document.getElementById('detailAddressRow');
+    const paymentAmountLabel = document.getElementById('detailPaymentAmountLabel');
+    if (paymentAmountLabel) {
+        paymentAmountLabel.textContent =
+            payStatus === 'completed' ? 'FULL PAYMENT AMOUNT' : 'DOWN PAYMENT AMOUNT';
+    }
+    
+    // People and Delivery — load the selected order's saved values.
+    const setDetailText = (elementId, value) => {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+
+        const normalized = String(value ?? '').trim();
+        element.textContent = normalized && normalized !== '-' ? normalized : '—';
+    };
+
+    const receiverName =
+        row.getAttribute('data-receiver-name') ||
+        row.getAttribute('data-customer-name') ||
+        '';
+    const receiverPhone = row.getAttribute('data-phone') || '';
+    const receiverAddress =
+        row.getAttribute('data-delivery-address') ||
+        row.getAttribute('data-address') ||
+        '';
+
+    const savedSenderName = row.getAttribute('data-sender-name') || '';
+    const savedSenderPhone = row.getAttribute('data-sender-phone') || '';
+    const samePerson = row.getAttribute('data-sender-is-receiver') === 'true';
+    const isPickup = dtRaw === 'pickup';
+
+    // Older Pick Up or same-person records may not have separate sender fields.
+    // Use the stored customer values as a safe fallback instead of showing blanks.
+    const senderName =
+        savedSenderName || ((isPickup || samePerson) ? receiverName : '');
+    const senderPhone =
+        savedSenderPhone || ((isPickup || samePerson) ? receiverPhone : '');
+
+    setDetailText('detailCustomerName', receiverName);
+    setDetailText('detailContactNumber', receiverPhone);
+    setDetailText('detailSenderName', senderName);
+    setDetailText('detailSenderPhone', senderPhone);
+    setDetailText('detailDropoffAddress', isPickup ? '' : receiverAddress);
+
+    const samePersonNotice = document.getElementById('detailSamePersonNotice');
+    const detailReceiverSection = document.getElementById('detailReceiverSection');
     const detailSenderSection = document.getElementById('detailSenderSection');
-    if (dtRaw === 'pickup') {
-        if (detailAddressRow)    detailAddressRow.style.display    = 'none';
-        if (detailSenderSection) detailSenderSection.style.display = 'none';
-    } else {
-        if (detailAddressRow)    detailAddressRow.style.display    = '';
-        if (detailSenderSection) detailSenderSection.style.display = '';
-    }
-    
-    // Right column - Delivery & Rider
-    document.getElementById('detailDeliveryType').textContent  = dtRaw === 'pickup' ? 'Local Pick Up' : 'Local Drop Off';
-    document.getElementById('detailDeliveryDate').textContent  = row.getAttribute('data-delivery') || '—';
-    const deliveryTimeRaw = row.getAttribute('data-delivery-time') || '';
-    const deliveryTimeFormatted = deliveryTimeRaw && deliveryTimeRaw !== '-' ? convertTo12Hour(deliveryTimeRaw) : '—';
-    document.getElementById('detailDeliveryTime').textContent  = deliveryTimeFormatted;
-    
-    // Rider information - get from data-rider-* attributes
-    const riderName = row.getAttribute('data-rider-name') || '—';
-    const riderPhone = row.getAttribute('data-rider-phone') || '—';
-    document.getElementById('detailRiderName').textContent     = riderName;
-    document.getElementById('detailRiderPhone').textContent    = riderPhone;
-    // Pre-fill editable rider inputs
-    const riderNameInput = document.getElementById('riderNameInput');
-    const riderPhoneInput = document.getElementById('riderPhoneInput');
-    if (riderNameInput) riderNameInput.value = (riderName === '—' ? '' : riderName);
-    if (riderPhoneInput) riderPhoneInput.value = (riderPhone === '—' ? '' : riderPhone);
+    const detailDeliveryAddressRow = document.getElementById('detailDeliveryAddressRow');
 
-    // Disable rider inputs and save button if order is completed
+    const showSenderOnly = isPickup || samePerson;
+
+    if (samePersonNotice) {
+        samePersonNotice.style.display = samePerson ? 'block' : 'none';
+    }
+    if (detailSenderSection) {
+        detailSenderSection.style.display = '';
+    }
+    if (detailReceiverSection) {
+        detailReceiverSection.style.display = showSenderOnly ? 'none' : '';
+    }
+    if (detailDeliveryAddressRow) {
+        detailDeliveryAddressRow.style.display = isPickup ? 'none' : '';
+    }
+
+    const deliveryDate =
+        row.getAttribute('data-delivery-date') ||
+        row.getAttribute('data-delivery') ||
+        '';
+    const deliveryTimeRaw = row.getAttribute('data-delivery-time') || '';
+    const deliveryTimeFormatted =
+        deliveryTimeRaw && deliveryTimeRaw !== '-'
+            ? convertTo12Hour(deliveryTimeRaw)
+            : '';
+
+    setDetailText(
+        'detailDeliveryType',
+        isPickup ? 'Local Pick Up' : 'Local Drop Off'
+    );
+    setDetailText('detailDeliveryDate', deliveryDate);
+    setDetailText('detailDeliveryTime', deliveryTimeFormatted);
+
+    const riderName = row.getAttribute('data-rider-name') || '';
     const orderStatus = row.getAttribute('data-status') || 'pending';
-    const btnSaveRider = document.getElementById('btnSaveRider');
     const isCompleted = orderStatus === 'completed';
-    if (riderNameInput) {
-        riderNameInput.disabled = isCompleted;
-        riderNameInput.style.opacity = isCompleted ? '0.5' : '1';
-        riderNameInput.style.cursor = isCompleted ? 'not-allowed' : '';
-        riderNameInput.style.background = isCompleted ? '#f1f5f9' : '';
-    }
-    if (riderPhoneInput) {
-        riderPhoneInput.disabled = isCompleted;
-        riderPhoneInput.style.opacity = isCompleted ? '0.5' : '1';
-        riderPhoneInput.style.cursor = isCompleted ? 'not-allowed' : '';
-        riderPhoneInput.style.background = isCompleted ? '#f1f5f9' : '';
-    }
-    if (btnSaveRider) {
-        btnSaveRider.disabled = isCompleted;
-        btnSaveRider.style.opacity = isCompleted ? '0.4' : '1';
-        btnSaveRider.style.cursor = isCompleted ? 'not-allowed' : 'pointer';
-        btnSaveRider.title = isCompleted ? 'Order is already completed' : '';
-    }
+    setRiderNameState(riderName, isCompleted);
 
     // Show/hide rider section based on delivery type
     const riderSection = document.getElementById('detailRiderSection');
@@ -2571,137 +2191,201 @@ function viewOrderDetails(orderId) {
     window._currentPaymentStatus = payStatus;
     window._currentOrderStatus   = row.getAttribute('data-status') || 'pending';
 
-    // Show/hide down payment amount row
+    // Display the saved payment amount with a label matching its status.
     const downPaymentRow = document.getElementById('detailDownPaymentRow');
-    if (payStatus === 'pending') {
-        downPaymentRow.style.display = 'flex';
-        // Fetch payment details from backend
-        fetch('/ajax/payment/get-by-order/?order_id=' + orderId)
-            .then(r => r.json())
-            .then(data => {
-                if (data.success && data.payment) {
-                    const amount = data.payment.amount;
-                    document.getElementById('detailDownPaymentAmount').textContent = '₱ ' + parseFloat(amount).toFixed(2);
-                } else {
-                    document.getElementById('detailDownPaymentAmount').textContent = '—';
-                }
-            })
-            .catch(() => {
-                document.getElementById('detailDownPaymentAmount').textContent = '—';
-            });
-    } else {
-        downPaymentRow.style.display = 'none';
-    }
+    if (downPaymentRow) downPaymentRow.style.display = 'flex';
 
-    document.getElementById('orderDetailsModal').classList.add('show');
-
-    // ── Photo: show uploaded reference photo if available ──
-    const detailPhotoImg = document.getElementById('detailPhotoImg');
-    const detailNoPhoto = document.getElementById('detailNoPhoto');
-    const detailPhotoMeta = document.getElementById('detailPhotoMeta');
-    const detailPhotoName = document.getElementById('detailPhotoName');
-    const detailPhotoWrapper = document.getElementById('detailPhotoWrapper');
-    const lightboxImg = document.getElementById('detailPhotoLightboxImg');
-
-    // Fetch photo from server
-    fetch(`/get-order-photo/?order_id=${orderId}`)
-        .then(response => response.json())
+    fetch(orderEndpoints.paymentGet + '?order_id=' + encodeURIComponent(orderId))
+        .then(response => {
+            if (!response.ok) throw new Error('Unable to load payment details.');
+            return response.json();
+        })
         .then(data => {
-            if (data.photo_url) {
-                lastImageHash = data.photo_hash || null;
-                detailPhotoImg.src = data.photo_url;
-                detailPhotoImg.style.display = 'block';
-                detailNoPhoto.style.display = 'none';
-                detailPhotoMeta.style.display = 'block';
-                detailPhotoName.textContent = data.photo_name || 'Order photo';
-                detailPhotoWrapper.style.borderColor = '#6ee7b7';
-                detailPhotoWrapper.style.background = 'linear-gradient(135deg,#f0fdf9,#ecfdf5)';
-                lightboxImg.src = data.photo_url;
-                // Start polling for image updates from other devices
-                startImageSyncPolling(orderId);
-            } else {
-                // No photo on server, check localStorage as fallback
-                let storedPhoto = null;
-                try {
-                    const raw = localStorage.getItem('orderPhoto_' + orderId);
-                    if (raw) storedPhoto = JSON.parse(raw);
-                } catch(e) {}
-                if (storedPhoto && storedPhoto.src) {
-                    detailPhotoImg.src = storedPhoto.src;
-                    detailPhotoImg.style.display = 'block';
-                    detailNoPhoto.style.display = 'none';
-                    detailPhotoMeta.style.display = 'block';
-                    detailPhotoName.textContent = storedPhoto.name || '';
-                    detailPhotoWrapper.style.borderColor = '#6ee7b7';
-                    detailPhotoWrapper.style.background = 'linear-gradient(135deg,#f0fdf9,#ecfdf5)';
-                    lightboxImg.src = storedPhoto.src;
-                } else {
-                    detailPhotoImg.src = '';
-                    detailPhotoImg.style.display = 'none';
-                    detailNoPhoto.style.display = 'block';
-                    detailPhotoMeta.style.display = 'none';
-                    detailPhotoWrapper.style.borderColor = '#d1fae5';
-                    detailPhotoWrapper.style.background = 'linear-gradient(135deg,#f0fdf9,#ecfdf5)';
-                    lightboxImg.src = '';
-                }
-                // Start polling anyway to catch new uploads from other devices
-                startImageSyncPolling(orderId);
+            const amountElement = document.getElementById('detailDownPaymentAmount');
+            if (amountElement) {
+                amountElement.textContent =
+                    data.success && data.payment
+                        ? normalizePesoDisplay(data.payment.amount || 0)
+                        : '—';
             }
         })
         .catch(() => {
-            // Fallback to localStorage if fetch fails
-            let storedPhoto = null;
-            try {
-                const raw = localStorage.getItem('orderPhoto_' + orderId);
-                if (raw) storedPhoto = JSON.parse(raw);
-            } catch(e) {}
-            if (storedPhoto && storedPhoto.src) {
-                detailPhotoImg.src = storedPhoto.src;
-                detailPhotoImg.style.display = 'block';
-                detailNoPhoto.style.display = 'none';
-                detailPhotoMeta.style.display = 'block';
-                detailPhotoName.textContent = storedPhoto.name || '';
-                detailPhotoWrapper.style.borderColor = '#6ee7b7';
-                detailPhotoWrapper.style.background = 'linear-gradient(135deg,#f0fdf9,#ecfdf5)';
-                lightboxImg.src = storedPhoto.src;
-            } else {
-                detailPhotoImg.src = '';
-                detailPhotoImg.style.display = 'none';
-                detailNoPhoto.style.display = 'block';
-                detailPhotoMeta.style.display = 'none';
-                detailPhotoWrapper.style.borderColor = '#d1fae5';
-                detailPhotoWrapper.style.background = 'linear-gradient(135deg,#f0fdf9,#ecfdf5)';
-                lightboxImg.src = '';
-            }
-            startImageSyncPolling(orderId);
+            const amountElement = document.getElementById('detailDownPaymentAmount');
+            if (amountElement) amountElement.textContent = '—';
         });
+
+    modal.classList.add('show');
 }
 
 // ── Save Payment Status ──
 function savePaymentStatus() {
-    const orderId        = window._currentOrderId;
-    const newPayStatus   = document.getElementById('detailPaymentStatusSelect').value;
+    const orderId = window._currentOrderId;
+    const newPayStatus = document.getElementById('detailPaymentStatusSelect').value;
     if (!orderId) return;
 
+    const row = document.querySelector('tr[data-id="' + orderId + '"]');
     const btn = document.getElementById('btnSavePayment');
-    if (btn) { btn.textContent = 'Saving...'; btn.disabled = true; }
 
-    fetch('/ajax/payment/update-by-order/', {
+    if (btn) {
+        btn.textContent = 'Saving...';
+        btn.disabled = true;
+    }
+
+    fetch(orderEndpoints.paymentUpdate, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
-        body: JSON.stringify({ order_id: orderId, payment_status: newPayStatus })
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken()
+        },
+        body: JSON.stringify({
+            order_id: orderId,
+            payment_status: newPayStatus
+        })
     })
-    .then(r => r.json())
+    .then(response => response.json())
     .then(data => {
-        if (btn) { btn.textContent = 'Save'; btn.disabled = false; }
-        if (data.success) {
-            closeOrderDetailsModal();
-            location.reload();
-        } else {
+        if (!data.success) {
+            if (btn) {
+                btn.textContent = 'Update';
+                btn.disabled = false;
+            }
             alert('Error: ' + (data.message || 'Could not update payment.'));
+            return;
+        }
+
+        const updatedStatus = data.payment?.status || newPayStatus;
+
+        if (row) {
+            row.setAttribute('data-payment-status', updatedStatus);
+
+            const statusCell = row.querySelector('td:nth-child(5)');
+            if (statusCell && row.getAttribute('data-status') !== 'completed') {
+                statusCell.innerHTML = updatedStatus === 'completed'
+                    ? '<span class="status-badge fully-paid"> Fully Paid</span>'
+                    : '<span class="status-badge pending"> Down Payment</span>';
+            }
+        }
+
+        document.getElementById('detailPaymentStatusDisplay').textContent =
+            updatedStatus === 'completed' ? 'Fully Paid' : 'Down Payment';
+
+        const paymentAmountLabel = document.getElementById('detailPaymentAmountLabel');
+        if (paymentAmountLabel) {
+            paymentAmountLabel.textContent =
+                updatedStatus === 'completed' ? 'FULL PAYMENT AMOUNT' : 'DOWN PAYMENT AMOUNT';
+        }
+
+        window._currentPaymentStatus = updatedStatus;
+        if (btn) {
+            btn.textContent = 'Saved';
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
         }
     })
-    .catch(() => { if (btn) { btn.textContent = 'Save'; btn.disabled = false; } });
+    .catch(error => {
+        if (btn) {
+            btn.textContent = 'Update';
+            btn.disabled = false;
+        }
+        alert('Error updating payment: ' + error.message);
+    });
+}
+
+// ── Update Additional Payment ──
+function saveAdditionalPayment() {
+    const orderId = String(window._currentOrderId || '').trim();
+    const input = document.getElementById('detailAdditionalPaymentInput');
+    const button = document.getElementById('btnUpdateAdditionalPayment');
+
+    if (!orderId || !input) {
+        alert('No order is currently selected.');
+        return;
+    }
+
+    const value = input.value.trim();
+
+    if (!value) {
+        alert('Please enter an Additional Payment value.');
+        input.focus();
+        return;
+    }
+
+    if (value.length > 255) {
+        alert('Additional Payment must not exceed 255 characters.');
+        input.focus();
+        return;
+    }
+
+    const originalText = button ? button.textContent : 'Save';
+
+    if (button) {
+        button.textContent = 'Saving...';
+        button.disabled = true;
+    }
+
+    fetch(orderEndpoints.paymentUpdate, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken()
+        },
+        body: JSON.stringify({
+            order_id: orderId,
+            additional_payment: value
+        })
+    })
+    .then(async response => {
+        let data = {};
+
+        try {
+            data = await response.json();
+        } catch (error) {
+            data = {};
+        }
+
+        if (!response.ok || data.success !== true) {
+            throw new Error(
+                data.message ||
+                data.error ||
+                'Could not save Additional Payment.'
+            );
+        }
+
+        return data;
+    })
+    .then(data => {
+        const savedValue = String(
+            data.additional_payment !== undefined
+                ? data.additional_payment
+                : value
+        ).trim();
+
+        const escapedOrderId = window.CSS && CSS.escape
+            ? CSS.escape(orderId)
+            : orderId.replace(/["\\]/g, '\\$&');
+
+        const row = document.querySelector(
+            'tr[data-id="' + escapedOrderId + '"]'
+        );
+
+        if (row) {
+            row.setAttribute('data-additional-payment', savedValue);
+        }
+
+        // Lock the field after the first successful save.
+        setAdditionalPaymentState(savedValue);
+    })
+    .catch(error => {
+        alert(error.message || 'Could not save Additional Payment.');
+        input.focus();
+    })
+    .finally(() => {
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    });
 }
 
 // ── Save Down Payment Amount ──
@@ -2714,7 +2398,7 @@ function saveDownPaymentAmount() {
     const btn = document.getElementById('btnSaveDownPayment');
     if (btn) { btn.textContent = 'Updating...'; btn.disabled = true; }
 
-    fetch('/ajax/payment/update-by-order/', {
+    fetch(orderEndpoints.paymentUpdate, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
         body: JSON.stringify({ order_id: orderId, payment_amount: parseFloat(amount) })
@@ -2734,66 +2418,157 @@ function saveDownPaymentAmount() {
     });
 }
 
+function editCurrentOrder() {
+    const row = document.querySelector(`tr[data-id="${window._currentOrderId}"]`);
+    if (!row) return;
+    closeOrderDetailsModal();
+    openAddOrderModal();
+    document.getElementById('editingOrderId').value = window._currentOrderId;
+    document.querySelector('.modal-title').textContent = 'Edit Order';
+    document.querySelector('button[form="addOrderForm"]').innerHTML = 'Save Changes';
+    const dt = row.getAttribute('data-delivery-type') || 'dropoff';
+    document.querySelector(`input[name="deliveryType"][value="${dt}"]`).checked = true;
+    onDeliveryTypeChange();
+    document.getElementById('deliveryDate').value = row.getAttribute('data-delivery-date') || '';
+    document.getElementById('deliveryTime').value = row.getAttribute('data-delivery-time') || '';
+    document.getElementById('address').value = row.getAttribute('data-delivery-address') || row.getAttribute('data-address') || '';
+    document.getElementById('senderName').value = row.getAttribute('data-sender-name') || '';
+    document.getElementById('senderPhone').value = row.getAttribute('data-sender-phone') || '';
+    document.getElementById('customerName').value = row.getAttribute('data-receiver-name') || '';
+    document.getElementById('contactNumber').value = row.getAttribute('data-phone') || '';
+    document.getElementById('receiverAddress').value = row.getAttribute('data-address') || '';
+    document.getElementById('orderProduct').value = row.getAttribute('data-product-name') || row.querySelector('.item-name')?.textContent.trim() || '';
+    document.getElementById('orderAmount').value = row.getAttribute('data-total') || '';
+    document.getElementById('balancePayment').value = row.getAttribute('data-balance-payment') || '0.00';
+    document.getElementById('specialRequests').value = (row.getAttribute('data-notes') || '').replace(/^\[(PICK UP|DROP OFF)\]\s*/, '');
+    const paymentMethodSelect = document.getElementById('paymentMethod');
+    const existingPaymentMethod = row.getAttribute('data-payment-method') || '';
+
+    // Preserve existing historical Cash orders during editing without making
+    // Cash available in the Create New Order dropdown.
+    if (existingPaymentMethod === 'cash' && paymentMethodSelect) {
+        let legacyCashOption = paymentMethodSelect.querySelector('option[data-legacy-cash="true"]');
+        if (!legacyCashOption) {
+            legacyCashOption = document.createElement('option');
+            legacyCashOption.value = 'cash';
+            legacyCashOption.textContent = 'Cash';
+            legacyCashOption.dataset.legacyCash = 'true';
+            paymentMethodSelect.appendChild(legacyCashOption);
+        }
+    }
+    if (paymentMethodSelect) paymentMethodSelect.value = existingPaymentMethod;
+    document.getElementById('senderIsReceiver').checked = row.getAttribute('data-sender-is-receiver') === 'true';
+    toggleSenderIsReceiver();
+}
+
 // ── Save Rider Info from View Details ──
 function saveRiderInfo() {
     if (window._currentOrderStatus === 'completed') return;
-    const orderId  = window._currentOrderId;
-    const riderName  = document.getElementById('riderNameInput').value.trim();
-    const riderPhone = document.getElementById('riderPhoneInput').value.trim();
-    if (!orderId) return;
 
-    const btn = document.getElementById('btnSaveRider');
-    if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+    const orderId = String(window._currentOrderId || '').trim();
+    const input = document.getElementById('riderNameInput');
+    const riderName = input ? input.value.trim() : '';
 
-    fetch('/ajax/order/update-rider/', {
+    if (!orderId || !input) return;
+
+    if (!riderName) {
+        alert('Please enter the Rider Name.');
+        input.focus();
+        return;
+    }
+
+    const button = document.getElementById('btnSaveRider');
+
+    if (button) {
+        button.textContent = 'Saving…';
+        button.disabled = true;
+    }
+
+    fetch(orderEndpoints.riderUpdate, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
-        body: JSON.stringify({ order_id: orderId, rider_name: riderName, rider_phone: riderPhone })
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken()
+        },
+        body: JSON.stringify({
+            order_id: orderId,
+            rider_name: riderName
+        })
     })
-    .then(r => r.json())
-    .then(data => {
-        if (btn) { btn.textContent = 'Save'; btn.disabled = false; }
-        if (data.success) {
-            document.getElementById('detailRiderName').textContent  = riderName || '—';
-            document.getElementById('detailRiderPhone').textContent = riderPhone || '—';
-            // Update the table row data attributes so it persists without reload
-            const row = document.querySelector('tr[data-id="' + orderId + '"]');
-            if (row) {
-                row.setAttribute('data-rider-name', riderName);
-                row.setAttribute('data-rider-phone', riderPhone);
-            }
-            btn.textContent = '✓ Saved!';
-            btn.style.background = 'linear-gradient(135deg,#059669,#10b981)';
-            setTimeout(() => { if (btn) { btn.textContent = 'Save'; btn.style.background = ''; } }, 1800);
-        } else {
-            alert('Error: ' + (data.message || 'Could not save rider info.'));
+    .then(async response => {
+        let data = {};
+
+        try {
+            data = await response.json();
+        } catch (error) {
+            data = {};
         }
+
+        if (!response.ok || data.success !== true) {
+            throw new Error(data.message || 'Could not save Rider Name.');
+        }
+
+        return data;
     })
-    .catch(() => { if (btn) { btn.textContent = 'Save'; btn.disabled = false; } });
+    .then(() => {
+        const row = document.querySelector(
+            'tr[data-id="' + (window.CSS && CSS.escape ? CSS.escape(orderId) : orderId) + '"]'
+        );
+
+        if (row) {
+            row.setAttribute('data-rider-name', riderName);
+        }
+
+        // Lock Rider Name after the first successful save.
+        setRiderNameState(riderName, false);
+    })
+    .catch(error => {
+        alert(error.message || 'Could not save Rider Name.');
+        input.focus();
+
+        if (button) {
+            button.textContent = 'Save Rider';
+            button.disabled = false;
+        }
+    });
 }
 
 // ── Mark Completed (Done button) ──
-function markCompleted(orderId, btnEl) {
+async function markCompleted(orderId, btnEl) {
+    if (!btnEl || btnEl.dataset.submitting === 'true') return;
+
     const origHTML = btnEl.innerHTML;
     btnEl.innerHTML = '⏳';
     btnEl.disabled  = true;
+    btnEl.dataset.submitting = 'true';
 
-    fetch('/ajax/order/update-status/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
-        body: JSON.stringify({ order_id: orderId, status: 'completed' })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            btnEl.innerHTML = origHTML;
-            btnEl.disabled  = false;
-            alert('Error: ' + data.message);
+    try {
+        const response = await fetch(orderEndpoints.statusUpdate, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRFToken': csrfToken()
+            },
+            body: JSON.stringify({ order_id: orderId, status: 'completed' })
+        });
+        let data;
+        try {
+            data = await response.json();
+        } catch (error) {
+            throw new Error(`Server returned HTTP ${response.status} instead of JSON.`);
         }
-    })
-    .catch(() => { btnEl.innerHTML = origHTML; btnEl.disabled = false; });
+        if (!response.ok || data.success !== true) {
+            throw new Error(data.message || `Unable to complete order (HTTP ${response.status}).`);
+        }
+        window.location.reload();
+    } catch (error) {
+        btnEl.innerHTML = origHTML;
+        btnEl.disabled = false;
+        btnEl.dataset.submitting = 'false';
+        alert(error.message || 'Unable to mark this order as completed.');
+    }
 }
 
 // ── Status Filter with sorting by delivery date ──
@@ -2832,23 +2607,32 @@ function getManilaDateString(offsetDays = 0) {
     return manilaTime.toISOString().split('T')[0];
 }
 
+function applyMinimumDeliveryDate() {
+    const deliveryDateInput = document.getElementById('deliveryDate');
+    if (!deliveryDateInput) return;
+
+    const todayInManila = getManilaDateString(0);
+    deliveryDateInput.min = todayInManila;
+
+    if (deliveryDateInput.value && deliveryDateInput.value < todayInManila) {
+        deliveryDateInput.value = '';
+    }
+}
+
 // ── Delivery summary filter ──
 let tomorrowFilterActive = false;
 
 function filterTomorrowDeliveries() {
     tomorrowFilterActive = !tomorrowFilterActive;
-    const tomorrowStr = getManilaDateString(1);
-
     const rows = document.querySelectorAll('.orders-table tbody tr[data-id]');
     let visibleCount = 0;
 
     rows.forEach(row => {
-        const sortDate = row.querySelector('.delivery-date')?.getAttribute('data-sort') || '';
-        const isToday = sortDate === tomorrowStr;
+        const isTomorrow = row.getAttribute('data-is-tomorrow') === 'true';
 
         if (tomorrowFilterActive) {
-            row.style.display = isToday ? '' : 'none';
-            if (isToday) visibleCount++;
+            row.style.display = isTomorrow ? '' : 'none';
+            if (isTomorrow) visibleCount++;
         } else {
             row.style.display = '';
         }
@@ -2865,14 +2649,11 @@ function filterTomorrowDeliveries() {
 
 // ── Update tomorrow delivery count ──
 function updateTomorrowDeliveryCount() {
-    const tomorrowStr = getManilaDateString(1); // Get tomorrow in Manila timezone
-
     const rows = document.querySelectorAll('.orders-table tbody tr[data-id]');
     let tomorrowCount = 0;
 
     rows.forEach(row => {
-        const sortDate = row.querySelector('.delivery-date')?.getAttribute('data-sort') || '';
-        if (sortDate === tomorrowStr) {
+        if (row.getAttribute('data-is-tomorrow') === 'true') {
             tomorrowCount++;
         }
     });
@@ -2897,6 +2678,12 @@ function updateTomorrowDeliveryCount() {
 document.addEventListener('DOMContentLoaded', function () {
     sortOrdersWithOrd1First();
 
+    document.querySelectorAll('.btn-view-details').forEach(button => {
+        button.addEventListener('click', function () {
+            viewOrderDetails(this.dataset.orderId);
+        });
+    });
+
     // Auto-capitalize first letter of every word on these fields
     function titleCaseInput(el) {
         if (!el) return;
@@ -2916,25 +2703,50 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(updateTomorrowDeliveryCount, 100);
 });
 
-// Status filter dropdown - navigate to URL with status parameter
+// Status filter dropdown with persistent selection across pages and refreshes.
 (function() {
+    const STORAGE_KEY = 'ordersStatusFilter';
     const statusFilterEl = document.getElementById('statusFilter');
-    if (statusFilterEl) {
-        statusFilterEl.addEventListener('change', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const value = this.value;
-            console.log('Status filter changed to:', value);
-            if (value === 'all') {
-                window.location.href = '/orders/';
-            } else {
-                window.location.href = '/orders/?status=' + value;
-            }
-        });
+    if (!statusFilterEl) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const urlStatus = params.get('status');
+    const validStatuses = new Set(['all', 'pending', 'completed']);
+
+    if (urlStatus && validStatuses.has(urlStatus)) {
+        localStorage.setItem(STORAGE_KEY, urlStatus);
+        statusFilterEl.value = urlStatus;
+    } else {
+        const savedStatus = localStorage.getItem(STORAGE_KEY);
+        if (savedStatus && validStatuses.has(savedStatus) && savedStatus !== 'all') {
+            params.set('status', savedStatus);
+            window.location.replace(window.location.pathname + '?' + params.toString());
+            return;
+        }
+
+        statusFilterEl.value = 'all';
     }
+
+    statusFilterEl.addEventListener('change', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const value = validStatuses.has(this.value) ? this.value : 'all';
+        localStorage.setItem(STORAGE_KEY, value);
+
+        const nextParams = new URLSearchParams(window.location.search);
+        if (value === 'all') {
+            nextParams.delete('status');
+        } else {
+            nextParams.set('status', value);
+        }
+
+        const query = nextParams.toString();
+        window.location.href = window.location.pathname + (query ? '?' + query : '');
+    });
 })();
 
-// Filter to show only completed orders
+// Filter to show only completed orders this month
 function filterByCompleted() {
     const statusFilterEl = document.getElementById('statusFilter');
     if (statusFilterEl) {
@@ -2948,9 +2760,6 @@ window.addEventListener('click', function (e) {
     if (e.target === document.getElementById('addOrderModal'))        closeAddOrderModal();
     if (e.target === document.getElementById('orderDetailsModal'))    closeOrderDetailsModal();
     if (e.target === document.getElementById('completedOrdersModal')) closeCompletedOrdersModal();
-    if (e.target === document.getElementById('draftOrdersModal'))     closeDraftOrdersModal();
-    if (e.target === document.getElementById('deleteDraftConfirmModal')) closeDeletDraftModal();
-    if (e.target === document.getElementById('exitWarningModal'))     closeExitWarning();
 });
 
 // ── Export Orders to XLSX ──
@@ -3040,119 +2849,6 @@ function exportOrdersToCSV() {
     }
 }
 
-function handlePhotoUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        // Show local preview immediately
-        document.getElementById('photoPreviewImg').src = e.target.result;
-        document.getElementById('photoFileName').textContent = file.name;
-        document.getElementById('photoPlaceholder').style.display = 'none';
-        document.getElementById('photoPreview').style.display = 'block';
-        document.getElementById('photoUploadArea').style.borderColor = '#6366f1';
-        document.getElementById('photoUploadArea').style.background = '#f5f3ff';
-    };
-    reader.readAsDataURL(file);
-    
-    // Upload to server if order ID is available
-    const orderId = window._currentOrderId;
-    if (orderId && file) {
-        const formData = new FormData();
-        formData.append('order_id', orderId);
-        formData.append('photo', file);
-        
-        fetch('/upload-order-photo/', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Photo uploaded successfully
-                // Start polling for image updates to sync across devices
-                startImageSyncPolling(orderId);
-            }
-        })
-        .catch(error => console.error('Photo upload error:', error));
-    }
-}
-
-// Real-time image sync polling
-let imageSyncPollingInterval = null;
-let lastImageHash = null;
-
-function startImageSyncPolling(orderId) {
-    if (imageSyncPollingInterval) clearInterval(imageSyncPollingInterval);
-    
-    // Poll every 3 seconds for image updates from other devices
-    imageSyncPollingInterval = setInterval(() => {
-        if (!window._currentOrderId || window._currentOrderId !== orderId) {
-            clearInterval(imageSyncPollingInterval);
-            return;
-        }
-        
-        fetch(`/get-order-photo/?order_id=${orderId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.photo_url) {
-                    // Check if image hash changed (new image uploaded by another device)
-                    const newHash = data.photo_hash;
-                    if (newHash && newHash !== lastImageHash) {
-                        lastImageHash = newHash;
-                        // Update preview with new image
-                        const img = document.getElementById('photoPreviewImg');
-                        if (img) {
-                            img.src = data.photo_url + '?t=' + Date.now(); // Cache bust
-                        }
-                        const nameEl = document.getElementById('photoFileName');
-                        if (nameEl) {
-                            nameEl.textContent = data.photo_name || 'Order photo';
-                        }
-                    }
-                }
-            })
-            .catch(error => console.error('Image sync error:', error));
-    }, 3000); // Poll every 3 seconds
-}
-
-function stopImageSyncPolling() {
-    if (imageSyncPollingInterval) {
-        clearInterval(imageSyncPollingInterval);
-        imageSyncPollingInterval = null;
-    }
-}
-
-function removePhoto(event) {
-    event.stopPropagation();
-    const orderId = window._currentOrderId;
-    
-    // Delete photo from server if order exists
-    if (orderId) {
-        fetch('/delete-order-photo/', {
-            method: 'POST',
-            body: JSON.stringify({ order_id: orderId }),
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
-            }
-        })
-        .catch(error => console.error('Photo deletion error:', error));
-    }
-    
-    document.getElementById('orderPhoto').value = '';
-    document.getElementById('photoPreviewImg').src = '';
-    document.getElementById('photoFileName').textContent = '';
-    document.getElementById('photoPlaceholder').style.display = 'block';
-    document.getElementById('photoPreview').style.display = 'none';
-    document.getElementById('photoUploadArea').style.borderColor = '#d1d5db';
-    document.getElementById('photoUploadArea').style.background = '#f8fafc';
-}
-
 // Populate the next month deletion date in the warning card
 document.addEventListener('DOMContentLoaded', function() {
     // Get the deletion date from the context variable
@@ -3162,7 +2858,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     const formattedDate = nextDeletionDate.toLocaleDateString('en-US', options);
     
-    // Update both the warning card on main page and completed orders modal
+    // Update both the warning card on main page and completed orders this month modal
     const dateSpan1 = document.getElementById('nextMonthDeletionDate2');
     if (dateSpan1) {
         dateSpan1.textContent = formattedDate;
@@ -3171,5 +2867,8 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
  {% include 'logout_modal.html' %}
+
+
+<script src="{% static 'js/sidebar.js' %}"></script>
 </body>
 </html>

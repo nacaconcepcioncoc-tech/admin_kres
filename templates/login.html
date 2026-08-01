@@ -717,7 +717,11 @@
             </div>
             <form method="POST" id="loginForm">
                 {% csrf_token %}
-                <div class="messages-container" id="messagesContainer"></div>
+                <div class="messages-container" id="messagesContainer" role="alert" aria-live="polite">
+                    {% for message in messages %}
+                    <div class="message-error show">{{ message }}</div>
+                    {% endfor %}
+                </div>
                 <div class="form-group">
                     <label for="email">Email or Username</label>
                     <div class="input-wrap">
@@ -754,8 +758,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (loginForm) {
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            console.log('[LOGIN] Form submitted via AJAX');
-            
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const rememberMe = document.getElementById('remember').checked;
@@ -782,26 +784,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 const response = await fetch(loginUrl, {
                     method: 'POST',
                     body: formData,
-                    redirect: 'follow'
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
                 });
-                
-                console.log('[LOGIN] Response status:', response.status, 'URL:', response.url);
-                
-                // Check if login was successful by checking the final URL
-                if (!response.url.includes('/login')) {
-                    // Login successful, redirect to the new page
-                    console.log('[LOGIN] Success! Redirecting to:', response.url);
-                    window.location.href = response.url;
+
+                const data = await response.json();
+                if (response.ok && data.success && data.redirect_url) {
+                    window.location.assign(data.redirect_url);
                     return;
                 }
-                
-                // Still on login page - means login failed
-                console.log('[LOGIN] Failed - still on login page');
-                
-                const html = await response.text();
-                
-                // Extract error message or use default
-                const errorMsg = 'Invalid email or password. Please try again.';
+
+                const errorMsg = data.message || 'Incorrect username or password';
                 
                 // Show error message with animation
                 const errorDiv = document.createElement('div');
@@ -813,17 +809,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Trigger animation
                 setTimeout(() => errorDiv.classList.add('show'), 10);
                 
-                // Clear password field and focus email
+                // Preserve the page and username; refresh only the secret field.
                 document.getElementById('password').value = '';
-                document.getElementById('email').focus();
+                document.getElementById('password').focus();
                 
                 // Re-enable button
                 btn.disabled = false;
                 btn.textContent = originalBtnText;
                 
             } catch (error) {
-                console.error('[LOGIN] Error:', error);
-                
                 // Show generic error
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'message-error';

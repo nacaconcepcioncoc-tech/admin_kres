@@ -319,9 +319,9 @@
         .header-left { display:flex; align-items:center; gap:15px; }
         .header-left svg { width:24px; height:24px; color:#333; }
         .header h2 { font-size:28px; font-weight:600; color:#022F56; }
-        .notification-icon { position:relative; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; }
-        .notification-icon svg { width:28px; height:28px; color:#1a1a1a; }
-        .notification-badge { position:absolute; top:2px; right:2px; background:#ef4444; color:white; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
+        
+        
+        
         .page-content { padding:30px 35px; }
         .search-row { display:flex; justify-content:flex-end; margin-bottom:20px; }
         .search-wrap { position:relative; width:320px; }
@@ -364,143 +364,25 @@
         .modal-footer { padding:14px 26px; display:flex; justify-content:flex-end; border-top:1px solid #f0f0f0; }
         .btn-close { padding:8px 20px; background:#f3f4f6; color:#374151; border:1.5px solid #e5e7eb; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
         .btn-close:hover { background:#e5e7eb; }
-        .notification-dropdown { position:absolute; top:60px; right:20px; background:white; border:1px solid #e0e0e0; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.1); width:300px; max-height:400px; overflow-y:auto; z-index:1000; display:none; }
-        .notification-dropdown.show { display:block; }
-        .notification-header { padding:15px; border-bottom:1px solid #e0e0e0; font-weight:600; color:#1a1a1a; }
-        .notification-item { padding:12px 15px; border-bottom:1px solid #f0f0f0; cursor:pointer; }
-        .notification-item:hover { background:#f5f5f5; }
-        .notification-item-title { font-weight:600; color:#1a1a1a; margin-bottom:4px; }
-        .notification-item-text { font-size:12px; color:#666; }
-        .notification-footer { padding:10px 15px; text-align:center; border-top:1px solid #e0e0e0; color:#3d5a73; font-size:13px; font-weight:600; }
+        
+        
+        
+        
+        
+        
+        
+        
     </style>
+    <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
 </head>
 <body>
-<div class="sidebar" id="sidebar">
-    <div class="logo-section">
-        <div class="logo">
-            <img src="{% static 'images/logo.png' %}" alt="KRES Logo" style="width: 70px; height: 70px; object-fit: contain;">
-        </div>
-        <div class="logo-text">
-            <h1>KRES Co. Admin</h1>
-            <p>Management Panel</p>
-        </div>
-    </div>
+{% include 'includes/sidebar.html' with active_page='customers' %}
 
-    <div class="nav-section-label">Main Menu</div>
-
-    <nav class="nav-menu">
-        <a href="{% url 'pages:dashboard' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor"/>
-                    <rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/>
-                    <rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
-                    <rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor"/>
-                </svg>
-            </div>
-            <span class="nav-label">Dashboard</span>
-            <span class="nav-tooltip">Dashboard</span>
-        </a>
-        <a href="{% url 'pages:inventory' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 7H4C2.9 7 2 7.9 2 9V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V9C22 7.9 21.1 7 20 7Z" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M12 7V3M8 7V5M16 7V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <span class="nav-label">Inventory</span>
-            <span class="nav-tooltip">Inventory</span>
-        </a>
-        <a href="{% url 'pages:orders' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                    <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
-                    <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <span class="nav-label">Orders</span>
-            <span class="nav-tooltip">Orders</span>
-        </a>
-        <a href="{% url 'pages:customers' %}" class="nav-item active">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <circle cx="17" cy="10" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M2 20C2 16.5 5 14 9 14C13 14 16 16.5 16 20" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M13 20C13 17.5 15 16 17 16C19 16 22 17.5 22 20" stroke="currentColor" stroke-width="2" fill="none"/>
-                </svg>
-            </div>
-            <span class="nav-label">Customers</span>
-            <span class="nav-tooltip">Customers</span>
-        </a>
-        <a href="{% url 'pages:payments' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M2 10H22M6 14H10M6 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <span class="nav-label">Payments</span>
-            <span class="nav-tooltip">Payments</span>
-        </a>
-        <a href="{% url 'pages:reports' %}" class="nav-item">
-            <div class="nav-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M8 2V6M16 2V6M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    <circle cx="8" cy="14" r="1" fill="currentColor"/>
-                    <circle cx="12" cy="14" r="1" fill="currentColor"/>
-                    <circle cx="16" cy="14" r="1" fill="currentColor"/>
-                    <circle cx="8" cy="18" r="1" fill="currentColor"/>
-                    <circle cx="12" cy="18" r="1" fill="currentColor"/>
-                </svg>
-            </div>
-            <span class="nav-label">Reports</span>
-            <span class="nav-tooltip">Reports</span>
-        </a>
-    </nav>
-
-    <div class="user-profile">
-        <div class="avatar">A</div>
-        <div class="user-info">
-            <div class="user-name">Admin User</div>
-            <div class="user-email">Administrator</div>
-        </div>
-        <a href="#" onclick="openLogoutModal(); return false;" style="text-decoration:none;display:inline-flex;align-items:center;">
-            <svg class="logout-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </a>
-    </div>
-</div>
-
-<!-- Sidebar Toggle Button -->
-<div class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="15 18 9 12 15 6"/>
-    </svg>
-</div>
-
-<!-- Main Content -->
 <div class="main-content" id="mainContent">
     <header class="header">
         <div class="header-left">
             <svg viewBox="0 0 24 24" fill="none"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             <h2>Customers</h2>
-        </div>
-        <div class="notification-icon" onclick="toggleNotifications(event)">
-            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="width: 28px; height: 28px;"><path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.89 22 12 22ZM18 16V11C18 7.93 16.36 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.64 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z"/></svg>
-            {% with total=low_stock_count|add:pending_payments|add:new_customers_count %}{% if total > 0 %}<span class="notification-badge">{{ total }}</span>{% endif %}{% endwith %}
-            <div id="notificationDropdown" class="notification-dropdown">
-                <div class="notification-header">Notifications</div>
-                {% if new_customers_count > 0 %}<a href="{% url 'pages:customers' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">👥 New Customers</div><div class="notification-item-text">{{ new_customers_count }} new customer(s) today</div></div></a>{% endif %}
-                {% if low_stock_count > 0 %}<a href="{% url 'pages:inventory' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">⚠️ Low Stock Alert</div><div class="notification-item-text">{{ low_stock_count }} product(s) running low</div></div></a>{% endif %}
-                {% if pending_payments > 0 %}<a href="{% url 'pages:payments' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">💳 Pending Payments</div><div class="notification-item-text">{{ pending_payments }} payment(s) waiting</div></div></a>{% endif %}
-                {% with total=low_stock_count|add:pending_payments|add:new_customers_count %}
-                    <div class="notification-footer">{% if total == 0 %}No new notifications{% else %}All notifications{% endif %}</div>
-                {% endwith %}
-            </div>
         </div>
     </header>
 
@@ -540,16 +422,16 @@
                 <tbody>
                     {% for customer in customers %}
                     <tr
-                        data-name="{{ customer.first_name }} {{ customer.last_name }}"
-                        data-phone="{{ customer.phone }}"
+                        data-name="{{ customer.display_customer_name }}"
+                        data-phone="{{ customer.display_customer_phone }}"
                         data-address="{{ customer.address }}"
                         data-orders="{{ customer.orders.count }}"
                         data-total="₱ {{ customer.get_total_spent|floatformat:2 }}"
                         data-items="{% for order in customer.orders.all %}{% for item in order.items.all %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if not forloop.parentloop.last %} | {% endif %}{% endfor %}"
                         data-delivery-type="{% with latest=customer.orders.first %}{% if latest %}{% if '[PICK UP]' in latest.notes %}pickup{% else %}dropoff{% endif %}{% endif %}{% endwith %}"
                     >
-                        <td class="name-cell">{{ customer.first_name }} {{ customer.last_name }}</td>
-                        <td>{{ customer.phone|default:"—" }}</td>
+                        <td class="name-cell">{{ customer.display_customer_name }}</td>
+                        <td>{{ customer.display_customer_phone|default:"—" }}</td>
                         <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                             {% with latest=customer.orders.first %}
                                 {% if latest %}{% for item in latest.items.all %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}—{% endif %}
@@ -602,11 +484,9 @@
         <div class="modal-body">
             <div class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><div class="dlabel">Full Name</div><div class="dvalue" id="mName">—</div></div></div>
             <div class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.82 2 2 0 012 .9h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6z"/></svg></div><div><div class="dlabel">Contact Number</div><div class="dvalue" id="mPhone">—</div></div></div>
-            <div id="mDeliveryRow" class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div><div class="dlabel" id="mDeliveryLabel">Address</div><div class="dvalue" id="mAddress">—</div></div></div>
             <div id="mDeliveryTypeRow" class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><div><div class="dlabel">Delivery Type</div><div class="dvalue" id="mDeliveryType">—</div></div></div>
             <div class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div><div><div class="dlabel">All Items Ordered</div><div class="dvalue" id="mItems" style="white-space:pre-wrap;">—</div></div></div>
             <div class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="dlabel">Total Spent</div><div class="dvalue" id="mTotal">—</div></div></div>
-            <div class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><div><div class="dlabel">Total Orders</div><div class="dvalue" id="mOrders">—</div></div></div>
         </div>
         <div class="modal-footer"><button class="btn-close" onclick="closeModal()">Close</button></div>
     </div>
@@ -619,33 +499,24 @@ function viewCustomer(btn) {
     document.getElementById('mPhone').textContent   = r.getAttribute('data-phone')   || '—';
     document.getElementById('mItems').textContent   = (r.getAttribute('data-items') || '—').replace(/ \| /g, '\n');
     document.getElementById('mTotal').textContent   = r.getAttribute('data-total')   || '—';
-    document.getElementById('mOrders').textContent  = r.getAttribute('data-orders')  || '0';
     document.getElementById('mSub').textContent     = r.getAttribute('data-name')    || '';
     
-    // Handle delivery type
+    // Handle delivery type without referencing removed address elements
     const deliveryType = r.getAttribute('data-delivery-type') || '';
-    const deliveryRow = document.getElementById('mDeliveryRow');
     const deliveryTypeRow = document.getElementById('mDeliveryTypeRow');
-    const deliveryLabel = document.getElementById('mDeliveryLabel');
-    const addressValue = document.getElementById('mAddress');
     const deliveryTypeValue = document.getElementById('mDeliveryType');
-    
+
     if (deliveryType === 'pickup') {
-        deliveryLabel.textContent = 'Delivery Type';
-        addressValue.textContent = 'Pick Up';
         deliveryTypeValue.textContent = 'Local Pick Up';
         if (deliveryTypeRow) deliveryTypeRow.style.display = 'flex';
     } else if (deliveryType === 'dropoff') {
-        deliveryLabel.textContent = 'Delivery Address';
-        addressValue.textContent = r.getAttribute('data-address') || '—';
         deliveryTypeValue.textContent = 'Local Drop Off';
         if (deliveryTypeRow) deliveryTypeRow.style.display = 'flex';
     } else {
-        addressValue.textContent = r.getAttribute('data-address') || '—';
         deliveryTypeValue.textContent = '—';
         if (deliveryTypeRow) deliveryTypeRow.style.display = 'none';
     }
-    
+
     document.getElementById('customerModal').classList.add('show');
 }
 function closeModal() { document.getElementById('customerModal').classList.remove('show'); }
@@ -677,51 +548,12 @@ if (searchInput) {
 }
 
 // Sidebar collapse toggle with localStorage persistence
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const toggle = document.getElementById('sidebarToggle');
-    const main = document.getElementById('mainContent');
-    const isCollapsed = sidebar.classList.toggle('collapsed');
-    localStorage.setItem('sidebarCollapsed', isCollapsed);
-    updateSidebarLayout();
-}
 
-function updateSidebarLayout() {
-    const sidebar = document.getElementById('sidebar');
-    const toggle = document.getElementById('sidebarToggle');
-    const main = document.getElementById('mainContent');
-    
-    if (!main) return;
-    
-    if (sidebar.classList.contains('collapsed')) {
-        toggle.style.left = '72px';
-        main.style.marginLeft = '72px';
-        main.style.width = 'calc(100% - 72px)';
-    } else {
-        toggle.style.left = '260px';
-        main.style.marginLeft = '260px';
-        main.style.width = 'calc(100% - 260px)';
-    }
-}
+
+
 
 // Restore sidebar state on page load from localStorage
-document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('sidebar');
-    const main = document.getElementById('mainContent');
-    
-    if (!sidebar || !main) return;
-    
-    // Restore saved state after sufficient delay to ensure DOM and all other scripts are ready
-    setTimeout(() => {
-        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-        if (isCollapsed) {
-            sidebar.classList.add('collapsed');
-        } else {
-            sidebar.classList.remove('collapsed');
-        }
-        updateSidebarLayout();
-    }, 50);
-});
+
 
 // Navigation without smooth transition
 function smoothNavigation(url) {
@@ -729,17 +561,6 @@ function smoothNavigation(url) {
     window.location.href = url;
 }
 
-function toggleNotifications(event) {
-    event.stopPropagation();
-    document.getElementById('notificationDropdown').classList.toggle('show');
-}
-document.addEventListener('click', function(e) {
-    const icon = document.querySelector('.notification-icon');
-    if (icon && !icon.contains(e.target)) {
-        const dd = document.getElementById('notificationDropdown');
-        if (dd) dd.classList.remove('show');
-    }
-});
 </script>
 
 <script>
@@ -757,5 +578,7 @@ document.addEventListener('click', function(e) {
 </script>
 
   {% include 'logout_modal.html' %}
+
+<script src="{% static 'js/sidebar.js' %}"></script>
 </body>
 </html>

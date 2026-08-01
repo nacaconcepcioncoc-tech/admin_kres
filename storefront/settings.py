@@ -12,20 +12,27 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+import sys
 import dj_database_url
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me-in-production')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-local-development-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+
+if not DEBUG and SECRET_KEY == 'django-insecure-local-development-only':
+    raise RuntimeError('SECRET_KEY must be set when DEBUG=False.')
 
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,192.168.1.42').split(',') if host.strip()]
 
@@ -39,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'storages',
     'pages',
 ]
@@ -50,6 +58,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'pages.middleware.RememberMeSessionMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -84,6 +93,25 @@ DATABASES = {
     )
 }
 
+# Never create or destroy test databases on the configured Supabase server.
+# Django's test command uses an isolated in-memory SQLite database instead;
+# normal development and deployment continue using DATABASE_URL unchanged.
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
+
+# Supabase Storage configuration used by Employee Standing profile photos.
+# The database still uses DATABASE_URL; these values only build public Storage URLs
+# when a row stores an object path instead of a full URL.
+SUPABASE_URL = os.environ.get('SUPABASE_URL', '').rstrip('/')
+SUPABASE_EMPLOYEE_PHOTOS_BUCKET = os.environ.get(
+    'SUPABASE_EMPLOYEE_PHOTOS_BUCKET',
+    'employee-profile-photos',
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -180,8 +208,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Authentication settings
 LOGIN_URL = 'pages:login'
 LOGIN_REDIRECT_URL = 'pages:dashboard'
+LOGOUT_REDIRECT_URL = 'pages:login'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 14  # 14 days
+REMEMBER_ME_SESSION_AGE = 60 * 60 * 24 * 14
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 # CSRF settings - ensure CSRF token is always available for AJAX requests
 CSRF_COOKIE_SECURE = not DEBUG

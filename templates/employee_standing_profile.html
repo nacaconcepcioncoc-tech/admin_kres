@@ -1,0 +1,128 @@
+{% load static %}<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ employee.full_name }} - Employee Standing</title><style>*{box-sizing:border-box;margin:0;padding:0} body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f7fa;color:#1f2937}.sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;background:linear-gradient(180deg,#1f3555,#16273e);color:#fff;padding:18px 12px;overflow-y:auto;z-index:100}.logo-section{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:8px}.logo img{width:60px;height:60px;object-fit:contain}.logo-text h1{font-size:18px}.logo-text p{font-size:12px;opacity:.8}.nav-menu{display:flex;flex-direction:column;gap:6px}.nav-item{display:flex;align-items:center;gap:10px;text-decoration:none;color:#e5edf8;padding:10px 12px;border-radius:10px;transition:.2s}.nav-item:hover,.nav-item.active{background:rgba(96,165,250,.22);color:#fff}.nav-icon-wrap{width:20px;text-align:center}.nav-label{font-size:14px;font-weight:600}.main-content{margin-left:260px;min-height:100vh;padding:22px 26px}.header{display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:12px;padding:14px 18px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:16px}.header h2{font-size:22px;color:#0f172a}@media(max-width:800px){.sidebar{width:76px;padding:14px 8px}.logo-text,.nav-label{display:none}.main-content{margin-left:76px;padding:14px}}
+.back-link{color:#3d5a73;text-decoration:none;font-weight:700}.profile-head{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#fff;border-radius:14px;padding:20px;box-shadow:0 3px 12px rgba(2,24,46,.07);margin-bottom:16px}.profile-id{display:flex;align-items:center;gap:14px}.avatar,.profile-photo{width:68px;height:68px;border-radius:50%;flex-shrink:0}.avatar{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#5b8fb8,#355675);color:#fff;font-size:24px;font-weight:800}.profile-photo{display:block;object-fit:cover;border:2px solid #e5edf5;background:#eef3f8}.profile-name{font-size:22px;font-weight:800}.position{color:#64748b;margin-top:4px}.btn-primary{border:0;background:#3d5a73;color:#fff;padding:11px 16px;border-radius:9px;font-weight:700;cursor:pointer}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}.summary-card{background:#fff;border-radius:12px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}.summary-label{font-size:12px;color:#64748b;text-transform:uppercase;font-weight:700}.summary-value{font-size:28px;font-weight:800;margin-top:8px}.records-section{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}.section-title{font-size:18px;margin-bottom:14px}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{padding:12px;text-align:left;border-bottom:1px solid #edf1f5;font-size:13px}th{background:#f8fafc;color:#475569}.type-star{color:#15803d;font-weight:800}.type-demerit{color:#b91c1c;font-weight:800}.empty-records{text-align:center;color:#94a3b8;padding:24px}.modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:1000;align-items:center;justify-content:center;padding:16px}.modal.show{display:flex}.modal-card{background:#fff;width:100%;max-width:520px;border-radius:14px;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.2)}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.close-btn{border:0;background:#eef2f7;width:32px;height:32px;border-radius:8px;cursor:pointer}.form-grid{display:grid;gap:13px}label{font-size:13px;font-weight:700;color:#334155}input,select,textarea{width:100%;margin-top:6px;padding:10px 12px;border:1px solid #dbe3ee;border-radius:8px;font:inherit}textarea{min-height:90px;resize:vertical}.form-error{display:none;color:#b91c1c;background:#fef2f2;padding:9px;border-radius:8px;font-size:13px}.saving{opacity:.65;pointer-events:none}@media(max-width:700px){.profile-head{align-items:flex-start;flex-direction:column}.summary-grid{grid-template-columns:1fr}}.profile-photo-fallback{display:flex;align-items:center;justify-content:center;font-weight:700;font-size:2rem;background:#eef2f7;color:#334155;}
+
+/* Shared KRES sidebar and header — matched with dashboard/orders/customers/payments */
+html,body{height:100%}
+body{display:flex;min-height:100vh;width:100%;overflow-x:hidden;background:#edf2f6}
+.sidebar{width:260px;background:#02182E;color:#fff;display:flex;flex-direction:column;padding:0;position:fixed;height:100vh;left:0;top:0;box-shadow:4px 0 20px rgba(2,24,46,.18);overflow:hidden;z-index:100;transition:width .3s cubic-bezier(.4,0,.2,1)}
+.sidebar.collapsed{width:72px}
+.sidebar-toggle{position:fixed;top:50%;transform:translateY(-50%);left:260px;width:18px;height:48px;background:#02182E;border-radius:0 8px 8px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:200;box-shadow:3px 0 8px rgba(2,24,46,.2);pointer-events:auto;transition:left .3s cubic-bezier(.4,0,.2,1)}
+.sidebar-toggle:hover{background:#0a2a46}
+.sidebar-toggle svg{color:#85C4E4;transition:transform .3s ease}
+.sidebar.collapsed~.sidebar-toggle{left:72px}
+.sidebar.collapsed~.sidebar-toggle svg{transform:rotate(180deg)}
+.logo-section{display:flex;align-items:center;gap:12px;padding:22px 16px 20px;border-bottom:1px solid rgba(255,255,255,.08);white-space:nowrap;overflow:hidden}
+.logo{flex-shrink:0;width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.95);border:2px solid rgba(133,196,228,.4);box-shadow:0 2px 10px rgba(133,196,228,.25);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.logo img{width:42px;height:42px;object-fit:cover;border-radius:50%}
+.logo-text{overflow:hidden}
+.logo-text h1{font-family:'Times New Roman',serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:2px;white-space:nowrap}
+.logo-text p{font-size:10px;color:#7aaec8;font-weight:500;letter-spacing:.8px;text-transform:uppercase;white-space:nowrap}
+.sidebar.collapsed .logo-text{opacity:0;pointer-events:none}
+.nav-section-label{padding:18px 20px 6px;font-size:10px;font-weight:700;color:rgba(133,196,228,.45);text-transform:uppercase;letter-spacing:1.2px;white-space:nowrap;overflow:hidden}
+.sidebar.collapsed .nav-section-label{opacity:0;height:0;padding:0}
+.nav-menu{flex:1;padding:4px 10px;overflow-y:auto;overflow-x:hidden;display:block}
+.nav-item{display:flex;align-items:center;gap:12px;padding:0 10px;height:48px;color:#8ab5cc;text-decoration:none;border-radius:10px;margin-bottom:3px;font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;position:relative}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#d6edf7}
+.nav-item.active{background:#85C4E4;color:#02182E;font-weight:600;box-shadow:0 4px 14px rgba(133,196,228,.3)}
+.nav-icon-wrap{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(255,255,255,.06)}
+.nav-item:hover .nav-icon-wrap{background:rgba(255,255,255,.12)}
+.nav-item.active .nav-icon-wrap{background:rgba(2,24,46,.15)}
+.nav-item svg{width:17px;height:17px;flex-shrink:0}
+.nav-label{flex:1}
+.sidebar.collapsed .nav-label{opacity:0;pointer-events:none}
+.nav-tooltip{display:none;position:fixed;left:82px;background:#85C4E4;color:#02182E;font-size:12px;font-weight:700;padding:5px 12px;border-radius:7px;white-space:nowrap;pointer-events:none;z-index:999;box-shadow:0 4px 12px rgba(2,24,46,.2)}
+.sidebar.collapsed .nav-item:hover .nav-tooltip{display:block}
+.user-profile{display:flex;align-items:center;gap:10px;padding:14px;border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.12);white-space:nowrap;overflow:hidden}
+.user-profile .avatar{width:38px;height:38px;background:#85C4E4;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#02182E;flex-shrink:0}
+.user-info{flex:1;overflow:hidden}
+.sidebar.collapsed .user-info{opacity:0;pointer-events:none}
+.user-name{font-size:13px;font-weight:600;color:#fff;white-space:nowrap}
+.user-email{font-size:11px;color:#7aaec8;white-space:nowrap}
+.logout-icon{width:18px;height:18px;color:#7aaec8;cursor:pointer;flex-shrink:0}
+.logout-icon:hover{color:#85C4E4}
+.main-content{margin-left:260px;flex:1;width:calc(100% - 260px);background:#edf2f6;min-height:100vh;transition:margin-left .3s cubic-bezier(.4,0,.2,1),width .3s cubic-bezier(.4,0,.2,1)}
+.main-content.expanded{margin-left:72px;width:calc(100% - 72px)}
+.header{background:#fff;padding:20px 32px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(26,77,110,.06);border-bottom:1px solid #e3eaf0;margin:0}
+.header-left{display:flex;align-items:center;gap:15px}
+.header-left svg{width:24px;height:24px;color:#333}
+.header h2{font-size:22px;color:#1f2937;margin:0}
+.header-back{color:#1A4D6E;text-decoration:none;font-size:13px;font-weight:600}
+.header-back:hover{text-decoration:underline}
+@media(max-width:768px){
+  .sidebar{width:72px}
+  .main-content{margin-left:72px;width:calc(100% - 72px)}
+  .logo-text,.nav-label,.user-info,.nav-section-label{display:none}
+  .logo-section{justify-content:center;padding-left:0;padding-right:0}
+  .nav-item{justify-content:center;padding:0}
+  .nav-icon-wrap{margin:0 auto}
+  .user-profile{justify-content:center}
+  .sidebar-toggle{display:none}
+  .header{padding:14px 16px}
+}
+
+</style></head><body>
+<div class="sidebar" id="sidebar">
+  <div class="logo-section">
+    <div class="logo"><img src="{% static 'images/logo.png' %}" alt="KRES Logo"></div>
+    <div class="logo-text"><h1>KRES Co. Admin</h1><p>Management Panel</p></div>
+  </div>
+  <div class="nav-section-label">Main Menu</div>
+  <nav class="nav-menu">
+    <a href="{% url 'pages:dashboard' %}" class="nav-item" onclick="smoothNavigation('{% url 'pages:dashboard' %}');return false;">
+      <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor"/></svg></div>
+      <span class="nav-label">Dashboard</span><span class="nav-tooltip">Dashboard</span>
+    </a>
+    <a href="{% url 'pages:orders' %}" class="nav-item" onclick="smoothNavigation('{% url 'pages:orders' %}');return false;">
+      <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/><path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+      <span class="nav-label">Orders</span><span class="nav-tooltip">Orders</span>
+    </a>
+    <a href="{% url 'pages:customers' %}" class="nav-item" onclick="smoothNavigation('{% url 'pages:customers' %}');return false;">
+      <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="10" r="3" stroke="currentColor" stroke-width="2"/><path d="M2 20C2 16.5 5 14 9 14C13 14 16 16.5 16 20" stroke="currentColor" stroke-width="2"/><path d="M13 20C13 17.5 15 16 17 16C19 16 22 17.5 22 20" stroke="currentColor" stroke-width="2"/></svg></div>
+      <span class="nav-label">Customers</span><span class="nav-tooltip">Customers</span>
+    </a>
+    <a href="{% url 'pages:payments' %}" class="nav-item" onclick="smoothNavigation('{% url 'pages:payments' %}');return false;">
+      <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M2 10H22M6 14H10M6 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+      <span class="nav-label">Payments</span><span class="nav-tooltip">Payments</span>
+    </a>
+    <a href="{% url 'pages:reports' %}" class="nav-item" onclick="smoothNavigation('{% url 'pages:reports' %}');return false;">
+      <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 2V6M16 2V6M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="8" cy="14" r="1" fill="currentColor"/><circle cx="12" cy="14" r="1" fill="currentColor"/><circle cx="16" cy="14" r="1" fill="currentColor"/><circle cx="8" cy="18" r="1" fill="currentColor"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg></div>
+      <span class="nav-label">Reports</span><span class="nav-tooltip">Reports</span>
+    </a>
+    <a href="{% url 'pages:employee_standing' %}" class="nav-item active" onclick="smoothNavigation('{% url 'pages:employee_standing' %}');return false;">
+      <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20C4 16 7.5 13 12 13C16.5 13 20 16 20 20" stroke="currentColor" stroke-width="2"/></svg></div>
+      <span class="nav-label">Employee Standing</span><span class="nav-tooltip">Employee Standing</span>
+    </a>
+  </nav>
+  <div class="user-profile">
+    <div class="avatar">A</div>
+    <div class="user-info"><div class="user-name">Admin User</div><div class="user-email">Administrator</div></div>
+    <a href="#" onclick="openLogoutModal();return false;" style="text-decoration:none;display:inline-flex;align-items:center;">
+      <svg class="logout-icon" viewBox="0 0 24 24" fill="none"><path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 3.46957 3 5 3H9M16 17L21 12M21 12L16 7M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+</div>
+<div class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+</div>
+<main class="main-content" id="mainContent"><header class="header"><div class="header-left"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><h2>Employee Profile</h2></div><a class="header-back" href="{% url 'pages:employee_standing' %}">← Back to Employees</a></header><section class="profile-head"><div class="profile-id">{% if employee.profile_photo_url %}<img class="profile-photo" src="{{ employee.profile_photo_url }}" alt="{{ employee.full_name }} profile photo" referrerpolicy="no-referrer">{% else %}<div class="profile-photo profile-photo-fallback" aria-label="{{ employee.full_name }} has no profile photo">{{ employee.full_name|slice:":1"|upper }}</div>{% endif %}<div><div class="profile-name">{{ employee.full_name }}</div><div class="position">Position: {{ employee.position }}</div></div></div><button class="btn-primary" id="openRecordModal">Add Performance Record</button></section><section class="summary-grid"><div class="summary-card"><div class="summary-label">Current Monthly Points</div><div class="summary-value" id="monthlyPoints">{{ employee.monthly_points }}</div></div><div class="summary-card"><div class="summary-label">Stars Earned</div><div class="summary-value" id="totalStars">{{ employee.total_stars }}</div></div><div class="summary-card"><div class="summary-label">Demerits</div><div class="summary-value" id="totalDemerits">{{ employee.total_demerits }}</div></div><div class="summary-card"><div class="summary-label">Performance Status</div><div class="summary-value" id="performanceStatus">{{ employee.performance_status }}</div></div></section><section class="records-section"><h3 class="section-title">Performance Records</h3><div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Points</th></tr></thead><tbody id="recordsBody">{% for record in performance_records %}<tr><td>{{ record.record_date|date:'m/d/Y' }}</td><td class="type-{{ record.record_type|lower }}">{{ record.get_record_type_display }}</td><td>{{ record.description }}</td><td>{% if record.record_type == 'positive' %}+{% else %}-{% endif %}{{ record.points }}</td></tr>{% empty %}<tr id="emptyRecords"><td colspan="4" class="empty-records">No performance records yet.</td></tr>{% endfor %}</tbody></table></div></section></main><div class="modal" id="recordModal"><div class="modal-card"><div class="modal-head"><h3>Add Performance Record</h3><button class="close-btn" id="closeRecordModal" type="button">×</button></div><form id="recordForm" class="form-grid"><div id="formError" class="form-error"></div><label>Record Type<select name="record_type" required><option value="positive">Positive</option><option value="negative">Negative</option></select></label><label>Reason/Description<textarea name="description" required maxlength="1000"></textarea></label><label>Points<input name="points" type="number" min="1" max="100" value="1" required></label><label>Date<input name="record_date" type="date" value="{{ today|date:'Y-m-d' }}" required></label><button class="btn-primary" id="saveRecord" type="submit">Save</button></form></div></div>{% include 'logout_modal.html' %}<script>const modal=document.getElementById('recordModal'),form=document.getElementById('recordForm'),errorBox=document.getElementById('formError'),saveBtn=document.getElementById('saveRecord');document.getElementById('openRecordModal').onclick=()=>{form.dataset.submissionKey=crypto.randomUUID();modal.classList.add('show')};document.getElementById('closeRecordModal').onclick=()=>modal.classList.remove('show');modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('show')});function cookie(name){return document.cookie.split(';').map(v=>v.trim()).find(v=>v.startsWith(name+'='))?.split('=').slice(1).join('=')||''}form.addEventListener('submit',async e=>{e.preventDefault();errorBox.style.display='none';saveBtn.textContent='Saving...';form.classList.add('saving');const data=Object.fromEntries(new FormData(form).entries());data.submission_key=form.dataset.submissionKey;try{const response=await fetch("{% url 'pages:employee_add_performance_ajax' employee.id %}",{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':decodeURIComponent(cookie('csrftoken'))},body:JSON.stringify(data)});const result=await response.json();if(!response.ok||!result.success)throw new Error(result.message||'Unable to save record.');document.getElementById('monthlyPoints').textContent=result.summary.monthly_points;document.getElementById('totalStars').textContent=result.summary.total_stars;document.getElementById('totalDemerits').textContent=result.summary.total_demerits;document.getElementById('performanceStatus').textContent=result.summary.performance_status;document.getElementById('emptyRecords')?.remove();const tr=document.createElement('tr');tr.innerHTML=`<td>${result.record.date}</td><td class="type-${result.record.type_value}">${result.record.type}</td><td></td><td>${result.record.points}</td>`;tr.children[2].textContent=result.record.description;document.getElementById('recordsBody').prepend(tr);form.reset();form.elements.record_date.value='{{ today|date:'Y-m-d' }}';form.elements.points.value='1';modal.classList.remove('show')}catch(err){errorBox.textContent=err.message;errorBox.style.display='block'}finally{saveBtn.textContent='Save';form.classList.remove('saving')}});</script>
+<script>
+function toggleSidebar(){
+  const sidebar=document.getElementById('sidebar');
+  const main=document.getElementById('mainContent');
+  const collapsed=sidebar.classList.toggle('collapsed');
+  if(main) main.classList.toggle('expanded',collapsed);
+  localStorage.setItem('sidebarCollapsed',collapsed);
+}
+function smoothNavigation(url){window.location.href=url}
+document.addEventListener('DOMContentLoaded',function(){
+  const sidebar=document.getElementById('sidebar');
+  const main=document.getElementById('mainContent');
+  const collapsed=localStorage.getItem('sidebarCollapsed')==='true';
+  if(collapsed&&window.innerWidth>768){
+    sidebar.classList.add('collapsed');
+    if(main) main.classList.add('expanded');
+  }
+});
+</script>
+
+</body></html>

@@ -1,0 +1,23 @@
+Calculation flow (Manila current month only)
+- Positive records add points; Negative records subtract points.
+- 90+ net points: 2 Stars / Excellent
+- 70-89 net points: 1 Star / Good
+- 0-69 net points: No Award
+- Below 0 net points: 1 Demerit / Needs Improvement
+- No current-month records: Not Yet Evaluated
+- Results recalculate on model save/edit/delete and after AJAX submission.
+- Stars are capped at 2 and demerits at 1.
+
+Monthly reset
+- Render cron runs at 16:05 UTC on day 1 (00:05 Asia/Manila).
+- The command checks Manila date and uses MonthlyCleanupRun for idempotency.
+- Before deletion, one MonthlyPerformanceSummary per employee/month is saved.
+- Previous-month PerformanceRecord rows are deleted.
+- Employee monthly points/stars/demerits/status reset to defaults.
+- Employee names, positions, and photos are preserved.
+
+Deployment
+1. Replace files using the included paths.
+2. Run: python manage.py migrate
+3. Push render.yaml and ensure the Render cron service is deployed.
+4. The Django migration applies the schema directly to the configured Supabase PostgreSQL database; separate SQL is not required.
