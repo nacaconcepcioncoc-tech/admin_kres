@@ -53,6 +53,11 @@ urlpatterns = [
         name="order_update_ajax",
     ),
     path(
+        "ajax/orders/update-schedule-note/",
+        views.order_update_schedule_note_ajax,
+        name="order_update_schedule_note_ajax",
+    ),
+    path(
         "ajax/payments/update/",
         views.payment_update_ajax,
         name="payment_update_ajax",

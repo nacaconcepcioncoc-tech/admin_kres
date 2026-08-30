@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.conf import settings
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -1861,3 +1861,256 @@ class OrderWorkflowTests(TestCase):
         self.assertTrue(response.json()['can_pay_balance'])
         order.refresh_from_db()
         self.assertEqual(order.balance_payment, Decimal('999.00'))
+
+
+class OrderScheduleNoteEditTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            'schedule-editor', password='secret'
+        )
+        self.client.force_login(self.user)
+        self.customer = Customer.objects.create(
+            first_name='Schedule', last_name='Customer',
+            email='schedule-edit@example.com', phone='09170009999',
+        )
+        self.order = Order.objects.create(
+            customer=self.customer,
+            order_number='SCHEDULE-EDIT-1',
+            status='pending',
+            notes='[DROP OFF] Original note',
+            delivery_date=date(2026, 9, 5),
+            delivery_time=time(10, 0),
+            sender_name='Schedule Customer',
+            sender_phone='09170009999',
+            receiver_name='Receiver Name',
+            customer_phone='09170008888',
+            delivery_address='Original address',
+            rider_name='Original Rider',
+            subtotal=Decimal('2200.00'),
+            total=Decimal('2200.00'),
+            balance_payment=Decimal('1200.00'),
+            additional_payment='legacy untouched',
+            delivery_fee_charge=Decimal('150.00'),
+        )
+        self.item = OrderItem.objects.create(
+            order=self.order,
+            product=None,
+            quantity=1,
+            unit_price=Decimal('2200.00'),
+            product_name='TEST BOUQUET',
+            product_sku='TEST-SCHEDULE-1',
+        )
+        self.payment = Payment.objects.create(
+            order=self.order,
+            amount=Decimal('1000.00'),
+            payment_method='cash',
+            payment_status=Payment.STATUS_DOWN_PAYMENT,
+            payment_type=Payment.TYPE_DOWN_PAYMENT,
+            payment_date=timezone.make_aware(datetime(2026, 8, 30, 9, 0)),
+        )
+        self.endpoint = reverse('pages:order_update_schedule_note_ajax')
+
+    def post_update(self, payload, client=None):
+        return (client or self.client).post(
+            self.endpoint,
+            data=json.dumps({'order_id': self.order.pk, **payload}),
+            content_type='application/json',
+        )
+
+    def test_all_supported_date_time_note_combinations_update_same_order(self):
+        combinations = (
+            ({'delivery_date': '2026-09-06'}, date(2026, 9, 6), time(10, 0), 'Original note'),
+            ({'delivery_time': '11:15'}, date(2026, 9, 6), time(11, 15), 'Original note'),
+            ({'delivery_date': '2026-09-07', 'delivery_time': '12:30'}, date(2026, 9, 7), time(12, 30), 'Original note'),
+            ({'special_note': 'Replacement note'}, date(2026, 9, 7), time(12, 30), 'Replacement note'),
+            ({'delivery_date': '2026-09-08', 'special_note': 'Date and note'}, date(2026, 9, 8), time(12, 30), 'Date and note'),
+            ({'delivery_time': '13:45', 'special_note': 'Time and note'}, date(2026, 9, 8), time(13, 45), 'Time and note'),
+            ({'delivery_date': '2026-09-09', 'delivery_time': '14:00', 'special_note': 'All three'}, date(2026, 9, 9), time(14, 0), 'All three'),
+        )
+        original_order_number = self.order.order_number
+
+        for payload, expected_date, expected_time, expected_note in combinations:
+            with self.subTest(payload=payload):
+                response = self.post_update(payload)
+                self.assertEqual(response.status_code, 200, response.content)
+                self.order.refresh_from_db()
+                self.assertEqual(self.order.pk, response.json()['order_id'])
+                self.assertEqual(self.order.order_number, original_order_number)
+                self.assertEqual(self.order.delivery_date, expected_date)
+                self.assertEqual(self.order.delivery_time, expected_time)
+                self.assertEqual(self.order.notes, f'[DROP OFF] {expected_note}')
+
+        self.assertEqual(Order.objects.filter(pk=self.order.pk).count(), 1)
+        self.assertEqual(Customer.objects.filter(pk=self.customer.pk).count(), 1)
+        self.assertEqual(OrderItem.objects.filter(pk=self.item.pk).count(), 1)
+        self.assertEqual(Payment.objects.filter(pk=self.payment.pk).count(), 1)
+
+    def test_special_note_can_be_added_replaced_and_cleared_for_any_status_or_type(self):
+        scenarios = (
+            ('pending', '[DROP OFF] ', 'Added drop-off note'),
+            ('completed', '[PICK UP] Existing pickup note', 'Replaced pickup note'),
+            ('completed', '[PICK UP] Replaced pickup note', ''),
+        )
+        for status, stored_note, new_note in scenarios:
+            with self.subTest(status=status, stored_note=stored_note, new_note=new_note):
+                self.order.status = status
+                self.order.notes = stored_note
+                self.order.save(update_fields=['status', 'notes', 'updated_at'])
+                response = self.post_update({'special_note': new_note})
+                self.assertEqual(response.status_code, 200, response.content)
+                self.order.refresh_from_db()
+                prefix = '[PICK UP]' if 'PICK UP' in stored_note else '[DROP OFF]'
+                self.assertEqual(self.order.notes, f'{prefix} {new_note}'.strip())
+                self.assertEqual(self.order.status, status)
+
+    def test_update_preserves_delivery_type_financials_and_related_records(self):
+        original_payment_date = self.payment.payment_date
+        original_updated_at = self.payment.updated_at
+        original_order_updated_at = self.order.updated_at
+        original_customer_id = self.order.customer_id
+        response = self.post_update({
+            'delivery_date': '2026-09-10',
+            'delivery_time': '15:30',
+            'special_note': 'Schedule changed safely',
+        })
+        self.assertEqual(response.status_code, 200, response.content)
+
+        self.order.refresh_from_db()
+        self.payment.refresh_from_db()
+        self.assertTrue(self.order.notes.startswith('[DROP OFF]'))
+        self.assertEqual(self.order.status, 'pending')
+        self.assertEqual(self.order.customer_id, original_customer_id)
+        self.assertEqual(self.order.total, Decimal('2200.00'))
+        self.assertEqual(self.order.balance_payment, Decimal('1200.00'))
+        self.assertEqual(self.order.additional_payment, 'legacy untouched')
+        self.assertEqual(self.order.delivery_fee_charge, Decimal('150.00'))
+        self.assertEqual(self.payment.amount, Decimal('1000.00'))
+        self.assertEqual(self.payment.payment_method, 'cash')
+        self.assertEqual(self.payment.payment_status, Payment.STATUS_DOWN_PAYMENT)
+        self.assertEqual(self.payment.payment_type, Payment.TYPE_DOWN_PAYMENT)
+        self.assertEqual(self.payment.payment_date, original_payment_date)
+        self.assertEqual(self.payment.updated_at, original_updated_at)
+        self.assertEqual(self.order.updated_at, original_order_updated_at)
+        self.assertEqual(self.order.payments.count(), 1)
+        self.assertEqual(self.order.items.count(), 1)
+        self.assertEqual(self.customer.get_total_spent(), Decimal('1000.00'))
+
+    def test_unexpected_fields_invalid_values_and_failed_validation_are_atomic(self):
+        original_date = self.order.delivery_date
+        original_time = self.order.delivery_time
+        original_note = self.order.notes
+
+        for payload in (
+            {'delivery_type': 'pickup'},
+            {'status': 'completed'},
+            {'total': '0.00'},
+            {'balance_payment': '0.00'},
+            {'payment_status': 'fully_paid'},
+        ):
+            with self.subTest(payload=payload):
+                response = self.post_update(payload)
+                self.assertEqual(response.status_code, 400, response.content)
+
+        invalid_payloads = (
+            {'delivery_date': '09/10/2026'},
+            {'delivery_time': '25:99'},
+            {'special_note': 'x' * 2001},
+            {'delivery_date': '2026-09-11', 'delivery_time': 'not-a-time', 'special_note': 'must not save'},
+        )
+        for payload in invalid_payloads:
+            with self.subTest(payload_keys=set(payload)):
+                response = self.post_update(payload)
+                self.assertEqual(response.status_code, 400, response.content)
+                self.order.refresh_from_db()
+                self.assertEqual(self.order.delivery_date, original_date)
+                self.assertEqual(self.order.delivery_time, original_time)
+                self.assertEqual(self.order.notes, original_note)
+
+    def test_endpoint_requires_authentication_and_csrf(self):
+        anonymous = Client()
+        response = self.post_update(
+            {'special_note': 'unauthorized'}, client=anonymous
+        )
+        self.assertEqual(response.status_code, 302)
+
+        csrf_client = Client(enforce_csrf_checks=True)
+        csrf_client.force_login(self.user)
+        response = self.post_update(
+            {'special_note': 'missing csrf'}, client=csrf_client
+        )
+        self.assertEqual(response.status_code, 403)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.notes, '[DROP OFF] Original note')
+
+    def test_fifo_uses_new_schedule_and_pickup_still_wins_exact_ties(self):
+        earlier = Order.objects.create(
+            customer=self.customer, order_number='FIFO-EARLIER', status='pending',
+            notes='[DROP OFF]', delivery_date=date(2026, 9, 5),
+            delivery_time=time(9, 0), total=Decimal('100.00'),
+        )
+        later = Order.objects.create(
+            customer=self.customer, order_number='FIFO-LATER', status='pending',
+            notes='[PICK UP]', delivery_date=date(2026, 9, 5),
+            delivery_time=time(11, 0), total=Decimal('100.00'),
+        )
+
+        response = self.post_update({
+            'delivery_date': '2026-09-05',
+            'delivery_time': '13:00',
+        })
+        self.assertEqual(response.status_code, 200, response.content)
+        order_ids = [order.pk for order in self.client.get(reverse('pages:orders')).context['orders']]
+        self.assertLess(order_ids.index(earlier.pk), order_ids.index(later.pk))
+        self.assertLess(order_ids.index(later.pk), order_ids.index(self.order.pk))
+
+        response = self.post_update({
+            'delivery_date': '2026-09-05',
+            'delivery_time': '11:00',
+        })
+        self.assertEqual(response.status_code, 200, response.content)
+        tied_ids = [order.pk for order in self.client.get(reverse('pages:orders')).context['orders']]
+        self.assertLess(tied_ids.index(later.pk), tied_ids.index(self.order.pk))
+
+        before_note_only = tied_ids
+        response = self.post_update({'special_note': 'No schedule change'})
+        self.assertEqual(response.status_code, 200, response.content)
+        after_note_only = [order.pk for order in self.client.get(reverse('pages:orders')).context['orders']]
+        self.assertEqual(after_note_only, before_note_only)
+
+    def test_dashboard_tomorrow_uses_rescheduled_date_and_reports_stay_on_payment_date(self):
+        fake_now = timezone.make_aware(datetime(2026, 9, 1, 8, 0))
+        original_payment_date = self.payment.payment_date
+        with patch('pages.manila_tz_utils.timezone.now', return_value=fake_now):
+            response = self.post_update({'delivery_date': '2026-09-02'})
+            self.assertEqual(response.status_code, 200, response.content)
+            tomorrow_ids = [
+                order.pk for order in self.client.get(reverse('pages:dashboard')).context['tomorrow_deliveries']
+            ]
+            self.assertIn(self.order.pk, tomorrow_ids)
+
+            response = self.post_update({'delivery_date': '2026-09-04'})
+            self.assertEqual(response.status_code, 200, response.content)
+            tomorrow_ids = [
+                order.pk for order in self.client.get(reverse('pages:dashboard')).context['tomorrow_deliveries']
+            ]
+            self.assertNotIn(self.order.pk, tomorrow_ids)
+
+        self.payment.refresh_from_db()
+        self.assertEqual(self.payment.payment_date, original_payment_date)
+        self.assertEqual(self.customer.get_total_spent(), Decimal('1000.00'))
+
+        cleanup_now = timezone.make_aware(datetime(2026, 10, 1, 8, 0))
+        with patch('pages.auto_delete_utils.timezone.now', return_value=cleanup_now):
+            check_and_delete_completed_orders()
+        self.assertTrue(Order.objects.filter(pk=self.order.pk, status='pending').exists())
+        self.assertTrue(Payment.objects.filter(pk=self.payment.pk).exists())
+
+    def test_view_details_exposes_only_schedule_note_edit_controls(self):
+        response = self.client.get(reverse('pages:orders'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Edit Schedule &amp; Note')
+        self.assertContains(response, 'id="detailDeliveryDateInput"')
+        self.assertContains(response, 'id="detailDeliveryTimeInput"')
+        self.assertContains(response, 'id="detailSpecialNoteInput"')
+        self.assertContains(response, 'id="btnSaveScheduleNote"')
+        self.assertContains(response, 'id="btnCancelScheduleNote"')

@@ -51,6 +51,7 @@ logger = logging.getLogger(__name__)
 
 MONEY_PATTERN = re.compile(r'^\d{1,8}(?:\.\d{1,2})?$')
 MONEY_PLACES = Decimal('0.01')
+ORDER_SPECIAL_NOTE_MAX_LENGTH = 2000
 
 
 @csrf_exempt
@@ -1345,6 +1346,127 @@ def order_update_ajax(request):
     except Exception as exc:
         logging.getLogger(__name__).exception('Order update failed')
         return JsonResponse({'success': False, 'message': f'Error updating order: {exc}'}, status=400)
+
+
+@login_required(login_url='login')
+@require_http_methods(["POST"])
+@csrf_protect
+@transaction.atomic
+def order_update_schedule_note_ajax(request):
+    """Update only an existing order's schedule and customer-facing note."""
+    try:
+        data = json.loads(request.body or b'{}')
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid request data.',
+        }, status=400)
+
+    allowed_fields = {'order_id', 'delivery_date', 'delivery_time', 'special_note'}
+    unexpected_fields = sorted(set(data) - allowed_fields)
+    if unexpected_fields:
+        return JsonResponse({
+            'success': False,
+            'message': 'Only Date, Time, and Special Note may be updated.',
+            'unexpected_fields': unexpected_fields,
+        }, status=400)
+
+    order_id = data.get('order_id')
+    editable_fields = {'delivery_date', 'delivery_time', 'special_note'} & set(data)
+    if not order_id or not editable_fields:
+        return JsonResponse({
+            'success': False,
+            'message': 'Order ID and at least one editable field are required.',
+        }, status=400)
+
+    try:
+        order = Order.objects.select_for_update().get(order_id=order_id)
+    except Order.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Order not found.',
+        }, status=404)
+
+    updates = {}
+    if 'delivery_date' in data:
+        raw_date = str(data.get('delivery_date') or '').strip()
+        if raw_date:
+            try:
+                updates['delivery_date'] = datetime.strptime(raw_date, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Date must use the YYYY-MM-DD format.',
+                }, status=400)
+        else:
+            updates['delivery_date'] = None
+
+    if 'delivery_time' in data:
+        raw_time = str(data.get('delivery_time') or '').strip()
+        if raw_time:
+            try:
+                updates['delivery_time'] = datetime.strptime(raw_time, '%H:%M').time()
+            except ValueError:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Time must use the HH:MM 24-hour format.',
+                }, status=400)
+        else:
+            updates['delivery_time'] = None
+
+    if 'special_note' in data:
+        raw_special_note = str(data.get('special_note') or '')
+        if len(raw_special_note) > ORDER_SPECIAL_NOTE_MAX_LENGTH:
+            return JsonResponse({
+                'success': False,
+                'message': (
+                    f'Special Note cannot exceed '
+                    f'{ORDER_SPECIAL_NOTE_MAX_LENGTH} characters.'
+                ),
+            }, status=400)
+
+        special_note = raw_special_note.strip()
+        prefix_match = re.match(
+            r'^\s*(\[(?:PICK UP|DROP OFF)\])\s*',
+            str(order.notes or ''),
+            flags=re.IGNORECASE,
+        )
+        delivery_prefix = prefix_match.group(1).upper() if prefix_match else ''
+        updates['notes'] = (
+            f'{delivery_prefix} {special_note}'.strip()
+            if delivery_prefix
+            else special_note
+        )
+
+    changed_fields = []
+    for field_name, value in updates.items():
+        if getattr(order, field_name) != value:
+            setattr(order, field_name, value)
+            changed_fields.append(field_name)
+
+    if changed_fields:
+        # Keep updated_at unchanged: cleanup uses it only as the established
+        # fallback month for legacy orders without a schedule date. A note or
+        # time edit must not move that fallback cleanup period.
+        order.save(update_fields=changed_fields)
+
+    special_note = re.sub(
+        r'^\s*\[(?:PICK UP|DROP OFF)\]\s*',
+        '',
+        str(order.notes or ''),
+        count=1,
+        flags=re.IGNORECASE,
+    ).strip()
+    return JsonResponse({
+        'success': True,
+        'message': 'Order details updated successfully.',
+        'order_id': order.order_id,
+        'order_number': order.order_number,
+        'delivery_date': order.delivery_date.isoformat() if order.delivery_date else '',
+        'delivery_time': order.delivery_time.strftime('%H:%M') if order.delivery_time else '',
+        'special_note': special_note,
+        'changed_fields': changed_fields,
+    })
 
 
 # ============================================================================
