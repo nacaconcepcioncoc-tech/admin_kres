@@ -6,7 +6,9 @@ These functions check the current date and trigger deletions based on scheduled 
 from django.utils import timezone
 from datetime import datetime, date, timedelta
 from decimal import Decimal
+import calendar
 import json
+import logging
 
 from pages.models import (
     Customer,
@@ -21,8 +23,16 @@ from pages.models import (
     YearlySalesSnapshot,
 )
 from pages.manila_tz_utils import get_manila_today, get_manila_timezone
-from django.db.models import Sum, Count, Q
+from pages.revenue_archive import (
+    aggregate_payments_by_manila_month,
+    merge_lightweight_archive,
+)
+from django.db.models import Sum, Count, Q, Prefetch
 from django.db import transaction
+from django.db import connection
+
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -90,6 +100,52 @@ def get_completed_order_month_date(order):
     return timezone.localtime(order.updated_at).date()
 
 
+def has_valid_fully_paid_cleanup_structure(order):
+    """Return True only for a ledger-settled order supported by the two-payment flow."""
+    payments = list(getattr(order, 'cleanup_payments', []))
+    if not payments or any(payment.payment_type is None for payment in payments):
+        return False
+
+    order_total = Decimal(order.total or 0).quantize(Decimal('0.01'))
+    if order_total <= 0 or any(Decimal(payment.amount or 0) <= 0 for payment in payments):
+        return False
+
+    received_total = sum(
+        (Decimal(payment.amount or 0) for payment in payments),
+        Decimal('0.00'),
+    )
+    calculated_remaining = max(order_total - received_total, Decimal('0.00'))
+    if calculated_remaining != Decimal('0.00'):
+        return False
+
+    if len(payments) == 1:
+        payment = payments[0]
+        return (
+            payment.payment_type == Payment.TYPE_FULL_PAYMENT
+            and payment.payment_status == Payment.STATUS_FULLY_PAID
+            and Decimal(payment.amount) == order_total
+        )
+
+    if len(payments) == 2:
+        payments_by_type = {payment.payment_type: payment for payment in payments}
+        if set(payments_by_type) != {
+            Payment.TYPE_DOWN_PAYMENT,
+            Payment.TYPE_BALANCE_PAYMENT,
+        }:
+            return False
+        down_payment = payments_by_type[Payment.TYPE_DOWN_PAYMENT]
+        balance_payment = payments_by_type[Payment.TYPE_BALANCE_PAYMENT]
+        return (
+            Decimal(down_payment.amount) < order_total
+            and Decimal(balance_payment.amount) >= order_total - Decimal(down_payment.amount)
+            and down_payment.payment_status
+            == Payment.STATUS_DOWN_PAYMENT
+            and balance_payment.payment_status == Payment.STATUS_FULLY_PAID
+        )
+
+    return False
+
+
 def check_and_delete_employee_standing_yearly_data():
     """Delete prior-year Employee Standing records on January 1 in Manila.
 
@@ -119,35 +175,62 @@ def check_and_delete_employee_standing_yearly_data():
 
     return True, deleted_count, legacy_deleted_count, summary_deleted_count, previous_year
 
+def get_previous_cleanup_month(reference_date=None):
+    """Return the first day of the last completed Manila calendar month."""
+    today = reference_date or get_manila_today()
+    return (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+
+
+def _lock_cleanup_month(month):
+    """Serialize one cleanup month on PostgreSQL before its unique row exists."""
+    if connection.vendor == 'postgresql':
+        lock_key = (month.year * 100) + month.month
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT pg_advisory_xact_lock(%s)', [lock_key])
+
+
 def check_and_delete_completed_orders():
     """Archive and delete only the previous month's completed operations.
 
-    The scheduler may invoke this command daily, but this function mutates data
-    only on Manila day 1 and records the period even when no orders qualified.
-    Pending, processing, cancelled, and current-month orders are never selected.
+    The scheduler may invoke this command daily. It processes the last completed
+    Manila month once, including a later catch-up when the first-day trigger was
+    missed. Pending, processing, cancelled, and current-month orders are never
+    selected.
     """
-    today = get_manila_today()
-    if today.day != 1:
-        return False
-
-    current_month_start = today.replace(day=1)
-    previous_month_reference = current_month_start - timedelta(days=1)
-    previous_month_start = previous_month_reference.replace(day=1)
+    previous_month_start = get_previous_cleanup_month()
 
     with transaction.atomic():
+        _lock_cleanup_month(previous_month_start)
         if MonthlyCleanupRun.objects.select_for_update().filter(
             month=previous_month_start
         ).exists():
+            logger.info(
+                'Monthly cleanup already processed for %s',
+                previous_month_start.strftime('%B %Y'),
+            )
             return False
 
         # Creating this before selection makes an empty run durable/idempotent.
         cleanup_run = MonthlyCleanupRun.objects.create(month=previous_month_start)
-        completed_orders = list(
+        candidate_orders = list(
             get_completed_orders_for_month(previous_month_start)
             .select_for_update()
             .select_related('customer')
+            .prefetch_related(
+                Prefetch(
+                    'payments',
+                    queryset=Payment.objects.select_for_update().order_by(
+                        'payment_date', 'payment_id'
+                    ),
+                    to_attr='cleanup_payments',
+                )
+            )
             .order_by('delivery_date', 'updated_at', 'order_id')
         )
+        completed_orders = [
+            order for order in candidate_orders
+            if has_valid_fully_paid_cleanup_structure(order)
+        ]
         order_count = len(completed_orders)
         customer_ids = {order.customer_id for order in completed_orders}
 
@@ -175,119 +258,124 @@ def check_and_delete_completed_orders():
         cleanup_run.save(update_fields=['orders_deleted', 'performance_records_deleted'])
 
     period = previous_month_start.strftime('%B %Y')
+    logger.info(
+        'Monthly cleanup processed for %s: orders_deleted=%s customers_deleted=%s',
+        period,
+        order_count,
+        customer_count,
+    )
     return True, order_count, customer_count, period
 
 
 def check_and_delete_yearly_sales_data():
-    """
-    Check if today is January 1st.
-    If so, delete all yearly sales snapshots and monthly archives from the previous year.
-    """
-    # Historical archives are permanent reporting data and must be preserved.
-    return False
+    """Prune the prior year's detailed Reports archive once during January."""
+    today = get_manila_today()
+    if today.month != 1:
+        return False
+
+    previous_year = today.year - 1
+    with transaction.atomic():
+        _lock_cleanup_month(date(previous_year, 12, 31))
+        archives = MonthlySalesArchive.objects.select_for_update().filter(
+            year=previous_year
+        )
+        snapshot = YearlySalesSnapshot.objects.select_for_update().filter(
+            year=previous_year
+        ).first()
+        if snapshot and not archives.exists():
+            return False
+
+        manila_tz = get_manila_timezone()
+        year_start = timezone.make_aware(datetime(previous_year, 1, 1), manila_tz)
+        next_year_start = timezone.make_aware(datetime(today.year, 1, 1), manila_tz)
+        archived_total = archives.aggregate(total=Sum('total_sales'))['total'] or Decimal('0.00')
+        retained_payment_total = (
+            Payment.objects.filter(
+                payment_date__gte=year_start,
+                payment_date__lt=next_year_start,
+            )
+            .exclude(payment_status__in=('failed', 'refunded'))
+            .aggregate(total=Sum('amount'))['total']
+            or Decimal('0.00')
+        )
+        total_yearly_sales = archived_total + retained_payment_total
+        YearlySalesSnapshot.objects.update_or_create(
+            year=previous_year,
+            defaults={
+                'calendar_data': {},
+                'all_months_archive': {},
+                'total_yearly_sales': total_yearly_sales,
+            },
+        )
+        archive_count = archives.count()
+        archives.delete()
+
+    logger.info(
+        'Yearly Reports archive pruned for %s: months_deleted=%s',
+        previous_year,
+        archive_count,
+    )
+    return True, previous_year, archive_count, total_yearly_sales
 
 
 def archive_monthly_sales_data(orders, month_name, year):
     """
-    Archive monthly sales data from orders before they are deleted.
-    Preserves sales records for the Sales Calendar.
-    """
-    month_names = ['January', 'February', 'March', 'April', 'May', 'June',
-                   'July', 'August', 'September', 'October', 'November', 'December']
-    
-    month_num = month_names.index(month_name) + 1 if month_name in month_names else 1
-    
-    # Get the date range for this month/year
-    first_day = date(year, month_num, 1)
-    if month_num == 12:
-        last_day = date(year + 1, 1, 1) - timedelta(days=1)
-    else:
-        last_day = date(year, month_num + 1, 1) - timedelta(days=1)
-    
-    # Group sales by day
-    daily_totals = {}
-    daily_orders_list = {}
-    
-    for order in orders:
-        order_date = get_completed_order_month_date(order)
-        day = order_date.day
-        day_str = str(day)
-        
-        if day_str not in daily_totals:
-            daily_totals[day_str] = 0
-            daily_orders_list[day_str] = []
-        
-        daily_totals[day_str] += float(order.total or 0)
-        daily_orders_list[day_str].append({
-            'order_number': order.order_number,
-            'customer_name': f"{order.customer.first_name} {order.customer.last_name}",
-            'total': float(order.total or 0),
-            'order_id': order.order_id,
-            'order_date': order_date.isoformat()
-        })
-    
-    # Merge into any earlier partial archive. Late-completed orders must not
-    # overwrite orders that were already archived for the same month.
-    archive, _ = MonthlySalesArchive.objects.select_for_update().get_or_create(
-        month_name=month_name,
-        year=year,
-        defaults={'sales_by_day': {}, 'orders_by_day': {}, 'total_sales': 0},
-    )
-    merged_orders = dict(archive.orders_by_day or {})
-    for day_str, new_orders in daily_orders_list.items():
-        existing_orders = list(merged_orders.get(day_str, []))
-        existing_ids = {
-            str(item.get('order_id'))
-            for item in existing_orders
-            if item.get('order_id') is not None
-        }
-        existing_orders.extend(
-            item for item in new_orders
-            if str(item.get('order_id')) not in existing_ids
-        )
-        merged_orders[day_str] = existing_orders
+    Archive received-payment ledger rows before their completed orders are deleted.
 
-    merged_sales = {
-        day_str: sum(float(item.get('total') or 0) for item in day_orders)
-        for day_str, day_orders in merged_orders.items()
-    }
-    archive.orders_by_day = merged_orders
-    archive.sales_by_day = merged_sales
-    archive.total_sales = Decimal(str(sum(merged_sales.values())))
-    archive.save(update_fields=['orders_by_day', 'sales_by_day', 'total_sales'])
+    Revenue remains in the month/day in which each payment was received, even
+    when the related order is completed and cleaned up in a later month.
+    """
+    order_ids = [order.order_id for order in orders]
+    received_payments = (
+        Payment.objects.filter(order_id__in=order_ids)
+        .exclude(payment_status__in=('failed', 'refunded'))
+        .select_related('order', 'order__customer')
+        .order_by('payment_date', 'payment_id')
+    )
+    payments_by_month = aggregate_payments_by_manila_month(received_payments)
+
+    # Preserve the prior behavior of creating the cleanup month's archive even
+    # when no received rows are present.
+    fallback_month_number = datetime.strptime(month_name, '%B').month
+    payments_by_month.setdefault(
+        (year, fallback_month_number),
+        {'sales_by_day': {}, 'customers_by_day': {}},
+    )
+
+    for (archive_year, archive_month_number), monthly_data in payments_by_month.items():
+        archive_month = calendar.month_name[archive_month_number]
+        archive, _ = MonthlySalesArchive.objects.select_for_update().get_or_create(
+            month_name=archive_month,
+            year=archive_year,
+            defaults={'sales_by_day': {}, 'orders_by_day': {}, 'total_sales': 0},
+        )
+        merged_rows, merged_sales = merge_lightweight_archive(
+            archive.orders_by_day,
+            monthly_data['customers_by_day'],
+        )
+        archive.orders_by_day = merged_rows
+        archive.sales_by_day = merged_sales
+        archive.total_sales = Decimal(str(sum(merged_sales.values())))
+        archive.save(update_fields=['orders_by_day', 'sales_by_day', 'total_sales'])
 
 
 def create_yearly_snapshot(year):
     """
-    Create a yearly snapshot from all MonthlySalesArchive records.
-    This preserves the full year's data before annual reset.
+    Preserve only the minimal yearly total; detailed daily rows are not copied.
     """
     archives = MonthlySalesArchive.objects.filter(year=year)
     
     if not archives.exists():
         return
     
-    # Combine all monthly data
-    all_months_data = {}
-    calendar_data = {}
-    total_yearly_sales = Decimal('0.00')
-    
-    for archive in archives:
-        month_name = archive.month_name
-        all_months_data[month_name] = {
-            'sales_by_day': archive.sales_by_day,
-            'orders_by_day': archive.orders_by_day,
-            'total_sales': float(archive.total_sales)
-        }
-        calendar_data[month_name] = archive.sales_by_day
-        total_yearly_sales += archive.total_sales
+    total_yearly_sales = archives.aggregate(total=Sum('total_sales'))['total'] or Decimal('0.00')
     
     # Save yearly snapshot
     YearlySalesSnapshot.objects.update_or_create(
         year=year,
         defaults={
-            'calendar_data': calendar_data,
-            'all_months_archive': all_months_data,
+            'calendar_data': {},
+            'all_months_archive': {},
             'total_yearly_sales': total_yearly_sales
         }
     )

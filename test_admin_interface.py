@@ -11,19 +11,31 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'storefront.settings')
 django.setup()
 
+from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.admin.sites import AdminSite
-from django.test import RequestFactory, Client
-from pages.admin import CustomerAdmin, ProductAdmin, OrderAdmin, PaymentAdmin, StockAlertAdmin
-from pages.models import Customer, Product, Order, OrderItem, Payment, StockAlert
+from pages.admin import (
+    CustomerAdmin,
+    EmployeeAdmin,
+    EmployeeMonthlyPerformanceAdmin,
+    EmployeeStandingPinAdmin,
+    OrderAdmin,
+    PaymentAdmin,
+)
+from pages.models import (
+    Customer,
+    Employee,
+    EmployeeMonthlyPerformance,
+    EmployeeStandingPin,
+    Order,
+    Payment,
+)
 
 def test_admin_site():
     """Test Django admin site configuration"""
     print("\n" + "="*70)
     print("  DJANGO ADMIN INTERFACE VALIDATION TEST")
     print("="*70)
-    
-    from django.contrib import admin
     
     print("\n✓ Admin Site Configuration:")
     print(f"  - Admin site name: {admin.site.site_header}")
@@ -75,10 +87,14 @@ def test_admin_views():
     # Test data availability for each model admin
     models_to_test = {
         'Customer': (CustomerAdmin, Customer),
-        'Product': (ProductAdmin, Product),
         'Order': (OrderAdmin, Order),
         'Payment': (PaymentAdmin, Payment),
-        'StockAlert': (StockAlertAdmin, StockAlert),
+        'Employee': (EmployeeAdmin, Employee),
+        'Employee Monthly Performance': (
+            EmployeeMonthlyPerformanceAdmin,
+            EmployeeMonthlyPerformance,
+        ),
+        'Employee Standing PIN': (EmployeeStandingPinAdmin, EmployeeStandingPin),
     }
     
     print("\n✓ Admin List View Accessibility:")
@@ -101,7 +117,9 @@ def test_admin_views():
         if sample:
             print(f"    - Sample record: {sample}")
         
-        test_results[model_name] = record_count > 0
+        test_results[model_name] = (
+            admin.site._registry.get(model).__class__ is admin_class
+        )
     
     return all(test_results.values())
 
@@ -115,9 +133,14 @@ def test_admin_forms():
     
     admin_classes = {
         'Customer': (CustomerAdmin, Customer),
-        'Product': (ProductAdmin, Product),
         'Order': (OrderAdmin, Order),
         'Payment': (PaymentAdmin, Payment),
+        'Employee': (EmployeeAdmin, Employee),
+        'Employee Monthly Performance': (
+            EmployeeMonthlyPerformanceAdmin,
+            EmployeeMonthlyPerformance,
+        ),
+        'Employee Standing PIN': (EmployeeStandingPinAdmin, EmployeeStandingPin),
     }
     
     for model_name, (admin_class, model) in admin_classes.items():
@@ -161,9 +184,10 @@ def test_database_operations():
         ).filter(order_count__gte=1).count()
         print(f"  ✓ Aggregation: {high_order_customers} customers with orders")
         
-        # Test ordering
-        first_product = Product.objects.order_by('name').first()
-        print(f"  ✓ Ordering: Product '{first_product.name}' sorted alphabetically")
+        # Test the current registered Employee ordering/query path.
+        first_employee = Employee.objects.order_by('full_name').first()
+        employee_label = first_employee.full_name if first_employee else 'No employee records'
+        print(f"  ✓ Ordering: Employee result '{employee_label}' queried alphabetically")
         
         print("\n  ✓ All database operations successful")
         return True
@@ -187,13 +211,6 @@ def test_admin_search_filters():
     print(f"    - Filter fields: {customer_admin.list_filter}")
     print(f"    - Sortable fields: {customer_admin.list_display[:3]}...")
     
-    # Product Admin
-    product_admin = ProductAdmin(Product, AdminSite())
-    print(f"\n  Product Admin:")
-    print(f"    - Search fields: {product_admin.search_fields}")
-    print(f"    - Filter fields: {product_admin.list_filter}")
-    print(f"    - Highlighted: Stock status visualization enabled")
-    
     # Order Admin
     order_admin = OrderAdmin(Order, AdminSite())
     print(f"\n  Order Admin:")
@@ -207,6 +224,28 @@ def test_admin_search_filters():
     print(f"    - Search fields: {payment_admin.search_fields}")
     print(f"    - Filter fields: {payment_admin.list_filter}")
     print(f"    - Display methods: Custom payment status display")
+
+    # Employee Admin
+    employee_admin = EmployeeAdmin(Employee, AdminSite())
+    print(f"\n  Employee Admin:")
+    print(f"    - Search fields: {employee_admin.search_fields}")
+    print(f"    - Filter fields: {employee_admin.list_filter}")
+    print(f"    - Inline editing: Monthly performance inline enabled")
+
+    # Employee Monthly Performance Admin
+    performance_admin = EmployeeMonthlyPerformanceAdmin(
+        EmployeeMonthlyPerformance,
+        AdminSite(),
+    )
+    print(f"\n  Employee Monthly Performance Admin:")
+    print(f"    - Search fields: {performance_admin.search_fields}")
+    print(f"    - Filter fields: {performance_admin.list_filter}")
+
+    # Employee Standing PIN Admin
+    pin_admin = EmployeeStandingPinAdmin(EmployeeStandingPin, AdminSite())
+    print(f"\n  Employee Standing PIN Admin:")
+    print(f"    - List display fields: {pin_admin.list_display}")
+    print(f"    - Access: Restricted to superusers")
     
     return True
 
@@ -244,7 +283,7 @@ def main():
         print("   1. Start the development server: python manage.py runserver")
         print("   2. Navigate to: http://localhost:8000/admin/")
         print("   3. Login with: Username 'kres_admin'")
-        print("   4. Manage all records: Customers, Products, Orders, Payments, Alerts")
+        print("   4. Manage registered records: Customers, Orders, Payments, Employees, Evaluations, and PIN")
         print("\n" + "="*70 + "\n")
         return 0
     else:

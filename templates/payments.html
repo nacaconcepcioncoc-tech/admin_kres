@@ -5,6 +5,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KRES Co. Admin - Payments</title>
+    {% include 'includes/favicon.html' %}
+    <script>
+        // Restore the remembered server-rendered filter before the page can paint.
+        (function () {
+            const storageKey = 'paymentsStatusFilter';
+            const validStatuses = ['down_payment', 'fully_paid'];
+            const params = new URLSearchParams(window.location.search);
+            const urlStatus = params.get('status');
+
+            if (validStatuses.includes(urlStatus)) {
+                sessionStorage.setItem(storageKey, urlStatus);
+                return;
+            }
+
+            if (urlStatus) {
+                params.delete('status');
+                window.location.replace(window.location.pathname + (params.toString() ? '?' + params.toString() : ''));
+                return;
+            }
+
+            const savedStatus = sessionStorage.getItem(storageKey);
+            if (validStatuses.includes(savedStatus)) {
+                params.set('status', savedStatus);
+                window.location.replace(window.location.pathname + '?' + params.toString());
+            }
+        })();
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -319,17 +346,6 @@
         .header-left { display:flex; align-items:center; gap:15px; }
         .header-left svg { width:24px; height:24px; color:#333; }
         .header h2 { font-size:28px; font-weight:600; color:#022F56; }
-        .notification-icon { position:relative; cursor:pointer; padding:8px; display:flex; align-items:center; justify-content:center; }
-        .notification-icon svg { width:28px; height:28px; color:#1a1a1a; }
-        .notification-badge { position:absolute; top:2px; right:2px; background:#ef4444; color:white; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
-        .notification-dropdown { position:absolute; top:60px; right:20px; background:white; border:1px solid #e0e0e0; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.1); width:300px; max-height:400px; overflow-y:auto; z-index:1000; display:none; }
-        .notification-dropdown.show { display:block; }
-        .notification-header { padding:15px; border-bottom:1px solid #e0e0e0; font-weight:600; color:#1a1a1a; }
-        .notification-item { padding:12px 15px; border-bottom:1px solid #f0f0f0; cursor:pointer; }
-        .notification-item:hover { background:#f5f5f5; }
-        .notification-item-title { font-weight:600; color:#1a1a1a; margin-bottom:4px; }
-        .notification-item-text { font-size:12px; color:#666; }
-        .notification-footer { padding:10px 15px; text-align:center; border-top:1px solid #e0e0e0; color:#3d5a73; font-size:13px; font-weight:600; }
         .page-content { padding:30px 35px; }
 
         /* Summary Cards */
@@ -361,6 +377,7 @@
         .empty-msg { text-align:center; padding:50px; color:#9ca3af; }
     </style>
     <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'css/kres-theme.css' %}">
 </head>
 <body>
 {% include 'includes/sidebar.html' with active_page='payments' %}
@@ -370,18 +387,6 @@
         <div class="header-left">
             <svg viewBox="0 0 24 24" fill="none"><path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             <h2>Payments</h2>
-        </div>
-        <div class="notification-icon" onclick="toggleNotificationDropdown(event)">
-            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="width: 28px; height: 28px;"><path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.89 22 12 22ZM18 16V11C18 7.93 16.36 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.64 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z"/></svg>
-            {% with total=pending_payments_count|add:new_customers_count %}{% if total > 0 %}<span class="notification-badge">{{ total }}</span>{% endif %}{% endwith %}
-            <div id="notificationDropdown" class="notification-dropdown">
-                <div class="notification-header">Notifications</div>
-                {% if new_customers_count > 0 %}<a href="{% url 'pages:customers' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">👥 New Customers</div><div class="notification-item-text">{{ new_customers_count }} new customer(s) today</div></div></a>{% endif %}
-                {% if pending_payments_count > 0 %}<a href="{% url 'pages:payments' %}" style="text-decoration:none;color:inherit;"><div class="notification-item"><div class="notification-item-title">💳 Pending Payments</div><div class="notification-item-text">{{ pending_payments_count }} payment(s) waiting</div></div></a>{% endif %}
-                {% with total=pending_payments_count|add:new_customers_count %}
-                    <div class="notification-footer">{% if total == 0 %}No new notifications{% else %}All notifications{% endif %}</div>
-                {% endwith %}
-            </div>
         </div>
     </header>
 
@@ -394,8 +399,8 @@
                     <label style="font-size:13px; font-weight:600; color:#6b7280; white-space:nowrap;">Status:</label>
                     <select id="paymentStatusFilter" style="padding:8px 12px; border:2px solid #e5e7eb; border-radius:8px; font-size:13px; background:white; color:#374151; cursor:pointer;">
                         <option value="all" {% if not status_filter or status_filter == 'all' %}selected{% endif %}>All</option>
-                        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
-                        <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                        <option value="down_payment" {% if status_filter == 'down_payment' %}selected{% endif %}>Down Payment</option>
+                        <option value="fully_paid" {% if status_filter == 'fully_paid' %}selected{% endif %}>Fully Paid</option>
                     </select>
                 </div>
             </div>
@@ -415,7 +420,7 @@
                 </thead>
                 <tbody>
                     {% for payment in payments %}
-                    <tr data-payment-status="{{ payment.payment_status }}">
+                    <tr data-payment-status="{{ payment.display_payment_state }}">
                         <td style="font-weight:600;color:#1a1a1a;">{{ payment.order.customer_name }}</td>
                         <td style="font-weight:700;">₱ {{ payment.amount|floatformat:2 }}</td>
                         <td>
@@ -434,15 +439,15 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if payment.order.status == 'completed' %}
-                                <span class="status-badge st-completed">✅ Completed</span>
-                            {% elif payment.payment_status == 'completed' %}
+                            {% if payment.display_payment_state == 'fully_paid' %}
                                 <span class="status-badge st-paid"> Fully Paid</span>
-                            {% else %}
+                            {% elif payment.display_payment_state == 'down_payment' %}
                                 <span class="status-badge st-pending"> Down Payment</span>
+                            {% else %}
+                                <span class="status-badge st-pending">Down Payment</span>
                             {% endif %}
                         </td>
-                        <td style="font-weight:700;">₱ {{ payment.order.balance_payment|floatformat:2 }}</td>
+                        <td style="font-weight:700;">₱ {{ payment.calculated_remaining_balance|floatformat:2 }}</td>
                     </tr>
                     {% empty %}
                     <tr><td colspan="5" class="empty-msg">
@@ -471,58 +476,19 @@ function smoothNavigation(url) {
     window.location.href = url;
 }
 
-// ── Notification dropdown functionality ──
-function toggleNotificationDropdown(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    const dropdown = document.getElementById('notificationDropdown');
-    
-    if (dropdown) {
-        dropdown.classList.toggle('show');
-    }
-}
-
-// Close notification dropdown when clicking outside
-document.addEventListener('click', function(event) {
-    const dropdown = document.getElementById('notificationDropdown');
-    const notificationIcon = document.querySelector('.notification-icon');
-    
-    if (dropdown && !dropdown.contains(event.target) && !notificationIcon.contains(event.target)) {
-        dropdown.classList.remove('show');
-    }
-});
-
-// Payment status filter - preserve selection while navigating between pages
+// The URL is the authoritative state rendered by Django; this only handles changes.
 (function() {
     const storageKey = 'paymentsStatusFilter';
     const paymentStatusFilter = document.getElementById('paymentStatusFilter');
     if (!paymentStatusFilter) return;
 
-    const navigationEntry = performance.getEntriesByType('navigation')[0];
-    const isPageRefresh = navigationEntry && navigationEntry.type === 'reload';
-
-    if (isPageRefresh) {
-        sessionStorage.removeItem(storageKey);
-    }
-
     const params = new URLSearchParams(window.location.search);
     const urlStatus = params.get('status');
-    const validStatuses = ['all', 'pending', 'completed'];
+    const validStatuses = ['all', 'down_payment', 'fully_paid'];
 
-    if (urlStatus && validStatuses.includes(urlStatus)) {
-        paymentStatusFilter.value = urlStatus;
-        sessionStorage.setItem(storageKey, urlStatus);
-    } else {
-        const savedStatus = sessionStorage.getItem(storageKey);
-
-        if (!isPageRefresh && savedStatus && validStatuses.includes(savedStatus) && savedStatus !== 'all') {
-            params.set('status', savedStatus);
-            window.location.replace(window.location.pathname + '?' + params.toString());
-            return;
-        }
-
-        paymentStatusFilter.value = 'all';
-    }
+    const initialStatus = urlStatus && validStatuses.includes(urlStatus) ? urlStatus : 'all';
+    paymentStatusFilter.value = initialStatus;
+    sessionStorage.setItem(storageKey, initialStatus);
 
     paymentStatusFilter.addEventListener('change', function() {
         const value = validStatuses.includes(this.value) ? this.value : 'all';

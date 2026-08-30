@@ -43,8 +43,14 @@ class Customer(models.Model):
         return self.orders.count()
    
     def get_total_spent(self):
-        """Get total amount spent by this customer"""
-        return sum(order.get_total_amount() for order in self.orders.all())
+        """Return money actually received from this customer's payment ledger."""
+        return (
+            Payment.objects
+            .filter(order__customer=self)
+            .exclude(payment_status__in=('failed', 'refunded'))
+            .aggregate(total=Sum('amount'))['total']
+            or Decimal('0.00')
+        )
 
 
 
@@ -127,13 +133,10 @@ class Order(models.Model):
     # Sender information (who is sending the delivery)
     sender_name = models.CharField(max_length=100, blank=True, help_text="Name of person sending the order")
     sender_phone = models.CharField(max_length=20, blank=True, help_text="Contact number of sender")
-    sender_address = models.TextField(blank=True, help_text="Complete address of sender")
     sender_is_receiver = models.BooleanField(default=False, help_text="Sender and receiver are the same person")
     
     # Rider information (delivery rider details) 
     rider_name = models.CharField(max_length=100, blank=True, help_text="Name of delivery rider")
-    rider_phone = models.CharField(max_length=20, blank=True, help_text="Contact number of rider")
-    rider_vehicle = models.CharField(max_length=100, blank=True, help_text="Vehicle used for delivery (e.g. motorcycle, car)")
     delivery_fee_charge = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -158,8 +161,6 @@ class Order(models.Model):
    
     # Order totals (calculated from order items)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
    
     created_at = models.DateTimeField(auto_now_add=True)
@@ -205,7 +206,7 @@ class Order(models.Model):
         """Calculate order totals from order items"""
         items = self.items.all()
         self.subtotal = sum(item.get_total_price() for item in items)
-        self.total = self.subtotal + self.tax - self.discount
+        self.total = self.subtotal
         self.save()
    
     def get_total_amount(self):
@@ -282,6 +283,17 @@ class OrderItem(models.Model):
 
 class Payment(models.Model):
     """Payment model - stores payment information"""
+    TYPE_FULL_PAYMENT = 'full_payment'
+    TYPE_DOWN_PAYMENT = 'down_payment'
+    TYPE_BALANCE_PAYMENT = 'balance_payment'
+    PAYMENT_TYPE_CHOICES = [
+        (TYPE_FULL_PAYMENT, 'Full Payment'),
+        (TYPE_DOWN_PAYMENT, 'Down Payment'),
+        (TYPE_BALANCE_PAYMENT, 'Balance Payment'),
+    ]
+
+    STATUS_DOWN_PAYMENT = 'down_payment'
+    STATUS_FULLY_PAID = 'fully_paid'
     PAYMENT_METHOD_CHOICES = [
         ('cash', 'Cash'),
         ('gcash_james', 'GCash - James'),
@@ -291,6 +303,10 @@ class Payment(models.Model):
     ]
    
     PAYMENT_STATUS_CHOICES = [
+        (STATUS_DOWN_PAYMENT, 'Down Payment'),
+        (STATUS_FULLY_PAID, 'Fully Paid'),
+        # Transitional legacy values remain readable until the approved
+        # payment-status data migration is performed.
         ('pending', 'Pending'),
         ('completed', 'Completed'),
         ('failed', 'Failed'),
@@ -303,6 +319,13 @@ class Payment(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='cash')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
+    payment_type = models.CharField(
+        max_length=20,
+        choices=PAYMENT_TYPE_CHOICES,
+        null=True,
+        blank=True,
+        help_text='NULL identifies an unreconciled legacy payment.',
+    )
     transaction_id = models.CharField(max_length=100, blank=True, help_text="External transaction ID")
     notes = models.TextField(blank=True)
     payment_date = models.DateTimeField(default=timezone.now)
@@ -397,7 +420,7 @@ class StockAlert(models.Model):
 
 
 class MonthlySalesArchive(models.Model):
-    """Archives monthly sales data to preserve it after orders are deleted on the first of each month"""
+    """Lightweight current-year daily customer revenue totals for Reports."""
     archive_id = models.AutoField(primary_key=True)
     month_name = models.CharField(max_length=20)  # 'January', 'February', etc.
     year = models.IntegerField()
@@ -419,7 +442,7 @@ class MonthlySalesArchive(models.Model):
 
 
 class YearlySalesSnapshot(models.Model):
-    """Stores complete yearly sales calendar data (all 12 months) before annual reset on Jan 1"""
+    """Minimal yearly revenue total and durable yearly-prune idempotency row."""
     snapshot_id = models.AutoField(primary_key=True)
     year = models.IntegerField(unique=True)
     calendar_data = models.JSONField(default=dict, help_text="Complete 12-month sales calendar data")

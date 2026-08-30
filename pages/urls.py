@@ -4,6 +4,11 @@ from . import views
 app_name = "pages"
 
 urlpatterns = [
+    path(
+        "internal/monthly-cleanup/",
+        views.scheduled_monthly_cleanup,
+        name="scheduled_monthly_cleanup",
+    ),
     # Authentication
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),

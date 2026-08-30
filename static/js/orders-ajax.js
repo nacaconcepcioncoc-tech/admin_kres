@@ -96,8 +96,7 @@ function submitAddOrder(event) {
         notes:          specialRequests,
         payment_method: paymentMethod,
         payment_status: paymentStatus,
-        delivery_date:  deliveryDate,
-        tax: 0, discount: 0
+        delivery_date:  deliveryDate
     };
 
     const btn = event.target.querySelector('button[type="submit"]') ||

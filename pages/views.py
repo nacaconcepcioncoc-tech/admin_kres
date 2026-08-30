@@ -8,6 +8,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import never_cache
 from django.urls import reverse
 from django.conf import settings
@@ -16,17 +17,190 @@ from django.db.utils import OperationalError, ProgrammingError
 from datetime import timedelta, datetime
 from functools import wraps
 import calendar
-from decimal import Decimal
+import hmac
+from decimal import Decimal, InvalidOperation
 import json
 import logging
+import re
 from urllib.parse import urlencode
 from .models import Customer, Product, Order, OrderItem, Payment, StockAlert, MonthlySalesArchive, YearlySalesSnapshot
-from .models import Employee, PerformanceRecord, EmployeeMonthlyPerformance, EmployeeStandingPin
+from .models import Employee, PerformanceRecord, EmployeeMonthlyPerformance, EmployeeStandingPin, MonthlyCleanupRun
+from .payment_state import (
+    STATE_DOWN_PAYMENT,
+    STATE_FULLY_PAID,
+    calculate_order_payment_display_state,
+    calculate_order_payment_state,
+)
 from .manila_tz_utils import get_manila_timezone, get_manila_today, get_manila_now, is_delivery_tomorrow
 from .auto_delete_utils import (
+    check_and_delete_completed_orders,
+    check_and_delete_employee_standing_yearly_data,
+    check_and_delete_yearly_sales_data,
+    get_previous_cleanup_month,
     get_next_month_deletion_date,
     get_next_year_deletion_date
 )
+from .revenue_archive import (
+    aggregate_payments_by_manila_month,
+    merge_lightweight_archive,
+)
+
+
+logger = logging.getLogger(__name__)
+
+
+MONEY_PATTERN = re.compile(r'^\d{1,8}(?:\.\d{1,2})?$')
+MONEY_PLACES = Decimal('0.01')
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def scheduled_monthly_cleanup(request):
+    """Secret-authenticated scheduler hook for the existing cleanup helper."""
+    logger.info('Scheduled monthly cleanup trigger received')
+
+    if not settings.DEBUG and not request.is_secure():
+        logger.warning('Scheduled monthly cleanup rejected: insecure request')
+        return JsonResponse({'success': False, 'message': 'HTTPS is required.'}, status=400)
+
+    expected_secret = settings.MONTHLY_CLEANUP_SECRET
+    if len(expected_secret) < 32:
+        logger.error('Scheduled monthly cleanup failed: strong secret is not configured')
+        return JsonResponse(
+            {'success': False, 'message': 'Cleanup trigger is not configured.'},
+            status=503,
+        )
+
+    authorization = request.headers.get('Authorization', '')
+    scheme, separator, supplied_secret = authorization.partition(' ')
+    valid_secret = (
+        separator == ' '
+        and scheme.lower() == 'bearer'
+        and hmac.compare_digest(supplied_secret, expected_secret)
+    )
+    if not valid_secret:
+        logger.warning('Scheduled monthly cleanup rejected: invalid credentials')
+        return JsonResponse({'success': False, 'message': 'Forbidden.'}, status=403)
+
+    cleanup_month = get_previous_cleanup_month()
+    try:
+        result = check_and_delete_completed_orders()
+        yearly_reports = check_and_delete_yearly_sales_data()
+        yearly_employee = check_and_delete_employee_standing_yearly_data()
+    except Exception:
+        logger.exception('Scheduled monthly cleanup failed for %s', cleanup_month)
+        return JsonResponse({'success': False, 'message': 'Cleanup failed.'}, status=500)
+
+    if not result:
+        run = MonthlyCleanupRun.objects.filter(month=cleanup_month).first()
+        logger.info('Scheduled monthly cleanup already processed for %s', cleanup_month)
+        return JsonResponse({
+            'success': True,
+            'status': 'already_processed',
+            'month': cleanup_month.isoformat(),
+            'orders_deleted': run.orders_deleted if run else 0,
+            'yearly_reports': 'processed' if yearly_reports else 'not_due_or_already_processed',
+            'yearly_employee': 'processed' if yearly_employee else 'not_due_or_already_processed',
+        })
+
+    _, orders_deleted, customers_deleted, period = result
+    return JsonResponse({
+        'success': True,
+        'status': 'processed',
+        'month': cleanup_month.isoformat(),
+        'period': period,
+        'orders_deleted': orders_deleted,
+        'customers_deleted': customers_deleted,
+        'yearly_reports': 'processed' if yearly_reports else 'not_due_or_already_processed',
+        'yearly_employee': 'processed' if yearly_employee else 'not_due_or_already_processed',
+    })
+
+
+def _parse_money(value, field_name, *, allow_zero=True):
+    """Parse a plain decimal currency string without accepting floats/exponents."""
+    raw_value = str(value if value is not None else '').strip()
+    if not MONEY_PATTERN.fullmatch(raw_value):
+        raise ValueError(f'{field_name} must be a valid amount with at most two decimal places.')
+    amount = Decimal(raw_value).quantize(MONEY_PLACES)
+    if amount < 0 or (not allow_zero and amount == 0):
+        qualifier = 'greater than zero' if not allow_zero else 'zero or greater'
+        raise ValueError(f'{field_name} must be {qualifier}.')
+    return amount
+
+
+def _requested_initial_payment_type(data):
+    """Map the current UI values and the new API values to one payment type."""
+    requested = str(
+        data.get('payment_type')
+        or data.get('payment_mode')
+        or data.get('payment_status')
+        or ''
+    ).strip().lower()
+    if requested in {'full_payment', 'fully_paid', 'completed'}:
+        return Payment.TYPE_FULL_PAYMENT
+    if requested in {'down_payment', 'pending'}:
+        return Payment.TYPE_DOWN_PAYMENT
+    raise ValueError('Payment mode must be Full Payment or Down Payment.')
+
+
+def _money(value):
+    """Normalize a database Decimal to the system's two currency places."""
+    return Decimal(value or 0).quantize(MONEY_PLACES)
+
+
+def _is_pickup_order(order):
+    """Delivery type is stored by the existing order-note prefix."""
+    return str(order.notes or '').lstrip().upper().startswith('[PICK UP]')
+
+
+def _order_by_fifo_schedule(queryset):
+    """Order scheduled work FIFO, with pickup winning exact schedule ties."""
+    return (
+        queryset
+        .annotate(
+            delivery_type_priority=Case(
+                When(notes__istartswith='[PICK UP]', then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by(
+            F('delivery_date').asc(nulls_last=True),
+            F('delivery_time').asc(nulls_last=True),
+            'delivery_type_priority',
+            'order_id',
+        )
+    )
+
+
+def _received_payment_transactions():
+    """Ledger rows that represent money received, including readable legacy rows."""
+    return Payment.objects.exclude(payment_status__in=('failed', 'refunded'))
+
+
+def _pending_payment_count():
+    orders = Order.objects.prefetch_related('payments').only(
+        'order_id', 'total', 'balance_payment'
+    )
+    return sum(
+        1 for order in orders
+        if calculate_order_payment_display_state(
+            order, order.payments.all()
+        )['code'] == STATE_DOWN_PAYMENT
+    )
+
+
+def _manila_month_datetime_bounds(month_start):
+    """Return aware Manila boundaries for the calendar month containing month_start."""
+    if month_start.month == 12:
+        next_month_start = month_start.replace(year=month_start.year + 1, month=1, day=1)
+    else:
+        next_month_start = month_start.replace(month=month_start.month + 1, day=1)
+    manila_tz = get_manila_timezone()
+    return (
+        timezone.make_aware(datetime.combine(month_start, datetime.min.time()), manila_tz),
+        timezone.make_aware(datetime.combine(next_month_start, datetime.min.time()), manila_tz),
+    )
 
 
 
@@ -362,16 +536,20 @@ def dashboard(request):
 
     pending_orders = Order.objects.filter(status='pending').count()
 
-    total_revenue = current_month_orders.filter(
-        status='completed'
-    ).aggregate(total=Sum('total'))['total'] or Decimal('0.00')
+    current_month_payments = _received_payment_transactions().filter(
+        payment_date__gte=month_start_datetime,
+        payment_date__lt=next_month_start_datetime,
+    )
+    total_revenue = current_month_payments.aggregate(
+        total=Sum('amount')
+    )['total'] or Decimal('0.00')
 
     completed_orders = current_month_orders.filter(
         status='completed'
     ).count()
 
-    customers_transacted_this_month = current_month_orders.values(
-        'customer_id'
+    customers_transacted_this_month = current_month_payments.values(
+        'order__customer_id'
     ).distinct().count()
 
     tomorrow_deliveries = (
@@ -402,9 +580,7 @@ def dashboard(request):
         'new_customers_count': Customer.objects.filter(
             created_at__date=today
         ).count(),
-        'pending_payments': Payment.objects.filter(
-            payment_status='pending'
-        ).count(),
+        'pending_payments': _pending_payment_count(),
     }
 
     return render(request, 'dashboard.html', context)
@@ -524,7 +700,7 @@ def customers(request):
    
     # Notification data
     recent_orders = Order.objects.select_related('customer').order_by('-created_at')[:3]
-    pending_payments = Payment.objects.filter(payment_status='pending').count()
+    pending_payments = _pending_payment_count()
    
     # Get next month's deletion date for warning message
     next_deletion_date = get_next_month_deletion_date()
@@ -565,7 +741,6 @@ def customer_create_ajax(request):
             data['customer_address'] = str(
                 data.get('delivery_address') or data.get('customer_address') or ''
             ).strip()
-            data['sender_address'] = ''
        
         # Create customer in database
         customer = Customer.objects.create(
@@ -608,7 +783,9 @@ def orders(request):
     status_filter = request.GET.get('status', '')
    
     # Get orders from database
-    orders_list = Order.objects.select_related('customer').prefetch_related('items__product')
+    orders_list = Order.objects.select_related('customer').prefetch_related(
+        'items__product', 'payments'
+    )
    
     if search_query:
         orders_list = orders_list.filter(
@@ -626,9 +803,8 @@ def orders(request):
         orders_list = orders_list.filter(
             delivery_date=get_manila_today() + timedelta(days=1)
         ).exclude(status='cancelled')
-        orders_list = orders_list.order_by('delivery_time', 'order_id')
-    else:
-        orders_list = orders_list.order_by('-created_at')
+
+    orders_list = _order_by_fifo_schedule(orders_list)
    
     # Completed Orders modal: current Manila month only.
     manila_today = get_manila_today()
@@ -666,7 +842,7 @@ def orders(request):
    
     # Notification data
     new_customers = Customer.objects.filter(created_at__date=get_manila_today()).count()
-    pending_payments = Payment.objects.filter(payment_status='pending').count()
+    pending_payments = _pending_payment_count()
     
     # Get next month's deletion date for warning message
     next_deletion_date = get_next_month_deletion_date()
@@ -678,12 +854,18 @@ def orders(request):
     orders_with_delivery_info = []
     tomorrow_count = 0
     for order in orders_list:
+        payment_state = calculate_order_payment_display_state(
+            order, order.payments.all()
+        )
+        order.display_payment_state = payment_state['code']
+        order.display_payment_state_label = payment_state['label']
+        order.display_remaining_balance = payment_state['remaining_balance']
         if order.delivery_date == manila_tomorrow:
             tomorrow_count += 1
         orders_with_delivery_info.append(order)
    
     context = {
-        'orders': orders_list,
+        'orders': orders_with_delivery_info,
         'completed_orders': completed_orders,
         'products': products,
         'search_query': search_query,
@@ -719,7 +901,7 @@ def order_create_ajax(request):
        
         # Normalize sender/receiver values before validation. This accepts the
         # current payload and safely supports older cached frontend field names.
-        delivery_type = data.get('notes', '').startswith('[PICK UP]')
+        delivery_type = str(data.get('notes', '')).lstrip().upper().startswith('[PICK UP]')
         sender_name_input = str(data.get('sender_name', '')).strip()
         sender_phone_input = str(data.get('sender_phone', '')).strip()
 
@@ -751,7 +933,9 @@ def order_create_ajax(request):
             if legacy_receiver_name and legacy_receiver_name.casefold() != sender_name_input.casefold():
                 receiver_name_input = legacy_receiver_name
 
-        required_fields = ['customer_email', 'customer_first_name', 'customer_phone', 'items']
+        required_fields = ['customer_email', 'customer_first_name', 'items']
+        if not delivery_type:
+            required_fields.append('customer_phone')
         for field in required_fields:
             if not data.get(field):
                 return JsonResponse({
@@ -759,8 +943,10 @@ def order_create_ajax(request):
                     'message': f'Missing required field: {field}'
                 }, status=400)
 
-        if not sender_name_input or not sender_phone_input:
-            return JsonResponse({'success': False, 'message': 'Sender name and phone are required.'}, status=400)
+        if not sender_name_input:
+            return JsonResponse({'success': False, 'message': 'Sender name is required.'}, status=400)
+        if not delivery_type and not sender_phone_input:
+            return JsonResponse({'success': False, 'message': 'Sender phone is required for Local Drop-off.'}, status=400)
 
         if not delivery_type:
             if not receiver_name_input:
@@ -780,7 +966,7 @@ def order_create_ajax(request):
                 'first_name': data.get('customer_first_name', ''),
                 'last_name': data.get('customer_last_name', ''),
                 'phone': data.get('customer_phone', ''),
-                'address': data.get('sender_address', data.get('customer_address', '')),
+                'address': data.get('customer_address', ''),
             }
         )
        
@@ -789,8 +975,8 @@ def order_create_ajax(request):
             customer.first_name = data.get('customer_first_name', customer.first_name)
             customer.last_name = data.get('customer_last_name', customer.last_name)
             customer.phone = data.get('customer_phone', customer.phone)
-            if data.get('sender_address') or data.get('customer_address'):
-                customer.address = data.get('sender_address', data.get('customer_address', ''))
+            if data.get('customer_address'):
+                customer.address = data.get('customer_address', '')
             customer.save()
        
         # ======== STEP 2: CREATE ORDER IN DATABASE ========
@@ -816,24 +1002,8 @@ def order_create_ajax(request):
         if delivery_date_val and delivery_date_val < get_manila_today():
             return JsonResponse({'success': False, 'message': 'Delivery date cannot be in the past.'}, status=400)
 
-        try:
-            balance_payment = Decimal(str(data.get('balance_payment', 0) or 0))
-            delivery_fee_charge = Decimal(str(data.get('delivery_fee_charge', 0) or 0))
-        except Exception:
-            return JsonResponse({
-                'success': False,
-                'message': 'Balance payment and delivery fee must be valid monetary amounts.'
-            }, status=400)
-
-        if balance_payment < 0 or delivery_fee_charge < 0:
-            return JsonResponse({
-                'success': False,
-                'message': 'Balance payment and delivery fee cannot be negative.'
-            }, status=400)
-
         sender_name = sender_name_input
         sender_phone = sender_phone_input
-        sender_address = str(data.get('sender_address', '')).strip()
         receiver_name = receiver_name_input
         receiver_phone = receiver_phone_input
         receiver_address = receiver_address_input
@@ -842,8 +1012,10 @@ def order_create_ajax(request):
             receiver_phone = receiver_phone or sender_phone
             receiver_address = ''
 
-        if not sender_name or not sender_phone:
-            return JsonResponse({'success': False, 'message': 'Sender name and phone are required.'}, status=400)
+        if not sender_name:
+            return JsonResponse({'success': False, 'message': 'Sender name is required.'}, status=400)
+        if not delivery_type and not sender_phone:
+            return JsonResponse({'success': False, 'message': 'Sender phone is required for Local Drop-off.'}, status=400)
         if not delivery_type and (not receiver_name or not receiver_phone):
             return JsonResponse({'success': False, 'message': 'Receiver name and phone are required.'}, status=400)
 
@@ -854,8 +1026,6 @@ def order_create_ajax(request):
             customer=customer,
             status='pending',
             notes=data.get('notes', ''),
-            tax=Decimal(str(data.get('tax', 0))),
-            discount=Decimal(str(data.get('discount', 0))),
             delivery_date=delivery_date_val,
             delivery_time=delivery_time_val,
             receiver_name=receiver_name,
@@ -865,21 +1035,20 @@ def order_create_ajax(request):
             fulfilled_by=data.get('fulfilled_by', ''),
             sender_name=sender_name,
             sender_phone=sender_phone,
-            sender_address=sender_address,
             sender_is_receiver=bool(data.get('sender_is_receiver', False)),
             rider_name=data.get('rider_name', ''),
-            rider_phone=data.get('rider_phone', ''),
-            rider_vehicle=data.get('rider_vehicle', ''),
-            balance_payment=balance_payment,
-            additional_payment=str(data.get('additional_payment', '') or '').strip()[:255],
-            delivery_fee_charge=delivery_fee_charge,
+            balance_payment=Decimal('0.00'),
+            delivery_fee_charge=Decimal('0.00'),
         )
         # ======== STEP 3: ADD ORDER ITEMS TO DATABASE ========
         items_data = data.get('items', [])
        
         for item_data in items_data:
             product_name = item_data.get('product_name', 'Custom Product')
-            unit_price = Decimal(str(item_data.get('unit_price', 0)))
+            try:
+                unit_price = _parse_money(item_data.get('unit_price', 0), 'Order Amount')
+            except ValueError as exc:
+                return JsonResponse({'success': False, 'message': str(exc)}, status=400)
            
             # Find product by name first, then by ID, otherwise create it
             product = None
@@ -922,31 +1091,53 @@ def order_create_ajax(request):
        
         # ======== STEP 5: AUTO-CREATE PAYMENT IN DATABASE ========
         payment_method = data.get('payment_method', 'cash')
-        payment_status = data.get('payment_status', 'pending')
         payment_amount = data.get('payment_amount')
 
         valid_payment_methods = {choice[0] for choice in Payment.PAYMENT_METHOD_CHOICES}
-        valid_payment_statuses = {choice[0] for choice in Payment.PAYMENT_STATUS_CHOICES}
         if payment_method not in valid_payment_methods:
             payment_method = 'cash'
-        if payment_status not in valid_payment_statuses:
-            payment_status = 'pending'
-        
-        # Use payment_amount if provided, otherwise use order total
-        if payment_amount not in (None, ''):
-            payment_amount = Decimal(str(payment_amount))
+
+        try:
+            payment_type = _requested_initial_payment_type(data)
+            order_total = _money(order.total)
+            if order_total <= 0:
+                raise ValueError('Order Amount must be greater than zero before recording payment.')
+            if payment_amount in (None, '') and payment_type == Payment.TYPE_FULL_PAYMENT:
+                payment_amount = order_total
+            payment_amount = _parse_money(payment_amount, 'Payment Amount', allow_zero=False)
+        except ValueError as exc:
+            transaction.set_rollback(True)
+            return JsonResponse({'success': False, 'message': str(exc)}, status=400)
+
+        if payment_type == Payment.TYPE_FULL_PAYMENT:
+            if payment_amount != order_total:
+                transaction.set_rollback(True)
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Full Payment must equal the exact Order Amount of ₱{order_total:.2f}.',
+                }, status=400)
+            initial_balance = Decimal('0.00')
+            payment_status = Payment.STATUS_FULLY_PAID
         else:
-            payment_amount = order.total
-        if payment_amount < 0 or payment_amount > order.total:
-            return JsonResponse({'success': False, 'message': 'Payment amount must be between 0 and the order total.'}, status=400)
-       
+            if payment_amount >= order_total:
+                transaction.set_rollback(True)
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Down Payment must be greater than zero and less than the Order Amount.',
+                }, status=400)
+            initial_balance = (order_total - payment_amount).quantize(MONEY_PLACES)
+            payment_status = Payment.STATUS_DOWN_PAYMENT
+
         payment = Payment.objects.create(
             order=order,
             amount=payment_amount,
             payment_method=payment_method,
             payment_status=payment_status,
+            payment_type=payment_type,
             notes=f'Auto-generated payment for order {order.order_number}'
         )
+        order.balance_payment = initial_balance
+        order.save(update_fields=['balance_payment', 'updated_at'])
        
         # Prepare response with all created data
         response_data = {
@@ -959,15 +1150,16 @@ def order_create_ajax(request):
                 'customer_name': order.customer_name,
                 'customer_email': customer.email,
                 'status': order.status,
-                'total': float(order.total),
+                'total': f'{order.total:.2f}',
                 'created_at': order.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             },
             'payment': {
                 'id': payment.payment_id,
                 'payment_number': payment.payment_number,
-                'amount': float(payment.amount),
+                'amount': f'{payment.amount:.2f}',
                 'method': payment.payment_method,
                 'status': payment.payment_status,
+                'type': payment.payment_type,
             }
         }
        
@@ -1006,14 +1198,21 @@ def order_update_ajax(request):
             return JsonResponse({'success': False, 'message': 'order_id is required.'}, status=400)
 
         order = (
-            Order.objects.select_related('customer')
+            Order.objects.select_for_update().select_related('customer')
             .prefetch_related('items', 'payments')
             .get(order_id=order_id)
         )
 
+        requested_notes = str(data.get('notes', order.notes or '')).strip()
+        requested_pickup = requested_notes.lstrip().upper().startswith('[PICK UP]')
+        if requested_pickup and _money(order.delivery_fee_charge) > 0:
+            return JsonResponse({
+                'success': False,
+                'message': 'This order has a permanent Delivery Fee and cannot be changed to Local Pick Up.',
+            }, status=409)
+
         sender_name = str(data.get('sender_name', order.sender_name or '')).strip()
         sender_phone = str(data.get('sender_phone', order.sender_phone or '')).strip()
-        sender_address = str(data.get('sender_address', order.sender_address or '')).strip()
         raw_same = data.get('sender_is_receiver', order.sender_is_receiver)
         sender_is_receiver = raw_same in (True, 1, '1', 'true', 'True', 'on', 'yes')
 
@@ -1021,7 +1220,12 @@ def order_update_ajax(request):
         receiver_phone = str(data.get('receiver_phone', order.customer_phone or '')).strip()
         receiver_address = str(data.get('receiver_address', order.customer_address or '')).strip()
 
-        if sender_is_receiver:
+        if requested_pickup:
+            sender_is_receiver = True
+            receiver_name = sender_name
+            receiver_phone = sender_phone
+            receiver_address = ''
+        elif sender_is_receiver:
             receiver_name = sender_name
             receiver_phone = sender_phone
             receiver_address = str(
@@ -1031,11 +1235,12 @@ def order_update_ajax(request):
                 or order.customer_address
                 or ''
             ).strip()
-            sender_address = ''
 
-        if not sender_name or not sender_phone:
-            return JsonResponse({'success': False, 'message': 'Sender name and phone are required.'}, status=400)
-        if not receiver_name or not receiver_phone:
+        if not sender_name:
+            return JsonResponse({'success': False, 'message': 'Sender name is required.'}, status=400)
+        if not requested_pickup and not sender_phone:
+            return JsonResponse({'success': False, 'message': 'Sender phone is required for Local Drop-off.'}, status=400)
+        if not requested_pickup and (not receiver_name or not receiver_phone):
             return JsonResponse({'success': False, 'message': 'Receiver name and phone are required.'}, status=400)
 
         raw_date = str(data.get('delivery_date', '')).strip()
@@ -1061,7 +1266,8 @@ def order_update_ajax(request):
         customer.first_name = sender_parts[0] if sender_parts else ''
         customer.last_name = ' '.join(sender_parts[1:]) if len(sender_parts) > 1 else ''
         customer.phone = sender_phone
-        customer.address = sender_address
+        if receiver_address:
+            customer.address = receiver_address
         email = str(data.get('customer_email', customer.email or '')).strip()
         if email:
             customer.email = email
@@ -1070,37 +1276,20 @@ def order_update_ajax(request):
         order.receiver_name = receiver_name
         order.customer_phone = receiver_phone
         order.customer_address = receiver_address
-        order.delivery_address = str(data.get('delivery_address', order.delivery_address or '')).strip()
+        order.delivery_address = '' if requested_pickup else str(
+            data.get('delivery_address', order.delivery_address or '')
+        ).strip()
         order.sender_name = sender_name
         order.sender_phone = sender_phone
-        order.sender_address = sender_address
         order.sender_is_receiver = sender_is_receiver
-        order.notes = str(data.get('notes', order.notes or '')).strip()
+        order.notes = requested_notes
         order.fulfilled_by = str(data.get('fulfilled_by', order.fulfilled_by or '')).strip()
         order.rider_name = str(data.get('rider_name', order.rider_name or '')).strip()
-        order.rider_phone = str(data.get('rider_phone', order.rider_phone or '')).strip()
-        order.rider_vehicle = str(data.get('rider_vehicle', order.rider_vehicle or '')).strip()
 
-        try:
-            balance_payment = Decimal(str(data.get('balance_payment', order.balance_payment) or 0))
-            delivery_fee_charge = Decimal(str(data.get('delivery_fee_charge', order.delivery_fee_charge) or 0))
-        except Exception:
-            return JsonResponse({
-                'success': False,
-                'message': 'Balance payment and delivery fee must be valid monetary amounts.'
-            }, status=400)
-
-        if balance_payment < 0 or delivery_fee_charge < 0:
-            return JsonResponse({
-                'success': False,
-                'message': 'Balance payment and delivery fee cannot be negative.'
-            }, status=400)
-
-        order.balance_payment = balance_payment
-        order.additional_payment = str(
-            data.get('additional_payment', order.additional_payment or '') or ''
-        ).strip()[:255]
-        order.delivery_fee_charge = delivery_fee_charge
+        # Delivery Fee is managed only from View Details. Switching an order
+        # to Local Pick Up always clears it; drop-off edits preserve it.
+        if _is_pickup_order(order):
+            order.delivery_fee_charge = Decimal('0.00')
         order.save()
 
         items = data.get('items')
@@ -1111,9 +1300,9 @@ def order_update_ajax(request):
                 return JsonResponse({'success': False, 'message': 'Order item is required.'}, status=400)
             try:
                 quantity = int(item_data.get('quantity', 1))
-                unit_price = Decimal(str(item_data.get('unit_price', 0)))
-            except (TypeError, ValueError):
-                return JsonResponse({'success': False, 'message': 'Invalid quantity or price.'}, status=400)
+                unit_price = _parse_money(item_data.get('unit_price', 0), 'Order Amount')
+            except (TypeError, ValueError) as exc:
+                return JsonResponse({'success': False, 'message': str(exc)}, status=400)
             if quantity < 1 or unit_price < 0:
                 return JsonResponse({'success': False, 'message': 'Invalid quantity or price.'}, status=400)
 
@@ -1138,25 +1327,6 @@ def order_update_ajax(request):
             item.save()
             order.calculate_totals()
 
-        payment = order.payments.first()
-        if payment:
-            method = str(data.get('payment_method', payment.payment_method)).strip()
-            status = str(data.get('payment_status', payment.payment_status)).strip()
-            valid_methods = {choice[0] for choice in Payment.PAYMENT_METHOD_CHOICES}
-            valid_statuses = {choice[0] for choice in Payment.PAYMENT_STATUS_CHOICES}
-            if method not in valid_methods:
-                return JsonResponse({'success': False, 'message': 'Invalid payment method.'}, status=400)
-            if status not in valid_statuses:
-                return JsonResponse({'success': False, 'message': 'Invalid payment status.'}, status=400)
-            payment.payment_method = method
-            payment.payment_status = status
-            if data.get('payment_amount') not in (None, ''):
-                amount = Decimal(str(data.get('payment_amount')))
-                if amount < 0 or amount > order.total:
-                    return JsonResponse({'success': False, 'message': 'Payment amount must be between 0 and the order total.'}, status=400)
-                payment.amount = amount
-            payment.save()
-
         return JsonResponse({
             'success': True,
             'message': f'Order {order.order_number} updated successfully.',
@@ -1164,7 +1334,7 @@ def order_update_ajax(request):
                 'id': order.order_id,
                 'order_number': order.order_number,
                 'sender_is_receiver': order.sender_is_receiver,
-                'total': float(order.total or 0),
+                'total': f'{Decimal(order.total or 0):.2f}',
                 'status': order.status,
             }
         })
@@ -1192,7 +1362,9 @@ def payments(request):
     method_filter = request.GET.get('method', '')
    
     # Get payments from database
-    payments_list = Payment.objects.select_related('order', 'order__customer')
+    payments_list = Payment.objects.select_related(
+        'order', 'order__customer'
+    ).prefetch_related('order__payments')
    
     if search_query:
         payments_list = payments_list.filter(
@@ -1201,21 +1373,37 @@ def payments(request):
             Q(transaction_id__icontains=search_query)
         )
    
-    # Filter by payment status
-    if status_filter == 'pending':
-        payments_list = payments_list.filter(payment_status='pending')
-    elif status_filter == 'completed':
-        payments_list = payments_list.filter(payment_status='completed')
-   
     if method_filter:
         payments_list = payments_list.filter(payment_method=method_filter)
    
-    payments_list = payments_list.order_by('-payment_date')
-   
-    # Total revenue = sum of ALL payment amounts (all sales including pending and completed)
-    total_revenue = Payment.objects.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    status_filter = {
+        'pending': STATE_DOWN_PAYMENT,
+        'completed': STATE_FULLY_PAID,
+    }.get(status_filter, status_filter)
+    payment_rows = list(payments_list.order_by('-payment_date'))
+    state_by_order = {}
+    for payment in payment_rows:
+        if payment.order_id not in state_by_order:
+            state_by_order[payment.order_id] = calculate_order_payment_display_state(
+                payment.order, payment.order.payments.all()
+            )
+        payment_state = state_by_order[payment.order_id]
+        payment.display_payment_state = payment_state['code']
+        payment.display_payment_state_label = payment_state['label']
+        payment.calculated_remaining_balance = payment_state['remaining_balance']
 
-    pending_payments_count = Payment.objects.filter(payment_status='pending').count()
+    if status_filter in (STATE_DOWN_PAYMENT, STATE_FULLY_PAID):
+        payment_rows = [
+            payment for payment in payment_rows
+            if payment.display_payment_state == status_filter
+        ]
+   
+    # Revenue is derived from immutable received-payment ledger rows.
+    total_revenue = _received_payment_transactions().aggregate(
+        total=Sum('amount')
+    )['total'] or Decimal('0.00')
+
+    pending_payments_count = _pending_payment_count()
 
     # Monthly summary cards use the current Manila calendar month only.
     manila_today = get_manila_today()
@@ -1241,10 +1429,10 @@ def payments(request):
         manila_tz,
     )
 
-    customers_transacted = Customer.objects.filter(
-        orders__payments__payment_date__gte=month_start_datetime,
-        orders__payments__payment_date__lt=next_month_start_datetime,
-    ).distinct().count()
+    customers_transacted = _received_payment_transactions().filter(
+        payment_date__gte=month_start_datetime,
+        payment_date__lt=next_month_start_datetime,
+    ).values('order__customer_id').distinct().count()
 
     # Match the same month basis used by the completed-order monthly reset:
     # delivery date when present, otherwise the order's latest update date.
@@ -1268,7 +1456,7 @@ def payments(request):
     next_deletion_date = get_next_month_deletion_date()
 
     context = {
-        'payments': payments_list,
+        'payments': payment_rows,
         'total_revenue': total_revenue,
         'pending_payments_count': pending_payments_count,
         'customers_transacted': customers_transacted,
@@ -1297,7 +1485,13 @@ def payment_update_ajax(request):
        
         # Update in database
         payment = Payment.objects.get(payment_id=payment_id)
-        payment.payment_status = data.get('payment_status', payment.payment_status)
+        requested_status = data.get('payment_status')
+        if payment.payment_type and requested_status not in (None, payment.payment_status):
+            return JsonResponse({
+                'success': False,
+                'message': 'Payment status is calculated by the two-payment workflow and cannot be edited manually.',
+            }, status=409)
+        payment.payment_status = requested_status or payment.payment_status
         payment.payment_method = data.get('payment_method', payment.payment_method)
         payment.transaction_id = data.get('transaction_id', payment.transaction_id)
         payment.notes = data.get('notes', payment.notes)
@@ -1337,21 +1531,11 @@ def payment_update_ajax(request):
 @csrf_protect
 @transaction.atomic
 def payment_update_by_order_ajax(request):
-    """Update payment status or amount for an order.
-
-    When a remaining balance is confirmed as paid, the payment becomes Fully Paid,
-    the payment amount is set to the order total, and Balance Payment becomes zero.
-    """
+    """Create the one permitted final balance transaction for a down payment."""
     try:
         data = json.loads(request.body or b'{}')
         order_id = data.get('order_id')
-        new_payment_status = data.get('payment_status')
-        payment_amount = data.get('payment_amount')
-        balance_payment = data.get('balance_payment')
-        additional_payment = data.get('additional_payment')
-        mark_balance_paid = data.get('mark_balance_paid') in (
-            True, 1, '1', 'true', 'True', 'on', 'yes'
-        )
+        submitted_amount = data.get('balance_payment_amount')
 
         if not order_id:
             return JsonResponse({
@@ -1360,79 +1544,88 @@ def payment_update_by_order_ajax(request):
             }, status=400)
 
         order = Order.objects.select_for_update().get(order_id=order_id)
-        payment = order.payments.select_for_update().first()
+        payments = list(
+            order.payments.select_for_update().order_by('payment_date', 'payment_id')
+        )
 
-        if not payment:
+        if not payments:
             return JsonResponse({
                 'success': False,
                 'message': 'No payment found for this order.'
             }, status=404)
 
-        valid_statuses = {choice[0] for choice in Payment.PAYMENT_STATUS_CHOICES}
+        if any(payment.payment_type is None for payment in payments):
+            return JsonResponse({
+                'success': False,
+                'message': 'Legacy payment history must be reconciled before recording a balance payment.',
+            }, status=409)
+        if any(payment.payment_type == Payment.TYPE_FULL_PAYMENT for payment in payments):
+            return JsonResponse({
+                'success': False,
+                'message': 'A Full Payment order cannot receive a second payment.',
+            }, status=409)
+        if any(payment.payment_type == Payment.TYPE_BALANCE_PAYMENT for payment in payments):
+            return JsonResponse({
+                'success': False,
+                'message': 'The Remaining Balance Payment has already been recorded.',
+            }, status=409)
+        if len(payments) != 1 or payments[0].payment_type != Payment.TYPE_DOWN_PAYMENT:
+            return JsonResponse({
+                'success': False,
+                'message': 'This order does not have a valid single Down Payment to settle.',
+            }, status=409)
 
-        if new_payment_status:
-            if new_payment_status not in valid_statuses:
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Invalid payment status.'
-                }, status=400)
-            payment.payment_status = new_payment_status
+        order_total = _money(order.total)
+        received_total = sum((_money(payment.amount) for payment in payments), Decimal('0.00'))
+        calculated_balance = (order_total - received_total).quantize(MONEY_PLACES)
+        if calculated_balance <= 0:
+            return JsonResponse({
+                'success': False,
+                'message': 'This order has no remaining balance.',
+            }, status=409)
 
-        if payment_amount is not None:
-            try:
-                parsed_amount = Decimal(str(payment_amount))
-            except Exception:
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Payment amount must be a valid monetary amount.'
-                }, status=400)
+        try:
+            final_amount = _parse_money(submitted_amount, 'Remaining Balance Payment', allow_zero=False)
+        except ValueError as exc:
+            return JsonResponse({'success': False, 'message': str(exc)}, status=400)
+        if final_amount < calculated_balance:
+            return JsonResponse({
+                'success': False,
+                'message': f'Final Balance Payment must be at least ₱{calculated_balance:.2f}.',
+            }, status=400)
 
-            if parsed_amount < 0 or parsed_amount > order.total:
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Payment amount must be between 0 and the order total.'
-                }, status=400)
+        payment_method = str(data.get('payment_method') or payments[0].payment_method).strip()
+        valid_methods = {choice[0] for choice in Payment.PAYMENT_METHOD_CHOICES}
+        if payment_method not in valid_methods:
+            return JsonResponse({'success': False, 'message': 'Invalid payment method.'}, status=400)
 
-            payment.amount = parsed_amount
-
-        if balance_payment is not None:
-            try:
-                parsed_balance = Decimal(str(balance_payment or 0))
-            except Exception:
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Balance Payment must be a valid monetary amount.'
-                }, status=400)
-
-            if parsed_balance < 0:
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Balance Payment cannot be negative.'
-                }, status=400)
-
-            order.balance_payment = parsed_balance
-            order.save(update_fields=['balance_payment', 'updated_at'])
-
-        if additional_payment is not None:
-            order.additional_payment = str(additional_payment or '').strip()[:255]
-            order.save(update_fields=['additional_payment', 'updated_at'])
-
-        if payment.payment_status == 'completed' and mark_balance_paid:
-            payment.amount = order.total
-            order.balance_payment = Decimal('0.00')
-            order.save(update_fields=['balance_payment', 'updated_at'])
-
-        payment.save()
+        balance_payment = Payment.objects.create(
+            order=order,
+            amount=final_amount,
+            payment_method=payment_method,
+            payment_status=Payment.STATUS_FULLY_PAID,
+            payment_type=Payment.TYPE_BALANCE_PAYMENT,
+            transaction_id=str(data.get('transaction_id', '') or '').strip()[:100],
+            notes=str(data.get('notes', '') or f'Final balance payment for order {order.order_number}'),
+        )
+        order.balance_payment = Decimal('0.00')
+        order.save(update_fields=['balance_payment', 'updated_at'])
 
         return JsonResponse({
             'success': True,
-            'balance_payment': float(order.balance_payment or 0),
-            'additional_payment': order.additional_payment or '',
+            'order_amount': f'{order_total:.2f}',
+            'down_payment': f'{_money(payments[0].amount):.2f}',
+            'settlement_amount': f'{final_amount:.2f}',
+            'balance_payment': '0.00',
+            'required_balance_payment': '0.00',
+            'has_legacy_payment': False,
+            'can_pay_balance': False,
             'payment': {
-                'id': payment.payment_id,
-                'payment_number': payment.payment_number,
-                'status': payment.payment_status,
-                'amount': float(payment.amount),
+                'id': balance_payment.payment_id,
+                'payment_number': balance_payment.payment_number,
+                'status': balance_payment.payment_status,
+                'type': balance_payment.payment_type,
+                'amount': f'{balance_payment.amount:.2f}',
             }
         })
 
@@ -1452,27 +1645,71 @@ def payment_update_by_order_ajax(request):
 @require_http_methods(["GET"])
 @login_required(login_url='login')
 def payment_get_by_order_ajax(request):
-    """AJAX endpoint to get payment information by order ID"""
+    """Read payment information without repairing or rewriting stored money."""
     try:
         order_id = request.GET.get('order_id')
         if not order_id:
             return JsonResponse({'success': False, 'message': 'order_id is required'}, status=400)
         
         order = Order.objects.get(order_id=order_id)
-        payment = order.payments.first()
+        payments = list(order.payments.order_by('payment_date', 'payment_id'))
         
-        if not payment:
+        if not payments:
             return JsonResponse({'success': False, 'message': 'No payment found for this order'}, status=404)
         
+        order_total = Decimal(order.total or 0).quantize(MONEY_PLACES)
+        saved_additional_text = str(order.additional_payment or '').strip()
+        try:
+            saved_additional = Decimal(saved_additional_text or '0').quantize(MONEY_PLACES)
+        except InvalidOperation:
+            saved_additional = Decimal('0.00')
+
+        initial_payment = payments[0]
+        down_payment = _money(initial_payment.amount)
+        cached_balance = Decimal(order.balance_payment or 0).quantize(MONEY_PLACES)
+        payment_state = calculate_order_payment_state(order, payments)
+        display_payment_state = calculate_order_payment_display_state(order, payments)
+        status = payment_state['code']
+        has_legacy_payment = payment_state['is_legacy']
+        balance = cached_balance if has_legacy_payment else payment_state['remaining_balance']
+        can_pay_balance = (
+            status == STATE_DOWN_PAYMENT
+            and len(payments) == 1
+            and initial_payment.payment_type == Payment.TYPE_DOWN_PAYMENT
+            and balance > 0
+        )
+
         return JsonResponse({
             'success': True,
+            'order_amount': f'{order_total:.2f}',
+            'down_payment': f'{down_payment:.2f}',
+            'additional_payment': f'{saved_additional:.2f}',
+            'balance_payment': f'{balance:.2f}',
+            'required_balance_payment': f'{balance:.2f}',
+            'has_legacy_payment': has_legacy_payment,
+            'can_pay_balance': can_pay_balance,
             'payment': {
-                'id': payment.payment_id,
-                'payment_number': payment.payment_number,
-                'amount': float(payment.amount),
-                'payment_method': payment.payment_method,
-                'payment_status': payment.payment_status,
-            }
+                'id': initial_payment.payment_id,
+                'payment_number': initial_payment.payment_number,
+                'amount': f'{down_payment:.2f}',
+                'payment_method': initial_payment.payment_method,
+                'payment_status': status,
+                'payment_status_label': display_payment_state['label'],
+                'display_status': display_payment_state['code'],
+                'display_status_label': display_payment_state['label'],
+                'payment_type': initial_payment.payment_type,
+            },
+            'transactions': [
+                {
+                    'id': transaction_row.payment_id,
+                    'payment_number': transaction_row.payment_number,
+                    'amount': f'{_money(transaction_row.amount):.2f}',
+                    'payment_method': transaction_row.payment_method,
+                    'payment_status': transaction_row.payment_status,
+                    'payment_type': transaction_row.payment_type,
+                }
+                for transaction_row in payments
+            ],
         })
     except Order.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Order not found'}, status=404)
@@ -1488,7 +1725,7 @@ def payment_get_by_order_ajax(request):
 # ============================================================================
 @login_required(login_url='login')
 def reports(request):
-    """Generate reports using live completed-order data in Manila time."""
+    """Generate reports from received payment transactions in Manila time."""
 
     # Preserve the existing monthly/yearly archival workflow before building
     # the live current-month report. Archived historical report data is kept.
@@ -1500,46 +1737,79 @@ def reports(request):
     else:
         next_month_start = today.replace(month=today.month + 1, day=1)
 
-    # Current-month completed orders are the single source of truth for the
-    # Total Monthly Sales card and calendar. Changes in Orders are reflected
-    # immediately whenever this page is loaded or refreshed.
-    current_month_orders = (
-        Order.objects.filter(
-            delivery_date__gte=current_month_start,
-            delivery_date__lt=next_month_start,
-            status='completed',
+    month_start_datetime, next_month_start_datetime = _manila_month_datetime_bounds(
+        current_month_start
+    )
+    current_month_payments = (
+        _received_payment_transactions()
+        .filter(
+            payment_date__gte=month_start_datetime,
+            payment_date__lt=next_month_start_datetime,
         )
-        .select_related('customer')
-        .order_by('delivery_date', 'updated_at', 'order_id')
+        .select_related('order', 'order__customer')
+        .order_by('payment_date', 'payment_id')
     )
 
-    total_monthly_sales = current_month_orders.aggregate(
-        total_orders=Count('order_id'),
-        total_revenue=Sum('total'),
+    total_monthly_sales = current_month_payments.aggregate(
+        total_transactions=Count('payment_id'),
+        total_revenue=Sum('amount'),
     )
-    total_monthly_sales['total_orders'] = total_monthly_sales['total_orders'] or 0
+    total_monthly_sales['total_transactions'] = total_monthly_sales['total_transactions'] or 0
     total_monthly_sales['total_revenue'] = total_monthly_sales['total_revenue'] or Decimal('0.00')
 
-    current_month_sales_by_day = {}
-    current_month_orders_by_day = {}
+    year_start_datetime = timezone.make_aware(
+        datetime(today.year, 1, 1),
+        get_manila_timezone(),
+    )
+    next_year_start_datetime = timezone.make_aware(
+        datetime(today.year + 1, 1, 1),
+        get_manila_timezone(),
+    )
+    current_year_payments = (
+        _received_payment_transactions()
+        .filter(
+            payment_date__gte=year_start_datetime,
+            payment_date__lt=next_year_start_datetime,
+        )
+        .select_related('order', 'order__customer')
+        .order_by('payment_date', 'payment_id')
+    )
+    live_months = aggregate_payments_by_manila_month(current_year_payments)
 
-    for order in current_month_orders:
-        order_date = order.delivery_date
-        if not order_date:
+    reports_year_data = {}
+    for archive in MonthlySalesArchive.objects.filter(year=today.year):
+        try:
+            month_number = list(calendar.month_name).index(archive.month_name)
+        except ValueError:
             continue
+        reports_year_data[str(month_number)] = {
+            'month_name': archive.month_name,
+            'sales_by_day': archive.sales_by_day or {},
+            'customers_by_day': archive.orders_by_day or {},
+        }
+    for (live_year, month_number), live_data in live_months.items():
+        if live_year != today.year:
+            continue
+        month_key = str(month_number)
+        archived_data = reports_year_data.get(month_key, {})
+        merged_rows, merged_sales = merge_lightweight_archive(
+            archived_data.get('customers_by_day', {}),
+            live_data['customers_by_day'],
+        )
+        reports_year_data[month_key] = {
+            'month_name': calendar.month_name[month_number],
+            'sales_by_day': merged_sales,
+            'customers_by_day': merged_rows,
+        }
 
-        day_key = str(order_date.day)
-        current_month_sales_by_day.setdefault(day_key, 0.0)
-        current_month_orders_by_day.setdefault(day_key, [])
-
-        current_month_sales_by_day[day_key] += float(order.total or 0)
-        current_month_orders_by_day[day_key].append({
-            'order_number': order.order_number,
-            'customer_name': order.customer_name,
-            'total': float(order.total or 0),
-            'order_id': order.order_id,
-            'order_date': order_date.isoformat(),
-        })
+    reports_year_data.setdefault(str(today.month), {
+        'month_name': today.strftime('%B'),
+        'sales_by_day': {},
+        'customers_by_day': {},
+    })
+    current_month_data = reports_year_data[str(today.month)]
+    current_month_sales_by_day = current_month_data['sales_by_day']
+    current_month_orders_by_day = current_month_data['customers_by_day']
 
     # Current-year Employee Standing overview. The monthly evaluations table
     # remains the single source of truth, so Reports always matches the
@@ -1560,7 +1830,7 @@ def reports(request):
         employee.yearly_total_stars = min(int(employee.current_year_stars or 0), 24)
         employee.yearly_total_demerits = int(employee.current_year_demerits or 0)
 
-    pending_payments = Payment.objects.filter(payment_status='pending').count()
+    pending_payments = _pending_payment_count()
     new_customers_count = Customer.objects.filter(created_at__date=today).count()
     next_year_deletion_date = get_next_year_deletion_date()
     next_deletion_date = get_next_month_deletion_date()
@@ -1573,6 +1843,7 @@ def reports(request):
         'current_month_day': today.day,
         'current_month_sales_by_day': current_month_sales_by_day,
         'current_month_orders_by_day': current_month_orders_by_day,
+        'reports_year_data': reports_year_data,
         'employees': employees,
         'employee_standing_year': today.year,
         'pending_payments': pending_payments,
@@ -1777,14 +2048,10 @@ def orders_export_data_ajax(request):
     for order in orders:
         items_text = ', '.join(item.product_name for item in order.items.all()) or '—'
 
-        if order.status == 'completed':
-            status_text = 'Completed'
-        else:
-            payment = order.payments.first()
-            if payment and payment.payment_status == 'completed':
-                status_text = 'Fully Paid'
-            else:
-                status_text = 'Down Payment'
+        payment_state = calculate_order_payment_display_state(
+            order, order.payments.all()
+        )
+        status_text = payment_state['label']
 
         if order.delivery_date:
             delivery_text = order.delivery_date.strftime('%b %d, %Y')
@@ -1830,7 +2097,7 @@ def features(request):
 def get_notification_context():
     from django.utils import timezone
     today = timezone.now().date()
-    pending_payments   = Payment.objects.filter(payment_status='pending').count()
+    pending_payments   = _pending_payment_count()
     new_customers_count = Customer.objects.filter(created_at__date=today).count()
     return {
         'pending_payments':   pending_payments,
@@ -1844,7 +2111,7 @@ def get_notification_context():
 @csrf_protect
 @transaction.atomic
 def order_update_status_ajax(request):
-    """AJAX endpoint to update an order's status. When completed, also mark payment as completed."""
+    """Update only the order/delivery lifecycle status."""
     try:
         data       = json.loads(request.body)
         order_id   = data.get('order_id')
@@ -1868,16 +2135,6 @@ def order_update_status_ajax(request):
 
         order.status = new_status
         order.save(update_fields=['status', 'updated_at'])
-
-        # When order is marked as completed, also mark the payment as completed (fully paid)
-        if new_status == 'completed':
-            payment = order.payments.select_for_update().first()
-            if payment:
-                payment.payment_status = 'completed'
-                payment.amount = order.total
-                payment.save(update_fields=['payment_status', 'amount', 'updated_at'])
-            order.balance_payment = Decimal('0.00')
-            order.save(update_fields=['balance_payment', 'updated_at'])
 
         return JsonResponse({
             'success': True,
@@ -1915,35 +2172,64 @@ def order_update_fulfilled_ajax(request):
 @login_required(login_url='login')
 @require_http_methods(["POST"])
 @csrf_protect
+@transaction.atomic
 def order_update_rider_ajax(request):
-    """Save rider name and manually entered delivery fee charge for an order."""
+    """Update View Details rider/fee fields without coupling them financially."""
     try:
-        data = json.loads(request.body)
+        data = json.loads(request.body or b'{}')
         order_id = data.get('order_id')
-        rider_name = str(data.get('rider_name', '')).strip()
+        if not order_id:
+            return JsonResponse({'success': False, 'message': 'order_id is required.'}, status=400)
 
-        try:
-            delivery_fee_charge = Decimal(str(data.get('delivery_fee_charge', 0) or 0))
-        except Exception:
+        order = Order.objects.select_for_update().get(order_id=order_id)
+        if order.status == 'completed':
             return JsonResponse({
                 'success': False,
-                'message': 'Delivery fee charge must be a valid monetary amount.'
-            }, status=400)
+                'message': 'Completed orders can no longer be edited.',
+            }, status=409)
 
-        if delivery_fee_charge < 0:
+        update_fields = []
+        if 'rider_name' in data:
+            rider_name = str(data.get('rider_name') or '').strip()
+            if not rider_name:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Rider Name is required.',
+                }, status=400)
+            order.rider_name = rider_name
+            update_fields.append('rider_name')
+
+        if 'delivery_fee_charge' in data:
+            if _is_pickup_order(order):
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Local Pick Up orders cannot have a Delivery Fee.',
+                }, status=400)
+            if _money(order.delivery_fee_charge) > 0:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Delivery Fee has already been saved and cannot be changed.',
+                }, status=409)
+            try:
+                order.delivery_fee_charge = _parse_money(
+                    data.get('delivery_fee_charge'), 'Delivery Fee', allow_zero=False
+                )
+            except ValueError as exc:
+                return JsonResponse({'success': False, 'message': str(exc)}, status=400)
+            update_fields.append('delivery_fee_charge')
+
+        if not update_fields:
             return JsonResponse({
                 'success': False,
-                'message': 'Delivery fee charge cannot be negative.'
+                'message': 'No supported View Details field was provided.',
             }, status=400)
 
-        order = Order.objects.get(order_id=order_id)
-        order.rider_name = rider_name
-        order.delivery_fee_charge = delivery_fee_charge
-        order.save(update_fields=['rider_name', 'delivery_fee_charge', 'updated_at'])
+        order.save(update_fields=[*update_fields, 'updated_at'])
 
         return JsonResponse({
             'success': True,
-            'delivery_fee_charge': float(order.delivery_fee_charge)
+            'rider_name': order.rider_name,
+            'delivery_fee_charge': f'{order.delivery_fee_charge:.2f}',
         })
     except Order.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Order not found'}, status=404)

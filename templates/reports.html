@@ -6,6 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KRES Co. Admin - Reports</title>
+    {% include 'includes/favicon.html' %}
     <style>
         /* 1. RESET & BASE STYLES */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -820,6 +821,18 @@
             font-weight: 700;
             color: #111827;
         }
+        .calendar-month-selector {
+            margin-left: auto;
+            min-width: 150px;
+            padding: 8px 10px;
+            border: 1px solid #cbdde8;
+            border-radius: 8px;
+            background: #fff;
+            color: #022f56;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 700;
+        }
         .calendar-month-stats {
             display: flex;
             gap: 16px;
@@ -1124,6 +1137,7 @@
         }
     </style>
     <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'css/kres-theme.css' %}">
 </head>
 <body>
     {% include 'includes/sidebar.html' with active_page='reports' %}
@@ -1132,7 +1146,7 @@
     <div class="sidebar" id="sidebar">
         <div class="logo-section">
             <div class="logo">
-                <img src="{% static 'images/logo.png' %}" alt="KRES Logo" style="width: 70px; height: 70px; object-fit: contain;">
+                <img src="{% static 'images/logo.png' %}" alt="KRES Logo">
             </div>
             <div class="logo-text">
                 <h1>KRES Co. Admin</h1>
@@ -1251,7 +1265,7 @@
                     <div class="summary-card" onclick="openCalendarModal()" style="cursor: pointer; transition: all 0.3s ease;">
                         <h4>Total Monthly Sales</h4>
                         <div class="value">₱<span id="totalMonthlySalesAmount">{{ total_monthly_sales.total_revenue }}</span></div>
-                        <div class="subtext">{{ current_month_name }} {{ current_month_year }} · {{ total_monthly_sales.total_orders }} completed order{{ total_monthly_sales.total_orders|pluralize }} · Click to view by date</div>
+                        <div class="subtext">{{ current_month_name }} {{ current_month_year }} · {{ total_monthly_sales.total_transactions }} received payment transaction{{ total_monthly_sales.total_transactions|pluralize }} · Click to view by date</div>
                     </div>
                 </div>
             </div>
@@ -1308,7 +1322,7 @@
                     </div>
                     <div>
                         <div class="calendar-title">Total Monthly Sales Calendar</div>
-                        <div class="calendar-subtitle">{{ current_month_name }} {{ current_month_year }} · Select a date to view completed orders and sales</div>
+                        <div class="calendar-subtitle" id="calendarSubtitle">{{ current_month_name }} {{ current_month_year }} · Select a date to view received payments</div>
                     </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;background:#fef9e7;border-left:3px solid #f59e0b;border-radius:5px;padding:6px 12px;margin-right:12px;">
@@ -1332,9 +1346,10 @@
                     <div id="calGridSection" style="display:flex; flex-direction:column; flex:1; overflow:hidden; min-height:0;">
                         <div class="calendar-month-title-bar" id="calMonthTitleBar">
                             <h3 id="calMonthTitle"></h3>
+                            <select class="calendar-month-selector" id="reportMonthSelect" onchange="selectReportMonth(this.value)" aria-label="Report month"></select>
                             <div class="calendar-month-stats">
                                 <div class="cal-stat">
-                                    <div class="cal-stat-label">Orders</div>
+                                    <div class="cal-stat-label">Customers</div>
                                     <div class="cal-stat-value" id="calMonthOrderCount">0</div>
                                 </div>
                                 <div class="cal-stat">
@@ -1360,7 +1375,7 @@
                                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/>
                                 </svg>
-                                <p>Click a highlighted date to see its orders</p>
+                                <p>Click a highlighted date to see customer payment totals</p>
                             </div>
                             <div id="calOrdersList" style="display:none;"></div>
                         </div>
@@ -1370,8 +1385,7 @@
         </div>
     </div>
 
-    {{ current_month_sales_by_day|json_script:"current-month-sales-data" }}
-    {{ current_month_orders_by_day|json_script:"current-month-orders-data" }}
+    {{ reports_year_data|json_script:"reports-year-data" }}
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="{% static 'js/sidebar.js' %}"></script>
@@ -1429,12 +1443,49 @@
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
 
         // Load the current Manila month directly from the backend.
-        const currentMonthSalesData = JSON.parse(document.getElementById('current-month-sales-data').textContent);
-        const currentMonthOrdersData = JSON.parse(document.getElementById('current-month-orders-data').textContent);
-        const reportMonthName = '{{ current_month_name|escapejs }}';
-        const reportMonthNumber = Number('{{ current_month_number }}');
+        const reportsYearData = JSON.parse(document.getElementById('reports-year-data').textContent);
+        const currentReportMonthNumber = Number('{{ current_month_number }}');
+        let reportMonthNumber = currentReportMonthNumber;
+        let reportMonthName = '{{ current_month_name|escapejs }}';
         const reportMonthYear = Number('{{ current_month_year }}');
         const reportCurrentDay = Number('{{ current_month_day }}');
+        let currentMonthSalesData = {};
+        let currentMonthOrdersData = {};
+
+        function loadReportMonth(monthNumber) {
+            const monthData = reportsYearData[String(monthNumber)] || {
+                month_name: new Date(reportMonthYear, monthNumber - 1, 1).toLocaleString('en-PH', {month: 'long'}),
+                sales_by_day: {},
+                customers_by_day: {}
+            };
+            reportMonthNumber = Number(monthNumber);
+            reportMonthName = monthData.month_name;
+            currentMonthSalesData = monthData.sales_by_day || {};
+            currentMonthOrdersData = monthData.customers_by_day || {};
+        }
+
+        function populateReportMonthSelector() {
+            const selector = document.getElementById('reportMonthSelect');
+            if (!selector) return;
+            selector.innerHTML = '';
+            Object.keys(reportsYearData)
+                .map(Number)
+                .sort((a, b) => a - b)
+                .forEach(monthNumber => {
+                    const option = document.createElement('option');
+                    option.value = String(monthNumber);
+                    option.textContent = `${reportsYearData[String(monthNumber)].month_name} ${reportMonthYear}`;
+                    option.selected = monthNumber === reportMonthNumber;
+                    selector.appendChild(option);
+                });
+        }
+
+        function selectReportMonth(monthNumber) {
+            loadReportMonth(Number(monthNumber));
+            renderCurrentMonthCalendar();
+        }
+
+        loadReportMonth(reportMonthNumber);
 
         function getMonthlySalesRows() {
             const daysInMonth = new Date(reportMonthYear, reportMonthNumber, 0).getDate();
@@ -1683,6 +1734,7 @@
 
         function openCalendarModal() {
             document.getElementById('calendarModal').classList.add('show');
+            populateReportMonthSelector();
             renderCurrentMonthCalendar();
         }
 
@@ -1702,6 +1754,7 @@
             const totalOrders = Object.values(currentMonthOrdersData).reduce((a, b) => a + b.length, 0);
 
             document.getElementById('calMonthTitle').textContent = `${reportMonthName} ${reportMonthYear}`;
+            document.getElementById('calendarSubtitle').textContent = `${reportMonthName} ${reportMonthYear} · Select a date to view received payments`;
             document.getElementById('calMonthOrderCount').textContent = totalOrders;
             document.getElementById('calMonthRevenue').textContent = '₱' + totalRevenue.toLocaleString('en-PH', {maximumFractionDigits: 2});
 
@@ -1719,7 +1772,7 @@
                 const amount = Number(currentMonthSalesData[dayKey] || 0);
                 const dayOrders = currentMonthOrdersData[dayKey] || [];
                 const hasData = dayOrders.length > 0;
-                const isToday = day === reportCurrentDay;
+                const isToday = reportMonthNumber === currentReportMonthNumber && day === reportCurrentDay;
                 const cell = document.createElement('div');
                 cell.className = 'cal-day-cell' + (hasData ? ' has-sales' : ' no-sales') + (isToday ? ' today-cell' : '');
                 cell.dataset.day = dayKey;
@@ -1780,7 +1833,7 @@
                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
-                        <p>No completed orders on this day.</p>
+                        <p>No customer payments received on this day.</p>
                     </div>
                 `;
             }

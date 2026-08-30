@@ -16,10 +16,25 @@ services:
         value: ".onrender.com,krescoadmin.xyz,www.krescoadmin.xyz"
       - key: CSRF_TRUSTED_ORIGINS
         value: "https://*.onrender.com,https://krescoadmin.xyz,https://www.krescoadmin.xyz"
+      - key: SECURE_SSL_REDIRECT
+        value: "True"
+      - key: SESSION_COOKIE_SECURE
+        value: "True"
+      - key: CSRF_COOKIE_SECURE
+        value: "True"
+      # Start conservatively; increase after confirming every production hostname is HTTPS-only.
+      - key: SECURE_HSTS_SECONDS
+        value: "3600"
+      - key: SECURE_HSTS_INCLUDE_SUBDOMAINS
+        value: "False"
+      - key: SECURE_HSTS_PRELOAD
+        value: "False"
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_EMPLOYEE_PHOTOS_BUCKET
         value: "employee-profile-photos"
+      - key: MONTHLY_CLEANUP_SECRET
+        sync: false
       - key: PYTHON_VERSION
         value: "3.13.5"
       # AWS S3 Configuration (add these in Render dashboard)
@@ -31,23 +46,3 @@ services:
         value: "kres-admin-photos"
       - key: AWS_S3_REGION_NAME
         value: "us-east-1"
-
-  # Render schedules use UTC. Run daily at 16:05 UTC, which is 00:05 the
-  # following Manila day; the command itself acts only on Manila day 1.
-  - type: cron
-    name: kres-monthly-cleanup
-    runtime: python
-    schedule: "5 16 * * *"
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python manage.py auto_delete_old_orders"
-    envVars:
-      - key: DATABASE_URL
-        sync: false
-      - key: SECRET_KEY
-        sync: false
-      - key: DEBUG
-        value: "False"
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_EMPLOYEE_PHOTOS_BUCKET
-        value: "employee-profile-photos"

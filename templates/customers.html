@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KRES Co. Admin - Customers</title>
+    {% include 'includes/favicon.html' %}
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -374,6 +375,7 @@
         
     </style>
     <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'css/kres-theme.css' %}">
 </head>
 <body>
 {% include 'includes/sidebar.html' with active_page='customers' %}
@@ -412,9 +414,8 @@
                 <thead>
                     <tr>
                         <th>Customer Name</th>
-                        <th>Contact Number</th>
                         <th>Items Ordered</th>
-                        <th>Payment Status</th>
+                        <th>Order Status</th>
                         <th>Total</th>
                         <th>Actions</th>
                     </tr>
@@ -431,7 +432,6 @@
                         data-delivery-type="{% with latest=customer.orders.first %}{% if latest %}{% if '[PICK UP]' in latest.notes %}pickup{% else %}dropoff{% endif %}{% endif %}{% endwith %}"
                     >
                         <td class="name-cell">{{ customer.display_customer_name }}</td>
-                        <td>{{ customer.display_customer_phone|default:"—" }}</td>
                         <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                             {% with latest=customer.orders.first %}
                                 {% if latest %}{% for item in latest.items.all %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}—{% endif %}
@@ -444,13 +444,7 @@
                                         {% if latest.status == 'completed' %}
                                             <span class="pill pill-paid"> Completed</span>
                                         {% else %}
-                                            {% with p=latest.payments.first %}
-                                                {% if p and p.payment_status == 'completed' %}
-                                                    <span class="pill pill-full"> Fully Paid</span>
-                                                {% else %}
-                                                    <span class="pill pill-half"> Down Payment</span>
-                                                {% endif %}
-                                            {% endwith %}
+                                            <span class="pill pill-half"> Pending</span>
                                         {% endif %}
                                     {% endwith %}
                                 {% else %}
@@ -462,7 +456,7 @@
                         <td><button class="btn-view" onclick="viewCustomer(this)">View Profile</button></td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="6" style="text-align:center;padding:60px;color:#9ca3af;">
+                    <tr><td colspan="5" style="text-align:center;padding:60px;color:#9ca3af;">
                         <div style="font-size:38px;margin-bottom:10px;">👥</div>
                         <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:#6b7280;">No customers yet</div>
                         <div style="font-size:13px;">Customers appear here once an order is created.</div>
@@ -486,7 +480,7 @@
             <div class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.82 2 2 0 012 .9h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6z"/></svg></div><div><div class="dlabel">Contact Number</div><div class="dvalue" id="mPhone">—</div></div></div>
             <div id="mDeliveryTypeRow" class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><div><div class="dlabel">Delivery Type</div><div class="dvalue" id="mDeliveryType">—</div></div></div>
             <div class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div><div><div class="dlabel">All Items Ordered</div><div class="dvalue" id="mItems" style="white-space:pre-wrap;">—</div></div></div>
-            <div class="drow"><div class="dico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="dlabel">Total Spent</div><div class="dvalue" id="mTotal">—</div></div></div>
+            <div class="drow"><div class="dico"><span aria-hidden="true">₱</span></div><div><div class="dlabel">Total Spent</div><div class="dvalue" id="mTotal">—</div></div></div>
         </div>
         <div class="modal-footer"><button class="btn-close" onclick="closeModal()">Close</button></div>
     </div>

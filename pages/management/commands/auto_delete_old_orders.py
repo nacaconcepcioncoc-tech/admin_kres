@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 from pages.auto_delete_utils import (
     check_and_delete_completed_orders,
     check_and_delete_employee_standing_yearly_data,
+    check_and_delete_yearly_sales_data,
 )
 class Command(BaseCommand):
     help = (
@@ -12,6 +13,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         monthly = check_and_delete_completed_orders()
+        yearly_sales = check_and_delete_yearly_sales_data()
         yearly = check_and_delete_employee_standing_yearly_data()
 
         if monthly:
@@ -23,6 +25,16 @@ class Command(BaseCommand):
             ))
         else:
             self.stdout.write('No monthly reset is due, or this period already ran.')
+
+        if yearly_sales:
+            _, year, archives_deleted, total = yearly_sales
+            self.stdout.write(self.style.SUCCESS(
+                f'Yearly Reports archive reset completed for {year}: '
+                f'{archives_deleted} monthly archives removed after preserving '
+                f'the minimal yearly total ({total}).'
+            ))
+        else:
+            self.stdout.write('No yearly Reports archive reset is due, or it already ran.')
 
         if yearly:
             _, evaluations, legacy, summaries, year = yearly

@@ -22,19 +22,48 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 
+def env_bool(name, default=False):
+    """Read a conventional boolean environment variable."""
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-local-development-only')
+DEVELOPMENT_SECRET_KEY = 'django-insecure-local-development-only'
+SECRET_KEY = os.environ.get('SECRET_KEY', DEVELOPMENT_SECRET_KEY)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+DEBUG = env_bool('DEBUG', True)
 
-if not DEBUG and SECRET_KEY == 'django-insecure-local-development-only':
-    raise RuntimeError('SECRET_KEY must be set when DEBUG=False.')
+if not DEBUG and (
+    SECRET_KEY == DEVELOPMENT_SECRET_KEY
+    or SECRET_KEY.startswith('django-insecure-')
+    or len(SECRET_KEY) < 50
+):
+    raise RuntimeError(
+        'A strong SECRET_KEY of at least 50 characters must be set when DEBUG=False.'
+    )
 
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,192.168.1.42').split(',') if host.strip()]
+
+# Render terminates TLS at its reverse proxy and forwards the original scheme.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Local DEBUG mode remains HTTP-friendly. Production defaults to HTTPS-only,
+# with environment overrides available for controlled staging deployments.
+SECURE_SSL_REDIRECT = env_bool('SECURE_SSL_REDIRECT', not DEBUG)
+SECURE_HSTS_SECONDS = int(
+    os.environ.get('SECURE_HSTS_SECONDS', '0' if DEBUG else '3600')
+)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool(
+    'SECURE_HSTS_INCLUDE_SUBDOMAINS', False
+)
+SECURE_HSTS_PRELOAD = env_bool('SECURE_HSTS_PRELOAD', False)
 
 
 # Application definition
@@ -112,6 +141,10 @@ SUPABASE_EMPLOYEE_PHOTOS_BUCKET = os.environ.get(
     'SUPABASE_EMPLOYEE_PHOTOS_BUCKET',
     'employee-profile-photos',
 )
+
+# Shared only between Render and the Supabase Cron/Vault scheduler. Keep empty
+# locally unless the protected scheduler endpoint needs to be exercised.
+MONTHLY_CLEANUP_SECRET = os.environ.get('MONTHLY_CLEANUP_SECRET', '')
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -216,7 +249,7 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 
 # CSRF settings - ensure CSRF token is always available for AJAX requests
-CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = env_bool('CSRF_COOKIE_SECURE', not DEBUG)
 CSRF_COOKIE_HTTPONLY = False  # Must be False to allow JavaScript access via header
-SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = env_bool('SESSION_COOKIE_SECURE', not DEBUG)
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost,http://127.0.0.1').split(',') if origin.strip()]

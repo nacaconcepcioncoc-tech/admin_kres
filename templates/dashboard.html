@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KRES Co. Admin - Management Panel</title>
+    {% include 'includes/favicon.html' %}
     <style>
         * {
             margin: 0;
@@ -623,6 +624,7 @@
         }
     </style>
     <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'css/kres-theme.css' %}">
 </head>
 <body>
     <!-- Sidebar -->
@@ -649,7 +651,7 @@
                         </svg>
                     </div>
                     <div class="stat-info">
-                        <div class="stat-label">Total Revenue</div>
+                        <div class="stat-label">Revenue Collected This Month</div>
                         <div class="stat-value" id="revenue-value">₱ {{ total_revenue|floatformat:2 }}</div>
                     </div>
                     <div class="stat-badge"></div>
@@ -849,15 +851,13 @@
         }
 
         function navigateToPendingOrders() {
-            // Store filter preference in sessionStorage
-            sessionStorage.setItem('orderFilter', 'pending');
-            window.location.href = "{% url 'pages:orders' %}";
+            localStorage.setItem('ordersStatusFilter', 'pending');
+            window.location.href = "{% url 'pages:orders' %}?status=pending";
         }
 
         function navigateToCompletedOrders() {
-            // Store filter preference in sessionStorage
-            sessionStorage.setItem('orderFilter', 'completed');
-            window.location.href = "{% url 'pages:orders' %}";
+            localStorage.setItem('ordersStatusFilter', 'completed');
+            window.location.href = "{% url 'pages:orders' %}?status=completed";
         }
 
     </script>

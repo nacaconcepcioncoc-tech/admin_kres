@@ -9,6 +9,7 @@ from .models import (
     EmployeeMonthlyPerformance,
     EmployeeStandingPin,
 )
+from .payment_state import calculate_order_payment_display_state
 
 
 class EmployeeStandingPinAdminForm(forms.ModelForm):
@@ -102,13 +103,13 @@ class OrderAdmin(admin.ModelAdmin):
             'fields': ('order_number', 'customer', 'status', 'notes')
         }),
         ('Sender / Customer Information', {
-            'fields': ('sender_name', 'sender_phone', 'sender_address', 'sender_is_receiver')
+            'fields': ('sender_name', 'sender_phone', 'sender_is_receiver')
         }),
         ('Receiver Information', {
             'fields': ('receiver_name', 'customer_phone', 'customer_address', 'delivery_address')
         }),
         ('Order Totals', {
-            'fields': ('subtotal', 'tax', 'discount', 'total')
+            'fields': ('subtotal', 'total')
         }),
         ('System Information', {
             'fields': ('order_id', 'created_at', 'updated_at'),
@@ -175,12 +176,11 @@ class PaymentAdmin(admin.ModelAdmin):
     
     def get_payment_status(self, obj):
         """Get payment status matching frontend display logic"""
-        if obj.order.status == 'completed':
-            return '✅ Completed'
-        elif obj.payment_status == 'completed':
-            return '💳 Fully Paid'
-        else:
-            return '💰 Down Payment'
+        state = calculate_order_payment_display_state(
+            obj.order,
+            obj.order.payments.all(),
+        )
+        return state['label']
     get_payment_status.short_description = 'Payment Status'
 
 
