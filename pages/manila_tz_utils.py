@@ -5,12 +5,12 @@ Ensures consistent timezone handling across the application.
 
 from django.utils import timezone
 from datetime import timedelta, date
-import pytz
+from zoneinfo import ZoneInfo
 
 
 def get_manila_timezone():
     """Get Manila timezone object (UTC+8)"""
-    return pytz.timezone('Asia/Manila')
+    return ZoneInfo('Asia/Manila')
 
 
 def get_manila_today():

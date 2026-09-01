@@ -204,6 +204,17 @@ def _manila_month_datetime_bounds(month_start):
     )
 
 
+def _received_payments_for_manila_month(month_start):
+    """Return received ledger rows inside one Manila-local calendar month."""
+    month_start_datetime, next_month_start_datetime = (
+        _manila_month_datetime_bounds(month_start)
+    )
+    return _received_payment_transactions().filter(
+        payment_date__gte=month_start_datetime,
+        payment_date__lt=next_month_start_datetime,
+    )
+
+
 
 # ============================================================================
 # EMPLOYEE STANDING PIN ACCESS CONTROL
@@ -537,9 +548,8 @@ def dashboard(request):
 
     pending_orders = Order.objects.filter(status='pending').count()
 
-    current_month_payments = _received_payment_transactions().filter(
-        payment_date__gte=month_start_datetime,
-        payment_date__lt=next_month_start_datetime,
+    current_month_payments = _received_payments_for_manila_month(
+        current_month_start
     )
     total_revenue = current_month_payments.aggregate(
         total=Sum('amount')
@@ -1854,20 +1864,9 @@ def reports(request):
 
     today = get_manila_today()
     current_month_start = today.replace(day=1)
-    if today.month == 12:
-        next_month_start = today.replace(year=today.year + 1, month=1, day=1)
-    else:
-        next_month_start = today.replace(month=today.month + 1, day=1)
 
-    month_start_datetime, next_month_start_datetime = _manila_month_datetime_bounds(
-        current_month_start
-    )
     current_month_payments = (
-        _received_payment_transactions()
-        .filter(
-            payment_date__gte=month_start_datetime,
-            payment_date__lt=next_month_start_datetime,
-        )
+        _received_payments_for_manila_month(current_month_start)
         .select_related('order', 'order__customer')
         .order_by('payment_date', 'payment_id')
     )

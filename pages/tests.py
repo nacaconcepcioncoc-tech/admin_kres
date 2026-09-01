@@ -2114,3 +2114,131 @@ class OrderScheduleNoteEditTests(TestCase):
         self.assertContains(response, 'id="detailSpecialNoteInput"')
         self.assertContains(response, 'id="btnSaveScheduleNote"')
         self.assertContains(response, 'id="btnCancelScheduleNote"')
+
+
+class CurrentMonthReceivedRevenueRegressionTests(TestCase):
+    """Keep every current-month revenue surface on the received-payment ledger."""
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            'revenue-regression', password='secret'
+        )
+        self.client.force_login(self.user)
+        self.customer = Customer.objects.create(
+            first_name='Revenue', last_name='Regression',
+            email='revenue-regression@example.com', phone='09170007777',
+        )
+
+    def test_september_received_payments_drive_dashboard_reports_and_calendar_once(self):
+        fake_now = timezone.make_aware(datetime(2026, 9, 1, 8, 0))
+        september_start = timezone.make_aware(datetime(2026, 9, 1, 0, 0))
+        september_second_day = timezone.make_aware(datetime(2026, 9, 2, 9, 0))
+        august_last_minute = timezone.make_aware(datetime(2026, 8, 31, 23, 59))
+
+        down_order = Order.objects.create(
+            customer=self.customer, order_number='REVENUE-DOWN', status='pending',
+            notes='[DROP OFF] Original note', delivery_date=date(2026, 9, 10),
+            delivery_time=time(10, 0), total=Decimal('1200.00'),
+            balance_payment=Decimal('700.00'), delivery_fee_charge=Decimal('150.00'),
+        )
+        full_order = Order.objects.create(
+            customer=self.customer, order_number='REVENUE-FULL', status='pending',
+            notes='[PICK UP]', delivery_date=date(2026, 9, 11),
+            delivery_time=time(11, 0), total=Decimal('1500.00'),
+            balance_payment=Decimal('0.00'),
+        )
+        previous_order = Order.objects.create(
+            customer=self.customer, order_number='REVENUE-AUGUST', status='pending',
+            total=Decimal('900.00'), balance_payment=Decimal('0.00'),
+        )
+        Payment.objects.create(
+            order=down_order, amount=Decimal('500.00'),
+            payment_type=Payment.TYPE_DOWN_PAYMENT,
+            payment_status=Payment.STATUS_DOWN_PAYMENT,
+            payment_method='cash', payment_date=september_start,
+        )
+        Payment.objects.create(
+            order=full_order, amount=Decimal('1500.00'),
+            payment_type=Payment.TYPE_FULL_PAYMENT,
+            payment_status=Payment.STATUS_FULLY_PAID,
+            payment_method='cash', payment_date=september_start,
+        )
+        Payment.objects.create(
+            order=down_order, amount=Decimal('700.00'),
+            payment_type=Payment.TYPE_BALANCE_PAYMENT,
+            payment_status=Payment.STATUS_FULLY_PAID,
+            payment_method='cash', payment_date=september_second_day,
+        )
+        Payment.objects.create(
+            order=previous_order, amount=Decimal('900.00'),
+            payment_type=Payment.TYPE_FULL_PAYMENT,
+            payment_status=Payment.STATUS_FULLY_PAID,
+            payment_method='cash', payment_date=august_last_minute,
+        )
+        MonthlySalesArchive.objects.create(
+            month_name='August', year=2026,
+            sales_by_day={'15': 100.0},
+            orders_by_day={'15': [{'customer_name': 'Archived', 'total': 100.0}]},
+            total_sales=Decimal('100.00'),
+        )
+
+        with patch('pages.manila_tz_utils.timezone.now', return_value=fake_now):
+            dashboard = self.client.get(reverse('pages:dashboard'))
+            reports = self.client.get(reverse('pages:reports'))
+
+        expected = Decimal('2700.00')
+        self.assertEqual(dashboard.context['total_revenue'], expected)
+        self.assertEqual(
+            reports.context['total_monthly_sales']['total_revenue'], expected
+        )
+        self.assertEqual(
+            reports.context['total_monthly_sales']['total_transactions'], 3
+        )
+        calendar_total = sum(
+            Decimal(str(amount))
+            for amount in reports.context['current_month_sales_by_day'].values()
+        )
+        self.assertEqual(calendar_total, expected)
+        self.assertEqual(
+            reports.context['current_month_sales_by_day']['1'], 2000.0
+        )
+        self.assertEqual(
+            reports.context['current_month_sales_by_day']['2'], 700.0
+        )
+        self.assertEqual(Payment.objects.filter(order=down_order).count(), 2)
+        self.assertEqual(down_order.status, 'pending')
+        self.assertEqual(down_order.delivery_fee_charge, Decimal('150.00'))
+        self.assertIn('8', reports.context['reports_year_data'])
+
+        with patch('pages.manila_tz_utils.timezone.now', return_value=fake_now):
+            changed = self.client.post(
+                reverse('pages:order_update_schedule_note_ajax'),
+                data=json.dumps({
+                    'order_id': down_order.pk,
+                    'delivery_date': '2026-09-20',
+                    'delivery_time': '15:30',
+                    'special_note': 'Rescheduled without changing revenue',
+                }),
+                content_type='application/json',
+            )
+            dashboard_after = self.client.get(reverse('pages:dashboard'))
+            reports_after = self.client.get(reverse('pages:reports'))
+
+        self.assertEqual(changed.status_code, 200, changed.content)
+        self.assertEqual(dashboard_after.context['total_revenue'], expected)
+        self.assertEqual(
+            reports_after.context['total_monthly_sales']['total_revenue'], expected
+        )
+        self.assertEqual(
+            sum(
+                Decimal(str(amount))
+                for amount in reports_after.context['current_month_sales_by_day'].values()
+            ),
+            expected,
+        )
+
+        cleanup_now = timezone.make_aware(datetime(2026, 10, 1, 8, 0))
+        with patch('pages.auto_delete_utils.timezone.now', return_value=cleanup_now):
+            check_and_delete_completed_orders()
+        self.assertTrue(Order.objects.filter(pk=down_order.pk, status='pending').exists())
+        self.assertEqual(Payment.objects.filter(order=down_order).count(), 2)
